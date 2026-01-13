@@ -5,7 +5,7 @@
 \thispagestyle{empty}
 
 \begin{center}
-\textbf{\Large Problem Set 1: Introduction to Git and GitHub}\\\vspace{10pt}
+\textbf{\Large Problem Set 1: Setting Up Git and GitHub}\\\vspace{10pt}
 {\Large Applied Quantitative Methods for the Social Sciences II}\\\vspace{10pt}
 Carlos III--Juan March Institute, Spring 2026
 \end{center}
@@ -18,178 +18,203 @@ Carlos III--Juan March Institute, Spring 2026
 \begin{itemize}
 \setlength\itemsep{0pt}
   \item {\color{red}{\textbf{Deadline}}}: \textbf{February 12, before class}
-  \item This problem set introduces you to Git and GitHub, which you will use throughout the course to submit your work
-  \item For this course, you will submit all assignments as plain \code{.R} files in a public GitHub repository
+  \item This problem set walks you through setting up Git and GitHub
+  \item You will use this setup to submit all assignments throughout the course
   \item Complete all the tasks below and send me the link to your GitHub repository
 \end{itemize}
 
 \vspace{20pt}
 
-\section{What is Version Control?}
+\section{Task 1: Create a GitHub Account}
 
-Version control is a system that records changes to files over time. It allows you to:
-
-\begin{itemize}
-  \item Track the history of your project
-  \item Revert to previous versions if something goes wrong
-  \item Collaborate with others without overwriting each other's work
-  \item Keep a backup of your work in the cloud
-\end{itemize}
-
-\textbf{Git} is the most widely used version control system. It tracks changes locally on your computer.
-
-\textbf{GitHub} is a web platform that hosts Git repositories online, making it easy to share code, collaborate, and back up your work.
-
-\vspace{10pt}
-
-\section{Why Use Git and GitHub?}
-
-In research and data analysis, version control is essential for:
-
-\begin{itemize}
-  \item \textbf{Reproducibility}: Others (and your future self) can see exactly what you did
-  \item \textbf{Collaboration}: Multiple people can work on the same project
-  \item \textbf{Backup}: Your work is safely stored online
-  \item \textbf{Transparency}: Open science practices require sharing code and data
-\end{itemize}
-
-Many journals and research groups now require or encourage sharing code via GitHub.
-
-\vspace{10pt}
-
-\section{The Basic Git Workflow}
-
-Git works with three main concepts:
+If you don't already have a GitHub account, create one at \url{https://github.com}.
 
 \begin{enumerate}
-  \item \textbf{Working directory}: The files on your computer
-  \item \textbf{Staging area}: Files you've marked to be included in the next snapshot
-  \item \textbf{Repository}: The history of all snapshots (commits)
-\end{enumerate}
-
-The basic workflow is:
-
-\begin{enumerate}
-  \item Make changes to your files
-  \item \textbf{Stage} the changes you want to save: \code{git add filename}
-  \item \textbf{Commit} the staged changes with a message: \code{git commit -m "description"}
-  \item \textbf{Push} your commits to GitHub: \code{git push}
+  \item Go to \url{https://github.com} and click ``Sign up''
+  \item Choose a \textbf{professional username}---you may use this for years in your academic career
+  \item Use your university email or a professional email address
+  \item Complete the verification process
+  \item Optionally: Add a profile picture and brief bio
 \end{enumerate}
 
 \vspace{10pt}
 
-\section{Ways to Use Git}
+\section{Task 2: Create a Repository for This Course}
 
-There are several ways to interact with Git and GitHub. All of them do the same thing---choose whichever you find most comfortable, or mix and match.
+Create a new \textbf{public} repository. Name it something like \code{aqmss2} or \code{quant-methods-2026}.
 
-\subsection{Option 1: GitHub Web Interface}
+\subsection{Option A: Using the GitHub Web Interface}
 
-The simplest way to get started. You can create repositories, upload files, and make commits directly on \url{https://github.com}. Good for beginners, but limited for complex workflows.
-
-\subsection{Option 2: Command Line (Terminal)}
-
-The most powerful and flexible option. You use commands like \code{git add}, \code{git commit}, and \code{git push} in your terminal (Terminal on Mac, Git Bash on Windows). This is what most experienced users prefer.
-
-\subsection{Option 3: RStudio Integration}
-
-If you use RStudio, it has built-in Git support. You can stage, commit, and push using buttons in the Git pane (top-right by default). This is convenient if you're already working in RStudio. To enable it, you need to have Git installed and configure RStudio to recognize it (Tools $\rightarrow$ Global Options $\rightarrow$ Git/SVN).
-
-\vspace{15pt}
-
-\section{Tasks}
-
-Complete the following tasks. You can use any of the methods described above (web, command line, or RStudio).
-
-\vspace{10pt}
-
-\subsection{Task 1: Create a GitHub Account}
-
-If you don't already have one, create a free account at \url{https://github.com}.
-
-\begin{itemize}
-  \item Choose a professional username (you may use this for years)
-  \item Add a profile picture and brief bio if you like
-\end{itemize}
-
-\vspace{10pt}
-
-\subsection{Task 2: Create a Repository}
-
-Create a new \textbf{public} repository for this course. Call it something like \code{aqmss2} or \code{quant-methods-2026}.
-
-\textbf{Via the web interface:}
 \begin{enumerate}
-  \item Click the ``+'' icon in the top right, then ``New repository''
-  \item Enter a name and description
-  \item Make sure ``Public'' is selected
-  \item Check ``Add a README file''
+  \item Click the ``+'' icon in the top-right corner of GitHub
+  \item Select ``New repository''
+  \item Fill in the form:
+    \begin{itemize}
+      \item \textbf{Repository name}: \code{aqmss2} (or similar)
+      \item \textbf{Description}: ``Problem sets for AQMSS II, Spring 2026''
+      \item \textbf{Visibility}: Select \textbf{Public}
+      \item Check the box ``Add a README file''
+    \end{itemize}
   \item Click ``Create repository''
 \end{enumerate}
 
-\textbf{Via the command line:}
+\subsection{Option B: Using the Command Line}
+
+First, make sure Git is installed on your computer. Then run:
+
 \begin{lstlisting}
+# Create a new directory and initialize Git
 mkdir aqmss2
 cd aqmss2
 git init
-echo "# AQMSS II" > README.md
+
+# Create a README file
+echo "# AQMSS II - Problem Sets" > README.md
+
+# Stage and commit the file
 git add README.md
 git commit -m "Initial commit"
+
+# Set up the remote repository (create it on GitHub first, without README)
 git branch -M main
 git remote add origin https://github.com/YOUR-USERNAME/aqmss2.git
 git push -u origin main
 \end{lstlisting}
 
+\textbf{Note}: Replace \code{YOUR-USERNAME} with your actual GitHub username.
+
+\subsection{Option C: Using RStudio}
+
+\begin{enumerate}
+  \item First, create an empty repository on GitHub (without README)
+  \item In RStudio: File $\rightarrow$ New Project $\rightarrow$ Version Control $\rightarrow$ Git
+  \item Paste your repository URL: \code{https://github.com/YOUR-USERNAME/aqmss2.git}
+  \item Choose a location on your computer
+  \item Click ``Create Project''
+\end{enumerate}
+
 \vspace{10pt}
 
-\subsection{Task 3: Edit the README}
+\section{Task 3: Edit the README File}
 
-The README file is the ``front page'' of your repository. Edit it to include:
+Your README is the ``front page'' of your repository. Edit it to include:
 
 \begin{itemize}
   \item Your name
-  \item A brief description of the repository (e.g., ``Problem sets for AQMSS II, Spring 2026'')
-  \item Optionally, a table of contents or list of files
+  \item A brief description (e.g., ``Problem sets for AQMSS II, Spring 2026'')
+  \item Optionally, a list of what will be in the repository
 \end{itemize}
 
-\textbf{Via the web:} Click on \code{README.md}, then the pencil icon to edit. When done, scroll down and click ``Commit changes.''
+\subsection{Option A: On the Web}
 
-\textbf{Via command line:} Edit the file locally, then:
+\begin{enumerate}
+  \item Click on \code{README.md} in your repository
+  \item Click the pencil icon (edit) in the top-right of the file view
+  \item Make your changes using Markdown syntax
+  \item Scroll down and click ``Commit changes''
+  \item Add a commit message like ``Update README with my info''
+\end{enumerate}
+
+\subsection{Option B: Command Line}
+
 \begin{lstlisting}
+# Edit README.md with any text editor, then:
 git add README.md
-git commit -m "Update README with course info"
+git commit -m "Update README with my info"
 git push
 \end{lstlisting}
 
+\subsection{Option C: RStudio}
+
+\begin{enumerate}
+  \item Edit the \code{README.md} file in the Files pane
+  \item Go to the Git pane (usually top-right)
+  \item Check the box next to \code{README.md} to stage it
+  \item Click ``Commit''
+  \item Write a commit message and click ``Commit''
+  \item Click ``Push'' to upload to GitHub
+\end{enumerate}
+
 \vspace{10pt}
 
-\subsection{Task 4: Create a Folder for Problem Sets}
+\section{Task 4: Create a Folder and R File}
 
-Create a folder called \code{problem\_sets} (or similar) in your repository. Inside it, create a file called \code{ps1.R} with a comment header:
+Create a folder called \code{problem\_sets} and add your first R file.
 
+\subsection{Option A: On the Web}
+
+\begin{enumerate}
+  \item Click ``Add file'' $\rightarrow$ ``Create new file''
+  \item In the filename box, type: \code{problem\_sets/ps1.R}
+    \begin{itemize}
+      \item This creates the folder and file at once
+    \end{itemize}
+  \item Add the following content:
 \begin{lstlisting}
 # Problem Set 1
 # AQMSS II, Spring 2026
 # [Your Name]
 
 # This file will contain my solutions for PS1
+print("Hello, Git!")
+\end{lstlisting}
+  \item Scroll down and commit with message ``Add ps1.R''
+\end{enumerate}
+
+\subsection{Option B: Command Line}
+
+\begin{lstlisting}
+# Create the folder
+mkdir problem_sets
+
+# Create the R file (use any text editor)
+# Then stage, commit, and push:
+git add problem_sets/ps1.R
+git commit -m "Add ps1.R"
+git push
 \end{lstlisting}
 
-Commit this file to your repository.
+\subsection{Option C: RStudio}
+
+\begin{enumerate}
+  \item Create a new folder \code{problem\_sets} in the Files pane
+  \item Create a new R script: File $\rightarrow$ New File $\rightarrow$ R Script
+  \item Add the header content and save as \code{problem\_sets/ps1.R}
+  \item In the Git pane, stage the new file, commit, and push
+\end{enumerate}
 
 \vspace{10pt}
 
-\subsection{Task 5: Explore the History}
+\section{Task 5: View Your Commit History}
 
-Look at the commit history of your repository:
+Check that your commits were recorded properly.
 
-\textbf{Via the web:} Click on ``Commits'' (or the clock icon) to see all your commits.
+\subsection{Option A: On the Web}
 
-\textbf{Via command line:}
+\begin{enumerate}
+  \item Go to your repository page on GitHub
+  \item Click on ``Commits'' (or the clock icon with a number)
+  \item You should see your commits listed with messages and timestamps
+\end{enumerate}
+
+\subsection{Option B: Command Line}
+
 \begin{lstlisting}
 git log --oneline
 \end{lstlisting}
 
-Take a screenshot of your commit history showing at least 2--3 commits.
+This shows a compact list of your commits.
+
+\subsection{Option C: RStudio}
+
+\begin{enumerate}
+  \item In the Git pane, click ``History'' (clock icon)
+  \item Browse through your commits
+\end{enumerate}
+
+\vspace{10pt}
+
+\textbf{Take a screenshot} of your commit history showing at least 2--3 commits.
 
 \vspace{15pt}
 
@@ -198,32 +223,76 @@ Take a screenshot of your commit history showing at least 2--3 commits.
 Send me an email with:
 
 \begin{enumerate}
-  \item The URL of your GitHub repository (e.g., \code{https://github.com/username/aqmss2})
-  \item The screenshot of your commit history
+  \item The URL of your GitHub repository\\
+        (e.g., \code{https://github.com/username/aqmss2})
+  \item A screenshot of your commit history
 \end{enumerate}
 
-I will check that your repository is public and contains a README and at least one \code{.R} file.
+I will check that:
+\begin{itemize}
+  \item Your repository is \textbf{public}
+  \item It contains a README with your name
+  \item It has a \code{problem\_sets} folder with at least one \code{.R} file
+  \item There are multiple commits in the history
+\end{itemize}
 
 \vspace{15pt}
 
-\section{Optional: Setting Up Git Locally}
+\section{Optional: Installing Git Locally}
 
-If you want to use Git from the command line or RStudio, you'll need to set it up on your computer:
+If you want to use Git from the command line, you need to install it first.
 
-\begin{enumerate}
-  \item \textbf{Install Git}: Download from \url{https://git-scm.com/downloads}
-  \item \textbf{Configure your identity}:
+\subsection{Installation}
+
+\begin{itemize}
+  \item \textbf{Mac}: Git comes pre-installed. Or install via Homebrew: \code{brew install git}
+  \item \textbf{Windows}: Download from \url{https://git-scm.com/download/win}
+  \item \textbf{Linux}: Use your package manager, e.g., \code{sudo apt install git}
+\end{itemize}
+
+\subsection{First-Time Configuration}
+
+After installing, configure your identity (run once):
+
 \begin{lstlisting}
 git config --global user.name "Your Name"
 git config --global user.email "your@email.com"
 \end{lstlisting}
-  \item \textbf{Clone your repository} (download it to your computer):
+
+\subsection{Cloning an Existing Repository}
+
+If you created the repository on GitHub first, download it to your computer:
+
 \begin{lstlisting}
 git clone https://github.com/YOUR-USERNAME/aqmss2.git
+cd aqmss2
 \end{lstlisting}
+
+\subsection{Configuring RStudio}
+
+To use Git in RStudio:
+\begin{enumerate}
+  \item Go to Tools $\rightarrow$ Global Options $\rightarrow$ Git/SVN
+  \item Make sure ``Git executable'' points to your Git installation
+  \item Restart RStudio
 \end{enumerate}
 
-\textbf{For RStudio users}: Go to File $\rightarrow$ New Project $\rightarrow$ Version Control $\rightarrow$ Git, and paste your repository URL. RStudio will clone the repository and set up a project for you.
+\vspace{15pt}
+
+\section{Quick Reference: Common Git Commands}
+
+\begin{tabular}{ll}
+\textbf{Command} & \textbf{What it does} \\
+\hline
+\code{git status} & Show which files have changed \\
+\code{git add <file>} & Stage a file for commit \\
+\code{git add .} & Stage all changed files \\
+\code{git commit -m "msg"} & Save staged changes with a message \\
+\code{git push} & Upload commits to GitHub \\
+\code{git pull} & Download changes from GitHub \\
+\code{git log --oneline} & Show commit history (compact) \\
+\code{git diff} & Show changes not yet staged \\
+\end{tabular}
 
 \vspace{15pt}
 
@@ -231,13 +300,10 @@ git clone https://github.com/YOUR-USERNAME/aqmss2.git
 
 \begin{itemize}
   \item GitHub's official guides: \url{https://docs.github.com/en/get-started}
-  \item Happy Git with R (excellent for R users): \url{https://happygitwithr.com}
+  \item Happy Git with R: \url{https://happygitwithr.com}
   \item Git cheat sheet: \url{https://education.github.com/git-cheat-sheet-education.pdf}
-  \item Pro Git book (free online): \url{https://git-scm.com/book/en/v2}
+  \item Interactive Git exercises: \url{https://gitexercises.fracz.com}
+  \item Pro Git book (free): \url{https://git-scm.com/book/en/v2}
 \end{itemize}
-
-\vspace{10pt}
-\noindent
-\textit{We will cover more advanced Git workflows and reproducible computing practices later in the course (Session 5). For now, just get comfortable with the basics!}
 
 \end{document}

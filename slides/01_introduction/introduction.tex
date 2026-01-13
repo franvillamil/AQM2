@@ -191,49 +191,27 @@ The Big Picture
 
 % ----------------------------------------------------
 \begin{transitionframe}
-Review: Key Concepts from AQMSS-I
+Version Control and Git
 \end{transitionframe}
 % ----------------------------------------------------
 
 % ----------------------------------------------------
 \begin{frame}
-\frametitle{The regression model}
-\centering
-
-\vspace{10pt}
-
-The most common tool in social science:
-
-\vspace{10pt}
-
-$$Y = \beta_0 + \beta_1 X + \varepsilon$$
-
-\vspace{10pt}
-
-\begin{itemize}[<+->]
-\item $Y$: outcome we want to explain
-\item $X$: explanatory variable(s)
-\item $\beta$: coefficients (what we estimate)
-\item $\varepsilon$: error term (what we can't explain)
-\end{itemize}
-
-\end{frame}
-% ----------------------------------------------------
-
-% ----------------------------------------------------
-\begin{frame}
-\frametitle{What regression tells us}
+\frametitle{The problem: managing files over time}
 \centering
 
 \begin{itemize}[<+->]
-\item Regression estimates \textbf{conditional expectations}
-\item ``What is the average $Y$ for units with a given value of $X$?''
-\item[]
-\item The slope $\beta_1$ tells us:
+\item Have you ever had files like this?
   \begin{itemize}
-  \item How much $Y$ changes, on average
-  \item When comparing units that differ by 1 in $X$
+  \item \texttt{thesis\_v1.docx}
+  \item \texttt{thesis\_v2\_final.docx}
+  \item \texttt{thesis\_v2\_final\_REAL.docx}
+  \item \texttt{thesis\_v2\_final\_REAL\_submitted.docx}
   \end{itemize}
+\item[]
+\item What changed between versions?
+\item Which version has the correct analysis?
+\item How do you collaborate without overwriting each other's work?
 \end{itemize}
 
 \end{frame}
@@ -241,21 +219,63 @@ $$Y = \beta_0 + \beta_1 X + \varepsilon$$
 
 % ----------------------------------------------------
 \begin{frame}
-\frametitle{Descriptive vs. Causal interpretation}
+\frametitle{Version control: a better way}
 \centering
 
+\vspace{10pt}
+
+\textbf{Version control} is a system that records changes to files over time
+
+\vspace{15pt}
+
+\begin{itemize}[<+->]
+\item One file, complete history
+\item Every change is recorded with a description
+\item Can go back to any previous state
+\item Multiple people can work simultaneously
+\end{itemize}
+
+\end{frame}
+% ----------------------------------------------------
+
+% ----------------------------------------------------
+\begin{frame}
+\frametitle{Why version control for research?}
+\centering
+
+\begin{itemize}[<+->]
+\item \textbf{Reproducibility}: Track exactly what you did and when
+\item \textbf{Backup}: Your work is safely stored, even if your laptop dies
+\item \textbf{Collaboration}: Work with others without email chains of files
+\item \textbf{Transparency}: Share your code with the research community
+\item[]
+\item Many journals now require or encourage sharing code via GitHub
+\end{itemize}
+
+\end{frame}
+% ----------------------------------------------------
+
+% ----------------------------------------------------
+\begin{frame}
+\frametitle{Git and GitHub}
+\centering
+
+\vspace{10pt}
+
+\textbf{Git}
 \begin{itemize}
-\item \textbf{Descriptive}: How do units with different $X$ values compare?
-  \begin{itemize}
-  \item ``People with more education earn more, on average''
-  \end{itemize}
-\item[]
-\item \textbf{Causal}: What happens if we change $X$ for a given unit?
-  \begin{itemize}
-  \item ``If we give someone more education, they will earn more''
-  \end{itemize}
-\item[]
-\item Same coefficient, very different claims!
+\item A version control system
+\item Runs locally on your computer
+\item Tracks changes to files
+\end{itemize}
+
+\vspace{15pt}
+
+\textbf{GitHub}
+\begin{itemize}
+\item A web platform that hosts Git repositories
+\item Stores your code online
+\item Enables sharing and collaboration
 \end{itemize}
 
 \end{frame}
@@ -263,16 +283,68 @@ $$Y = \beta_0 + \beta_1 X + \varepsilon$$
 
 % ----------------------------------------------------
 \begin{frame}
-\frametitle{The challenge of causal inference}
+\frametitle{The basic Git workflow}
+\centering
+
+\begin{enumerate}[<+->]
+\item \textbf{Make changes} to your files (write code, edit text)
+\item \textbf{Stage} the changes you want to save
+  \begin{itemize}
+  \item ``These are the files I want to include in my next snapshot''
+  \end{itemize}
+\item \textbf{Commit} the staged changes with a message
+  \begin{itemize}
+  \item A snapshot of your project at this moment
+  \end{itemize}
+\item \textbf{Push} your commits to GitHub
+  \begin{itemize}
+  \item Upload your local changes to the cloud
+  \end{itemize}
+\end{enumerate}
+
+\end{frame}
+% ----------------------------------------------------
+
+% ----------------------------------------------------
+\begin{frame}
+\frametitle{Ways to use Git}
 \centering
 
 \begin{itemize}[<+->]
-\item Causal effects are about \textbf{counterfactuals}
-\item ``What would have happened if things were different?''
+\item \textbf{GitHub web interface}: Create repos, upload files, edit directly
+  \begin{itemize}
+  \item Simple but limited
+  \end{itemize}
+\item \textbf{Command line}: Most powerful and flexible
+  \begin{itemize}
+  \item \texttt{git add}, \texttt{git commit}, \texttt{git push}
+  \end{itemize}
+\item \textbf{RStudio}: Built-in Git integration
+  \begin{itemize}
+  \item Point-and-click interface
+  \end{itemize}
 \item[]
-\item The problem: we can't observe counterfactuals
-\item We need strategies to infer them
-\item This will be a recurring theme throughout the course
+\item All do the same thing---choose what works for you
+\end{itemize}
+
+\end{frame}
+% ----------------------------------------------------
+
+% ----------------------------------------------------
+\begin{frame}
+\frametitle{Problem Set 1}
+\centering
+
+\vspace{10pt}
+
+\begin{itemize}[<+->]
+\item Create a GitHub account (if you don't have one)
+\item Create a \textbf{public} repository for this course
+\item Set up your README and folder structure
+\item Create a simple \texttt{.R} file
+\item[]
+\item This repository is where you'll submit all your assignments
+\item Detailed instructions in the problem set document
 \end{itemize}
 
 \end{frame}

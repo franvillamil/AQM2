@@ -11,6 +11,13 @@ layout: default
 - Francisco Urdinez and Andres Cruz, *R for Political Data Science: A Practical Guide* (CRC, 2020)
 - Ismay, Kim, and Valdivia, [*Statistical Inference via Data Science: A ModernDive into R and the Tidyverse*](https://moderndive.com/) (Online/CRC, 2025)
 
+### Git and Version Control
+
+- [Happy Git with R](https://happygitwithr.com) - Essential guide for R users
+- [Git Exercises](https://gitexercises.fracz.com/) - Interactive exercises to practice Git
+- [GitHub's Official Guides](https://docs.github.com/en/get-started)
+- [Pro Git Book](https://git-scm.com/book/en/v2) (free online)
+
 ### R Resources
 
 - Wickham, Cetinkaya-Rundel, and Grolemund, [*R for Data Science*](https://r4ds.hadley.nz/) (Online/O'Reilly, 2nd ed, 2023)
