@@ -2,4 +2,4 @@
 layout: default
 ---
 
-## Detailed course outline
+## Course sessions and topics

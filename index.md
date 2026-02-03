@@ -22,5 +22,5 @@ layout: default
 | Mar 26  | [Spatial data (I)](./sessions.md) | | |
 | Apr 9   | [Spatial data (II)](./sessions.md) | | |
 | Apr 16  | [Other outcomes](./sessions.md) | | |
-| Apr 23  | [Project presentations](./sessions.md) | | |
-| Apr 30  | [Review/Advanced](./sessions.md) | | |
+| Apr 23  | [Project presentations](./logistics.md) | | |
+| Apr 30  | [Exam](./logistics.md) / [Review & Advanced](./sessions.md) | | |
