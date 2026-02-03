@@ -12,15 +12,15 @@ layout: default
 
 | Date        | Topic  | Slides | Exercises |
 | :---        | :---   | :--- | :--- |
-| Feb 5    | Introduction | [[PDF](./slides/01_introduction/introduction.pdf)] | [[Ex 1](./problems/ps1_introduction.pdf)] |
-| Feb 12  | Applied regression (I) | | |
-| Feb 19  | Applied regression (II) | | |
-| Feb 26  | Model interpretation and diagnostics | | |
-| Mar 5   | Best practices in computing | | |
-| Mar 12  | Panel data (I) | | |
-| Mar 19  | Panel data (II) | | |
-| Mar 26  | Spatial data (I) | | |
-| Apr 9   | Spatial data (II) | | |
-| Apr 16  | Other outcomes | | |
-| Apr 23  | Project presentations | | |
-| Apr 30  | Review/Advanced | | |
+| Feb 5    | [Introduction](./sessions.md) | [[PDF](./slides/01_introduction/introduction.pdf)] | [[Ex 1](./problems/ps1_introduction.pdf)] |
+| Feb 12  | [Applied regression (I)](./sessions.md) | | |
+| Feb 19  | [Applied regression (II)](./sessions.md) | | |
+| Feb 26  | [Model interpretation and diagnostics](./sessions.md) | | |
+| Mar 5   | [Best practices in computing](./sessions.md) | | |
+| Mar 12  | [Panel data (I)](./sessions.md) | | |
+| Mar 19  | [Panel data (II)](./sessions.md) | | |
+| Mar 26  | [Spatial data (I)](./sessions.md) | | |
+| Apr 9   | [Spatial data (II)](./sessions.md) | | |
+| Apr 16  | [Other outcomes](./sessions.md) | | |
+| Apr 23  | [Project presentations](./sessions.md) | | |
+| Apr 30  | [Review/Advanced](./sessions.md) | | |
