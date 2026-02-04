@@ -1,0 +1,599 @@
+% ----------------------------------------------------
+\begin{frame}
+  \titlepage
+\end{frame}
+% ----------------------------------------------------
+\note{}
+
+% ----------------------------------------------------
+\begin{frame}
+\frametitle{Today's goals}
+\centering
+
+\begin{itemize}[<+->]
+\item Understand why OLS is problematic for binary outcomes
+\item Learn the linear probability model and its trade-offs
+\item Understand logistic regression and how to estimate it in R
+\item Interpret logit results using predicted probabilities and marginal effects
+\end{itemize}
+
+\end{frame}
+% ----------------------------------------------------
+\note{}
+
+% ====================================================
+\section{The Problem with Binary Outcomes}
+% ====================================================
+
+% ----------------------------------------------------
+\begin{transitionframe}
+The Problem with Binary Outcomes
+\end{transitionframe}
+% ----------------------------------------------------
+\note{}
+
+% ----------------------------------------------------
+\begin{frame}
+\frametitle{Binary outcomes are everywhere}
+\centering
+
+\begin{itemize}[<+->]
+\item Many outcomes in social science are binary (yes/no):
+  \begin{itemize}
+  \item Did someone vote?
+  \item Did a war break out?
+  \item Did a bill pass?
+  \item Did a country democratize?
+  \end{itemize}
+\item[]
+\item Our outcome $Y \in \{0, 1\}$
+\item We want to model: $P(Y = 1 | X)$
+\end{itemize}
+
+\end{frame}
+% ----------------------------------------------------
+\note{}
+
+% ----------------------------------------------------
+\begin{frame}
+\frametitle{What happens if we just use OLS?}
+\centering
+
+\vspace{10pt}
+
+$$Y = \beta_0 + \beta_1 X + \varepsilon$$
+
+\vspace{10pt}
+
+\begin{itemize}[<+->]
+\item OLS gives us: $E[Y|X] = \beta_0 + \beta_1 X$
+\item Since $Y \in \{0, 1\}$: $E[Y|X] = P(Y = 1 | X)$
+\item[]
+\item So OLS is modeling a probability as a linear function of $X$
+\item This is the \textbf{linear probability model} (LPM)
+\end{itemize}
+
+\end{frame}
+% ----------------------------------------------------
+\note{}
+
+% ----------------------------------------------------
+\begin{frame}
+\frametitle{The LPM: Simple and intuitive}
+\centering
+
+\begin{itemize}[<+->]
+\item $\beta_1$ has a direct interpretation:
+  \begin{itemize}
+  \item A one-unit increase in $X$ changes the probability of $Y = 1$ by $\beta_1$
+  \end{itemize}
+\item[]
+\item Easy to estimate: just \texttt{lm(y \textasciitilde{} x, data = df)}
+\item Easy to interpret: same as OLS
+\item[]
+\item Many applied researchers use the LPM in practice
+\end{itemize}
+
+\end{frame}
+% ----------------------------------------------------
+\note{}
+
+% ----------------------------------------------------
+\begin{frame}
+\frametitle{LPM limitations}
+\centering
+
+\begin{itemize}[<+->]
+\item \textbf{Problem 1}: Predictions outside $[0, 1]$
+  \begin{itemize}
+  \item A linear function can produce $\hat{P} < 0$ or $\hat{P} > 1$
+  \item Probabilities must be between 0 and 1!
+  \end{itemize}
+\item[]
+\item \textbf{Problem 2}: Heteroskedasticity by construction
+  \begin{itemize}
+  \item $\text{Var}(\varepsilon | X) = P(1-P)$, which varies with $X$
+  \item Standard errors from OLS are wrong (use robust SEs)
+  \end{itemize}
+\item[]
+\item \textbf{Problem 3}: Non-linearity at the extremes
+  \begin{itemize}
+  \item True relationship between $X$ and $P(Y=1)$ is S-shaped
+  \item LPM forces it to be linear
+  \end{itemize}
+\end{itemize}
+
+\end{frame}
+% ----------------------------------------------------
+\note{}
+
+% ----------------------------------------------------
+\begin{frame}
+\frametitle{When is the LPM ``good enough''?}
+\centering
+
+\begin{itemize}[<+->]
+\item When probabilities are in the middle range (0.2--0.8)
+  \begin{itemize}
+  \item The linear approximation is reasonable here
+  \end{itemize}
+\item When you care about \textbf{average marginal effects}
+  \begin{itemize}
+  \item LPM and logit often give similar AMEs
+  \end{itemize}
+\item When simplicity of interpretation matters
+\item[]
+\item When is it \textbf{not} good enough?
+  \begin{itemize}
+  \item Many observations near 0 or 1
+  \item You need predicted probabilities to be bounded
+  \item The relationship is clearly non-linear
+  \end{itemize}
+\end{itemize}
+
+\end{frame}
+% ----------------------------------------------------
+\note{}
+
+% ====================================================
+\section{Logistic Regression}
+% ====================================================
+
+% ----------------------------------------------------
+\begin{transitionframe}
+Logistic Regression
+\end{transitionframe}
+% ----------------------------------------------------
+\note{}
+
+% ----------------------------------------------------
+\begin{frame}
+\frametitle{The logistic function}
+\centering
+
+\vspace{10pt}
+
+$$P(Y = 1 | X) = \frac{e^{X\beta}}{1 + e^{X\beta}} = \frac{1}{1 + e^{-X\beta}}$$
+
+\vspace{20pt}
+
+\begin{itemize}[<+->]
+\item This is an S-shaped (sigmoid) curve
+\item Output is always between 0 and 1
+\item Steep in the middle, flat at the extremes
+\item A natural model for probabilities
+\end{itemize}
+
+\end{frame}
+% ----------------------------------------------------
+\note{}
+
+% ----------------------------------------------------
+\begin{frame}
+\frametitle{The logit model}
+\centering
+
+\vspace{10pt}
+
+We can rearrange the logistic function:
+
+\vspace{10pt}
+
+$$\log\left(\frac{P}{1-P}\right) = \beta_0 + \beta_1 X$$
+
+\vspace{15pt}
+
+\begin{itemize}[<+->]
+\item The left side is the \textbf{log-odds} (or ``logit'')
+\item $\frac{P}{1-P}$ is the \textbf{odds} of the event
+\item The model is linear in the log-odds, not in the probability
+\end{itemize}
+
+\end{frame}
+% ----------------------------------------------------
+\note{}
+
+% ----------------------------------------------------
+\begin{frame}
+\frametitle{Maximum likelihood estimation}
+\centering
+
+\begin{itemize}[<+->]
+\item We can't use OLS for logistic regression
+\item Instead, we use \textbf{maximum likelihood estimation} (MLE)
+\item[]
+\item The intuition:
+  \begin{itemize}
+  \item For each observation, the model predicts $P(Y_i = 1)$
+  \item MLE finds the coefficients that make the observed data most likely
+  \item The ``likelihood'' is the product of these predicted probabilities
+  \end{itemize}
+\item[]
+\item No need to derive this---R does it for us
+\end{itemize}
+
+\end{frame}
+% ----------------------------------------------------
+\note{}
+
+% ----------------------------------------------------
+\begin{frame}
+\frametitle{Estimating logit in R}
+\centering
+
+\vspace{10pt}
+
+\begin{itemize}[<+->]
+\item The function: \texttt{glm(y \textasciitilde{} x, family = binomial, data = df)}
+\item[]
+\item \texttt{glm}: generalized linear model
+\item \texttt{family = binomial}: tells R to use logistic regression
+\item[]
+\item The syntax is identical to \texttt{lm()}, just change to \texttt{glm()}
+\item Works with \texttt{broom::tidy()}, \texttt{modelsummary()}, etc.
+\end{itemize}
+
+\end{frame}
+% ----------------------------------------------------
+\note{}
+
+% ----------------------------------------------------
+\begin{frame}
+\frametitle{Interpreting logit output: Log-odds}
+\centering
+
+\begin{itemize}[<+->]
+\item The direct output gives coefficients in \textbf{log-odds}
+\item[]
+\item $\beta_1 = 0.5$ means:
+  \begin{itemize}
+  \item A one-unit increase in $X$ increases the log-odds by 0.5
+  \end{itemize}
+\item[]
+\item This is hard to interpret!
+\item Nobody thinks in log-odds
+\end{itemize}
+
+\end{frame}
+% ----------------------------------------------------
+\note{}
+
+% ----------------------------------------------------
+\begin{frame}
+\frametitle{Interpreting logit output: Odds ratios}
+\centering
+
+\vspace{10pt}
+
+\begin{itemize}[<+->]
+\item Exponentiate the coefficient: $e^{\beta_1}$ = odds ratio
+\item In R: \texttt{exp(coef(model))}
+\item[]
+\item $e^{0.5} \approx 1.65$ means:
+  \begin{itemize}
+  \item A one-unit increase in $X$ \textbf{multiplies} the odds by 1.65
+  \item Or: the odds increase by 65\%
+  \end{itemize}
+\item[]
+\item Slightly more intuitive, but still not probabilities
+\item The change in probability depends on where you start
+\end{itemize}
+
+\end{frame}
+% ----------------------------------------------------
+\note{}
+
+% ----------------------------------------------------
+\begin{frame}
+\frametitle{Why coefficients alone are not enough}
+\centering
+
+\begin{itemize}[<+->]
+\item In OLS: $\beta_1$ = change in $Y$ for one-unit change in $X$ (always)
+\item[]
+\item In logit: the change in \textbf{probability} depends on:
+  \begin{itemize}
+  \item The current value of $X$
+  \item The values of all other variables
+  \end{itemize}
+\item[]
+\item A coefficient of $\beta_1 = 0.5$ could mean:
+  \begin{itemize}
+  \item Going from $P = 0.01$ to $P = 0.016$ (tiny change)
+  \item Going from $P = 0.50$ to $P = 0.62$ (large change)
+  \end{itemize}
+\item[]
+\item We need better tools to interpret logit models
+\end{itemize}
+
+\end{frame}
+% ----------------------------------------------------
+\note{}
+
+% ====================================================
+\section{Interpreting Logit Results}
+% ====================================================
+
+% ----------------------------------------------------
+\begin{transitionframe}
+Interpreting Logit Results
+\end{transitionframe}
+% ----------------------------------------------------
+\note{}
+
+% ----------------------------------------------------
+\begin{frame}
+\frametitle{Predicted probabilities}
+\centering
+
+\begin{itemize}[<+->]
+\item The most intuitive way to interpret logit models
+\item[]
+\item ``What is the predicted probability of $Y = 1$ for a person with these characteristics?''
+\item[]
+\item In R:
+  \begin{itemize}
+  \item \texttt{marginaleffects::predictions(model)}
+  \item Returns predicted probabilities for each observation
+  \item Or at specific values: \texttt{predictions(model, newdata = ...)}
+  \end{itemize}
+\end{itemize}
+
+\end{frame}
+% ----------------------------------------------------
+\note{}
+
+% ----------------------------------------------------
+\begin{frame}
+\frametitle{Average marginal effects (AME)}
+\centering
+
+\begin{itemize}[<+->]
+\item The marginal effect varies across observations
+\item The AME averages across all observations
+\item[]
+\item In R: \texttt{marginaleffects::avg\_slopes(model)}
+\item[]
+\item Interpretation (like OLS):
+  \begin{itemize}
+  \item ``On average, a one-unit increase in $X$ changes the probability of $Y = 1$ by $\Delta P$''
+  \end{itemize}
+\item[]
+\item This is often comparable to the LPM coefficient
+\end{itemize}
+
+\end{frame}
+% ----------------------------------------------------
+\note{}
+
+% ----------------------------------------------------
+\begin{frame}
+\frametitle{Marginal effects at representative values}
+\centering
+
+\begin{itemize}[<+->]
+\item Instead of averaging, evaluate at specific values
+\item[]
+\item Example: ``What is the effect of education on voting for a 40-year-old woman?''
+\item[]
+\item In R:
+  \begin{itemize}
+  \item \texttt{avg\_slopes(model, newdata = datagrid(age = 40, gender = "F"))}
+  \end{itemize}
+\item[]
+\item Useful when the marginal effect varies a lot across the sample
+\end{itemize}
+
+\end{frame}
+% ----------------------------------------------------
+\note{}
+
+% ----------------------------------------------------
+\begin{frame}
+\frametitle{Plotting predicted probabilities}
+\centering
+
+\begin{itemize}[<+->]
+\item The best way to communicate logit results
+\item[]
+\item Show how $P(Y=1)$ changes across values of $X$
+\item Include confidence bands
+\item[]
+\item In R:
+  \begin{itemize}
+  \item \texttt{plot\_predictions(model, condition = "x")}
+  \item Plots the S-curve with uncertainty
+  \end{itemize}
+\item[]
+\item Much more informative than a table of log-odds
+\end{itemize}
+
+\end{frame}
+% ----------------------------------------------------
+\note{}
+
+% ----------------------------------------------------
+\begin{frame}
+\frametitle{Comparing LPM and logit}
+\centering
+
+\begin{itemize}[<+->]
+\item In many cases, LPM and logit give similar results
+  \begin{itemize}
+  \item Especially for average marginal effects
+  \item Especially when probabilities are in the 0.2--0.8 range
+  \end{itemize}
+\item[]
+\item Where they differ:
+  \begin{itemize}
+  \item Predicted probabilities near 0 or 1
+  \item LPM can go outside $[0, 1]$; logit cannot
+  \item Marginal effects at extreme values
+  \end{itemize}
+\item[]
+\item A good practice: estimate both and compare
+\end{itemize}
+
+\end{frame}
+% ----------------------------------------------------
+\note{}
+
+% ----------------------------------------------------
+\begin{frame}
+\frametitle{Model fit for logit}
+\centering
+
+\begin{itemize}[<+->]
+\item No $R^2$ in the usual sense (MLE, not OLS)
+\item[]
+\item Alternative measures:
+  \begin{itemize}
+  \item \textbf{Pseudo-$R^2$}: compares model to null model (McFadden)
+  \item \textbf{AIC}: penalized likelihood (lower = better)
+  \item \textbf{Classification}: what percent does the model correctly predict?
+  \item \textbf{ROC curve}: trade-off between true and false positives
+  \end{itemize}
+\item[]
+\item None is perfect; use them as rough guides
+\item Reported automatically by \texttt{modelsummary()} and \texttt{performance::r2()}
+\end{itemize}
+
+\end{frame}
+% ----------------------------------------------------
+\note{}
+
+% ====================================================
+\section{Practice}
+% ====================================================
+
+% ----------------------------------------------------
+\begin{transitionframe}
+Practice
+\end{transitionframe}
+% ----------------------------------------------------
+\note{}
+
+% ----------------------------------------------------
+\begin{frame}
+\frametitle{Worked example: LPM vs. logit}
+\centering
+
+\vspace{5pt}
+
+\begin{itemize}[<+->]
+\item[]
+  \texttt{lpm <- lm(vote \textasciitilde{} age + income + educ, data = df)} \\[3pt]
+  \texttt{logit <- glm(vote \textasciitilde{} age + income + educ,} \\
+  \texttt{\hspace{60pt}family = binomial, data = df)}
+\item[]
+  \texttt{modelsummary(list("LPM" = lpm, "Logit" = logit))}
+\item[]
+  \texttt{avg\_slopes(logit)}  \hfill \textit{\# compare to LPM coefficients}
+\item[]
+  \texttt{plot\_predictions(logit, condition = "income")}
+\end{itemize}
+
+\end{frame}
+% ----------------------------------------------------
+\note{}
+
+% ----------------------------------------------------
+\begin{frame}
+\frametitle{Decision tree: When to use which?}
+\centering
+
+\vspace{10pt}
+
+\begin{itemize}[<+->]
+\item \textbf{Use LPM when:}
+  \begin{itemize}
+  \item You want simple, quick interpretation
+  \item Probabilities are in the middle range
+  \item You mainly care about average effects
+  \end{itemize}
+\item[]
+\item \textbf{Use logit when:}
+  \begin{itemize}
+  \item You need bounded predicted probabilities
+  \item Many observations have extreme probabilities (near 0 or 1)
+  \item You want to properly account for the binary nature of $Y$
+  \end{itemize}
+\item[]
+\item In practice: estimate both, report the one most appropriate
+\end{itemize}
+
+\end{frame}
+% ----------------------------------------------------
+\note{}
+
+% ----------------------------------------------------
+\begin{frame}
+\frametitle{Summary: Key takeaways}
+\centering
+
+\begin{itemize}[<+->]
+\item Binary outcomes require special treatment
+\item LPM is simple but has known limitations
+\item Logit bounds probabilities between 0 and 1
+\item Log-odds and odds ratios are not intuitive---use marginal effects
+\item Predicted probabilities and AMEs are the best way to interpret logit
+\item Compare LPM and logit; they often agree on AMEs
+\end{itemize}
+
+\end{frame}
+% ----------------------------------------------------
+\note{}
+
+% ----------------------------------------------------
+\begin{frame}
+\frametitle{For next week}
+\centering
+
+\begin{itemize}
+\item Read Urdinez \& Cruz (2020), chapter 5 (\S 5.6)
+\item Read Gelman et al., chapters 11--12
+\item Complete Assignment 3
+\item[]
+\item Next session: Model interpretation and diagnostics
+  \begin{itemize}
+  \item Beyond coefficient tables
+  \item Visualizing model results
+  \item Publication-quality tables
+  \item Key diagnostics
+  \end{itemize}
+\end{itemize}
+
+\end{frame}
+% ----------------------------------------------------
+\note{}
+
+% ----------------------------------------------------
+\begin{frame}
+\frametitle{}
+\centering
+
+Questions?
+
+\end{frame}
+% ----------------------------------------------------
+\note{}

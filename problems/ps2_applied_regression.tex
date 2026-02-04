@@ -1,0 +1,153 @@
+\input{preamble.tex}
+
+% Additional package for math
+\usepackage{amsmath}
+
+\begin{document}
+
+\thispagestyle{empty}
+
+\begin{center}
+\textbf{\Large Assignment 2: Applied Regression}\\\vspace{10pt}
+{\Large Applied Quantitative Methods for the Social Sciences II}\\\vspace{10pt}
+Carlos III--Juan March Institute, Spring 2026
+\end{center}
+
+\vspace{10pt}
+\noindent
+\textbf{\large Instructions:}
+
+\vspace{10pt}
+\begin{itemize}
+\setlength\itemsep{0pt}
+  \item {\color{red}{\textbf{Deadline}}}: \textbf{February 19, before class}
+  \item Submit your work as a \code{.R} file called \code{ps2.R} in your GitHub repository
+  \item Use comments in your R code to answer conceptual questions and explain your analysis
+  \item You are encouraged to work together, but each person must submit their own code
+\end{itemize}
+
+\vspace{20pt}
+
+\section{Conceptual Questions}
+
+Answer these questions using comments in your R script. You don't need to run any code for this section---just write your answers as comments.
+
+\subsection{Question 1: Conditional Expectations}
+
+Consider a study examining the effect of education on income.
+
+\begin{enumerate}[label=\alph*)]
+    \item Explain in your own words what a conditional expectation function (CEF) is. Write down the CEF for income given education.
+    \item Why is regression considered an approximation to the CEF? Under what conditions is the regression exactly equal to the CEF?
+    \item A researcher finds that, on average, people with a college degree earn \$20,000 more than people with only a high school diploma. Is this a descriptive or causal statement? Explain.
+\end{enumerate}
+
+\subsection{Question 2: Omitted Variable Bias}
+
+\begin{enumerate}[label=\alph*)]
+    \item State the omitted variable bias formula and explain each component.
+    \item In the education-income example, suppose ``ability'' is an omitted variable that affects both education and income. If ability is positively related to both education and income, what is the sign of the omitted variable bias? Is the effect of education on income over- or under-estimated?
+    \item A researcher argues: ``I cannot measure ability, but I can control for test scores as a proxy.'' Discuss the limitations of this approach.
+\end{enumerate}
+
+\subsection{Question 3: Good and Bad Controls}
+
+For each of the following scenarios, identify whether the proposed control variable is a good control, a bad control (post-treatment), or a collider. Explain your reasoning.
+
+\begin{enumerate}[label=\alph*)]
+    \item \textbf{Research question:} Effect of job training on wages. \textbf{Proposed control:} Current occupation.
+    \item \textbf{Research question:} Effect of smoking on lung cancer. \textbf{Proposed control:} Family history of cancer.
+    \item \textbf{Research question:} Effect of education on income. \textbf{Proposed control:} Being employed (yes/no).
+    \item \textbf{Research question:} Effect of democracy on economic growth. \textbf{Proposed control:} Colonial history.
+\end{enumerate}
+
+\subsection{Question 4: Interaction Effects}
+
+Consider the model: $Y = \beta_0 + \beta_1 X + \beta_2 Z + \beta_3 (X \times Z) + \varepsilon$
+
+\begin{enumerate}[label=\alph*)]
+    \item What is the marginal effect of $X$ on $Y$? Show how it depends on $Z$.
+    \item Suppose $\beta_1 = 0.5$, $\beta_3 = -0.1$, and $Z$ ranges from 0 to 10. At what value of $Z$ does the effect of $X$ become zero?
+    \item Why is it incorrect to interpret $\beta_1$ as ``the effect of $X$'' in this model?
+\end{enumerate}
+
+\vspace{15pt}
+
+\section{Applied Analysis: European Social Survey}
+
+For this assignment, you will use data from the European Social Survey (ESS). The ESS is a cross-national survey that collects data on attitudes, beliefs, and behavior patterns of diverse populations in Europe.
+
+You can download the data from: \url{https://www.europeansocialsurvey.org/data/}
+
+Alternatively, use the \code{essurvey} package in R:
+
+\begin{lstlisting}
+install.packages("essurvey")
+library(essurvey)
+set_email("your@email.com")  # Register at ESS website first
+
+# Download ESS Round 10 (2020-2022)
+ess <- import_rounds(10)
+\end{lstlisting}
+
+We will examine the determinants of support for redistribution. Key variables include:
+
+\begin{itemize}
+    \item \code{gincdif}: Government should reduce income differences (1--5 scale, 5 = strongly agree)
+    \item \code{hinctnta}: Household income decile (1 = lowest, 10 = highest)
+    \item \code{eduyrs}: Years of education
+    \item \code{agea}: Age in years
+    \item \code{gndr}: Gender (1 = male, 2 = female)
+    \item \code{cntry}: Country
+\end{itemize}
+
+\subsection{Question 5: Data Exploration and Bivariate Regression}
+
+\begin{enumerate}[label=\alph*)]
+    \item Select a subset of countries (at least 3) and prepare the data for analysis. Remove missing values and recode variables as needed. Report sample sizes by country.
+    \item Create a scatter plot of income (x-axis) versus support for redistribution (y-axis), using jittering to show the distribution.
+    \item Estimate a bivariate regression with support for redistribution as the outcome and household income decile as the predictor. Print a summary of the results using \code{broom::tidy()}.
+    \item Interpret the coefficient on income in a comment. What is the predicted difference in redistribution support between someone in the lowest income decile and someone in the highest?
+\end{enumerate}
+
+\subsection{Question 6: Multiple Regression}
+
+\begin{enumerate}[label=\alph*)]
+    \item Estimate a model that includes income, education (years), age, and gender. Print a summary of the results.
+    \item Compare the coefficient on income in this model to the bivariate model. Does it change? In what direction? Explain what this suggests about the role of the control variables.
+    \item Interpret each of the coefficients in the multiple regression model (in comments).
+\end{enumerate}
+
+\subsection{Question 7: Interactions}
+
+\begin{enumerate}[label=\alph*)]
+    \item Estimate a model that interacts income with gender (e.g., \code{gincdif \textasciitilde{} hinctnta * gndr + eduyrs + agea}). Print the results.
+    \item What is the marginal effect of income on redistribution preferences for men? For women?
+    \item Use \code{marginaleffects::plot\_predictions()} to visualize how the relationship between income and redistribution support differs by gender. Save the plot.
+    \item Discuss your findings in a comment: does the income-redistribution relationship differ between men and women? Is the difference substantively meaningful?
+\end{enumerate}
+
+\subsection{Question 8: Presenting Results}
+
+\begin{enumerate}[label=\alph*)]
+    \item Using \code{modelsummary()}, create a table that presents all three models side by side: bivariate, multiple regression, and interaction model.
+    \item Create a coefficient plot using \code{modelsummary::modelplot()} comparing the three models.
+    \item In a comment, describe how the income coefficient changes across the three models and what this tells us about the relationship between income and redistribution preferences.
+\end{enumerate}
+
+\vspace{15pt}
+
+\section{Submission}
+
+Commit your \code{ps2.R} file to your GitHub repository before the deadline. Make sure your repository is public so I can access it.
+
+Your R script should:
+\begin{itemize}
+  \item Be well-organized with clear section headers (using comments)
+  \item Include all code needed to reproduce your analysis
+  \item Include your answers to conceptual questions as comments
+  \item Save any plots to files (e.g., using \code{ggsave()})
+  \item Run without errors from top to bottom
+\end{itemize}
+
+\end{document}

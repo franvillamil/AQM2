@@ -1,0 +1,679 @@
+% ----------------------------------------------------
+\begin{frame}
+  \titlepage
+\end{frame}
+% ----------------------------------------------------
+\note{}
+
+% ----------------------------------------------------
+\begin{frame}
+\frametitle{Today's goals}
+\centering
+
+\begin{itemize}[<+->]
+\item Review regression as modeling conditional expectations
+\item Understand multiple regression and control variables
+\item Learn how to model conditional relationships (interactions)
+\item Present results effectively with \texttt{modelsummary}
+\end{itemize}
+
+\end{frame}
+% ----------------------------------------------------
+\note{}
+
+% ====================================================
+\section{Regression Review}
+% ====================================================
+
+% ----------------------------------------------------
+\begin{transitionframe}
+Regression Review
+\end{transitionframe}
+% ----------------------------------------------------
+\note{}
+
+% ----------------------------------------------------
+\begin{frame}
+\frametitle{What question does regression answer?}
+\centering
+
+\vspace{10pt}
+
+\begin{itemize}[<+->]
+\item ``What is the average value of $Y$ for different values of $X$?''
+\item[]
+\item This is the \textbf{conditional expectation function} (CEF)
+\item[]
+\item Written as: $E[Y | X]$
+\item[]
+\item Regression approximates this function
+\end{itemize}
+
+\end{frame}
+% ----------------------------------------------------
+\note{}
+
+% ----------------------------------------------------
+\begin{frame}
+\frametitle{The regression model}
+\centering
+
+\vspace{10pt}
+
+The most common tool in social science:
+
+\vspace{10pt}
+
+$$Y = \beta_0 + \beta_1 X + \varepsilon$$
+
+\vspace{10pt}
+
+\begin{itemize}[<+->]
+\item $Y$: outcome we want to explain
+\item $X$: explanatory variable(s)
+\item $\beta$: coefficients (what we estimate)
+\item $\varepsilon$: error term (what we can't explain)
+\end{itemize}
+
+\end{frame}
+% ----------------------------------------------------
+\note{}
+
+% ----------------------------------------------------
+\begin{frame}
+\frametitle{Linear regression as approximation}
+\centering
+
+\begin{itemize}[<+->]
+\item The true CEF might be complicated
+\item Linear regression fits the \textbf{best linear approximation}
+\item[]
+\item Even if the true relationship is non-linear
+\item The linear fit is still the best predictor among linear functions
+\item[]
+\item Why linear? Simple, interpretable, often good enough
+\end{itemize}
+
+\end{frame}
+% ----------------------------------------------------
+\note{}
+
+% ----------------------------------------------------
+\begin{frame}
+\frametitle{Interpreting the slope coefficient}
+\centering
+
+\vspace{10pt}
+
+$$Y = \beta_0 + \beta_1 X + \varepsilon$$
+
+\vspace{10pt}
+
+\begin{itemize}[<+->]
+\item $\beta_1$ represents:
+  \begin{itemize}
+  \item The difference in average $Y$
+  \item Between groups that differ by 1 unit in $X$
+  \end{itemize}
+\item[]
+\item This is a \textbf{comparison}, not necessarily a causal effect
+\end{itemize}
+
+\end{frame}
+% ----------------------------------------------------
+\note{}
+
+% ----------------------------------------------------
+\begin{frame}
+\frametitle{Descriptive vs. Causal interpretation}
+\centering
+
+\begin{itemize}
+\item \textbf{Descriptive}: How do units with different $X$ values compare?
+  \begin{itemize}
+  \item ``People with more education earn more, on average''
+  \end{itemize}
+\item[]
+\item \textbf{Causal}: What happens if we change $X$ for a given unit?
+  \begin{itemize}
+  \item ``If we give someone more education, they will earn more''
+  \end{itemize}
+\item[]
+\item Same coefficient, very different claims!
+\end{itemize}
+
+\end{frame}
+% ----------------------------------------------------
+\note{}
+
+% ----------------------------------------------------
+\begin{frame}
+\frametitle{Running a regression in R}
+\centering
+
+\vspace{10pt}
+
+\begin{itemize}[<+->]
+\item The basic function: \texttt{lm(y \textasciitilde{} x, data = df)}
+\item[]
+\item Getting tidy output:
+  \begin{itemize}
+  \item \texttt{broom::tidy(model)} --- coefficients as a data frame
+  \item \texttt{broom::glance(model)} --- model-level statistics ($R^2$, etc.)
+  \end{itemize}
+\item[]
+\item These are much easier to work with than \texttt{summary()}
+\end{itemize}
+
+\end{frame}
+% ----------------------------------------------------
+\note{}
+
+% ====================================================
+\section{Multiple Regression}
+% ====================================================
+
+% ----------------------------------------------------
+\begin{transitionframe}
+Multiple Regression
+\end{transitionframe}
+% ----------------------------------------------------
+\note{}
+
+% ----------------------------------------------------
+\begin{frame}
+\frametitle{Adding predictors}
+\centering
+
+\vspace{10pt}
+
+$$Y = \beta_0 + \beta_1 X_1 + \beta_2 X_2 + \varepsilon$$
+
+\vspace{10pt}
+
+\begin{itemize}[<+->]
+\item $\beta_1$ now represents:
+  \begin{itemize}
+  \item The difference in average $Y$
+  \item Between groups that differ by 1 in $X_1$
+  \item \textbf{Holding $X_2$ constant}
+  \end{itemize}
+\item[]
+\item This is the ``controlled'' effect of $X_1$
+\end{itemize}
+
+\end{frame}
+% ----------------------------------------------------
+\note{}
+
+% ----------------------------------------------------
+\begin{frame}
+\frametitle{How controlling works}
+\centering
+
+\begin{itemize}[<+->]
+\item OLS with multiple variables ``partials out'' the controls
+\item[]
+\item Technically: we look at variation in $X_1$ that is unrelated to $X_2$
+\item[]
+\item This isolates the unique contribution of $X_1$
+\end{itemize}
+
+\end{frame}
+% ----------------------------------------------------
+\note{}
+
+% ----------------------------------------------------
+\begin{frame}
+\frametitle{Omitted variable bias}
+\centering
+
+\begin{itemize}[<+->]
+\item If we omit a confounder, our estimate will be biased
+\item[]
+\item The bias formula:
+$$\text{Bias} = \beta_{\text{confounder}} \times \delta_{X, \text{confounder}}$$
+\item[]
+\item Depends on:
+  \begin{itemize}
+  \item How strongly the confounder affects $Y$
+  \item How strongly the confounder relates to $X$
+  \end{itemize}
+\end{itemize}
+
+\end{frame}
+% ----------------------------------------------------
+\note{}
+
+% ----------------------------------------------------
+\begin{frame}
+\frametitle{What makes a good control?}
+\centering
+
+Good controls are variables that:
+
+\begin{itemize}[<+->]
+\item Affect both the treatment and the outcome
+\item Are determined \textbf{before} the treatment
+\item Are not affected by the treatment
+\end{itemize}
+
+\vspace{10pt}
+
+\pause
+\textbf{Pre-treatment confounders} are the key!
+
+\end{frame}
+% ----------------------------------------------------
+\note{}
+
+% ----------------------------------------------------
+\begin{frame}
+\frametitle{Bad controls: Post-treatment variables}
+\centering
+
+\begin{itemize}[<+->]
+\item Never control for variables caused by the treatment
+\item[]
+\item Example: Studying effect of job training on wages
+  \begin{itemize}
+  \item Don't control for job type (affected by training)
+  \item Do control for education (determined before training)
+  \end{itemize}
+\item[]
+\item Controlling for post-treatment variables can \textit{introduce} bias
+\end{itemize}
+
+\end{frame}
+% ----------------------------------------------------
+\note{}
+
+% ----------------------------------------------------
+\begin{frame}
+\frametitle{Bad controls: Colliders}
+\centering
+
+\begin{itemize}[<+->]
+\item A \textbf{collider} is caused by both $X$ and $Y$
+\item Controlling for it creates a spurious association
+\item[]
+\item Example: NBA players
+  \begin{itemize}
+  \item Height and skill both affect being in NBA
+  \item Among NBA players, height and skill are negatively correlated
+  \item But not in the general population!
+  \end{itemize}
+\end{itemize}
+
+\end{frame}
+% ----------------------------------------------------
+\note{}
+
+% ----------------------------------------------------
+\begin{frame}
+\frametitle{Categorical predictors}
+\centering
+
+\begin{itemize}[<+->]
+\item What if $X$ is a category (region, party, gender)?
+\item[]
+\item R automatically creates \textbf{dummy variables}
+  \begin{itemize}
+  \item One indicator (0/1) for each category
+  \item One category is the \textbf{reference} (omitted)
+  \end{itemize}
+\item[]
+\item Coefficients represent the difference from the reference
+\item[]
+\item Example: \texttt{lm(income \textasciitilde{} factor(region), data = df)}
+  \begin{itemize}
+  \item If reference is ``North'', the ``South'' coefficient means: average income in South minus average income in North
+  \end{itemize}
+\end{itemize}
+
+\end{frame}
+% ----------------------------------------------------
+\note{}
+
+% ====================================================
+\section{Interaction Effects}
+% ====================================================
+
+% ----------------------------------------------------
+\begin{transitionframe}
+Interaction Effects
+\end{transitionframe}
+% ----------------------------------------------------
+\note{}
+
+% ----------------------------------------------------
+\begin{frame}
+\frametitle{When effects depend on context}
+\centering
+
+\begin{itemize}[<+->]
+\item Sometimes, the effect of $X$ on $Y$ depends on another variable $Z$
+\item[]
+\item Examples:
+  \begin{itemize}
+  \item Effect of education on income may differ by gender
+  \item Effect of campaign spending may differ by incumbency status
+  \item Effect of democracy on growth may depend on economic development
+  \end{itemize}
+\item[]
+\item We model this with \textbf{interaction terms}
+\end{itemize}
+
+\end{frame}
+% ----------------------------------------------------
+\note{}
+
+% ----------------------------------------------------
+\begin{frame}
+\frametitle{The interaction model}
+\centering
+
+\vspace{10pt}
+
+$$Y = \beta_0 + \beta_1 X + \beta_2 Z + \beta_3 (X \times Z) + \varepsilon$$
+
+\vspace{20pt}
+
+\begin{itemize}[<+->]
+\item $\beta_1$: effect of $X$ when $Z = 0$
+\item $\beta_2$: effect of $Z$ when $X = 0$
+\item $\beta_3$: how the effect of $X$ changes as $Z$ increases
+\end{itemize}
+
+\end{frame}
+% ----------------------------------------------------
+\note{}
+
+% ----------------------------------------------------
+\begin{frame}
+\frametitle{The marginal effect of $X$}
+\centering
+
+\vspace{10pt}
+
+$$\frac{\partial Y}{\partial X} = \beta_1 + \beta_3 Z$$
+
+\vspace{20pt}
+
+\begin{itemize}[<+->]
+\item The effect of $X$ is no longer a single number
+\item It's a \textbf{function} of $Z$
+\item[]
+\item Need to report effects at meaningful values of $Z$
+\end{itemize}
+
+\end{frame}
+% ----------------------------------------------------
+\note{}
+
+% ----------------------------------------------------
+\begin{frame}
+\frametitle{Continuous $\times$ categorical interactions}
+\centering
+
+\begin{itemize}[<+->]
+\item When $Z$ is categorical (e.g., gender, regime type)
+\item The interaction gives a \textbf{different slope} for each group
+\item[]
+\item Example: \texttt{lm(income \textasciitilde{} education * gender, data = df)}
+  \begin{itemize}
+  \item One slope for men, a different slope for women
+  \end{itemize}
+\item[]
+\item Equivalent to fitting separate regressions by group
+\item But estimated jointly (shares the error variance)
+\end{itemize}
+
+\end{frame}
+% ----------------------------------------------------
+\note{}
+
+% ----------------------------------------------------
+\begin{frame}
+\frametitle{Continuous $\times$ continuous interactions}
+\centering
+
+\begin{itemize}[<+->]
+\item When both $X$ and $Z$ are continuous
+\item The slope of $X$ varies smoothly with $Z$ (and vice versa)
+\item[]
+\item Harder to interpret from coefficients alone
+\item[]
+\item Best communicated through plots:
+  \begin{itemize}
+  \item Predicted values at different combinations of $X$ and $Z$
+  \item Marginal effect of $X$ across values of $Z$
+  \end{itemize}
+\end{itemize}
+
+\end{frame}
+% ----------------------------------------------------
+\note{}
+
+% ----------------------------------------------------
+\begin{frame}
+\frametitle{Common mistakes with interactions}
+\centering
+
+\begin{itemize}[<+->]
+\item \textbf{Mistake 1}: Interpreting $\beta_1$ as ``the effect of $X$''
+  \begin{itemize}
+  \item It's only the effect when $Z = 0$
+  \item May not even be meaningful!
+  \end{itemize}
+\item[]
+\item \textbf{Mistake 2}: Omitting constitutive terms
+  \begin{itemize}
+  \item Always include $X$ and $Z$ separately, not just $X \times Z$
+  \end{itemize}
+\item[]
+\item \textbf{Mistake 3}: Not showing how the effect varies
+  \begin{itemize}
+  \item Plot the marginal effect across values of $Z$
+  \end{itemize}
+\end{itemize}
+
+\end{frame}
+% ----------------------------------------------------
+\note{}
+
+% ----------------------------------------------------
+\begin{frame}
+\frametitle{Visualizing interactions}
+\centering
+
+\begin{itemize}[<+->]
+\item Tables of coefficients are hard to interpret
+\item[]
+\item Better approach:
+  \begin{itemize}
+  \item Plot predicted values of $Y$ for different combinations of $X$ and $Z$
+  \item Plot the marginal effect of $X$ across values of $Z$
+  \item Include confidence intervals
+  \end{itemize}
+\item[]
+\item In R: \texttt{marginaleffects::plot\_predictions()}
+\end{itemize}
+
+\end{frame}
+% ----------------------------------------------------
+\note{}
+
+% ====================================================
+\section{Presenting Results}
+% ====================================================
+
+% ----------------------------------------------------
+\begin{transitionframe}
+Presenting Results
+\end{transitionframe}
+% ----------------------------------------------------
+\note{}
+
+% ----------------------------------------------------
+\begin{frame}
+\frametitle{Why presentation matters}
+\centering
+
+\begin{itemize}[<+->]
+\item A regression table is not the end of the analysis
+\item Readers need to understand the \textbf{substance} of your findings
+\item[]
+\item Good presentation:
+  \begin{itemize}
+  \item Shows what the results \textbf{mean}, not just what they are
+  \item Communicates \textbf{uncertainty} honestly
+  \item Helps readers evaluate the \textbf{size} of effects
+  \end{itemize}
+\end{itemize}
+
+\end{frame}
+% ----------------------------------------------------
+\note{}
+
+% ----------------------------------------------------
+\begin{frame}
+\frametitle{The \texttt{modelsummary} package}
+\centering
+
+\begin{itemize}[<+->]
+\item Creates publication-quality tables from model objects
+\item[]
+\item Basic usage:
+  \begin{itemize}
+  \item \texttt{modelsummary(model)}
+  \item \texttt{modelsummary(list(m1, m2, m3))}
+  \end{itemize}
+\item[]
+\item Output formats: LaTeX, HTML, Word, markdown
+\item Highly customizable: statistics, labels, notes
+\end{itemize}
+
+\end{frame}
+% ----------------------------------------------------
+\note{}
+
+% ----------------------------------------------------
+\begin{frame}
+\frametitle{Coefficient plots}
+\centering
+
+\begin{itemize}[<+->]
+\item A visual alternative to tables
+\item[]
+\item \texttt{modelsummary::modelplot(model)}
+  \begin{itemize}
+  \item Each coefficient as a point with confidence interval
+  \item Easy to compare multiple models
+  \end{itemize}
+\item[]
+\item Often more effective than tables for communicating results
+\item Readers immediately see which effects are large vs. small
+\end{itemize}
+
+\end{frame}
+% ----------------------------------------------------
+\note{}
+
+% ----------------------------------------------------
+\begin{frame}
+\frametitle{Building sequential models}
+\centering
+
+\begin{itemize}[<+->]
+\item Common strategy: show how results change as you add variables
+\item[]
+\item Step 1: Bivariate model (just $X$ and $Y$)
+\item Step 2: Add control variables
+\item Step 3: Add interactions
+\item[]
+\item Present all three in one table:
+  \begin{itemize}
+  \item \texttt{modelsummary(list(m1, m2, m3))}
+  \end{itemize}
+\item[]
+\item Shows robustness and what adding controls does to the estimate
+\end{itemize}
+
+\end{frame}
+% ----------------------------------------------------
+\note{}
+
+% ----------------------------------------------------
+\begin{frame}
+\frametitle{Example workflow in R}
+\centering
+
+\vspace{5pt}
+
+\begin{itemize}[<+->]
+\item[]
+  \texttt{m1 <- lm(y \textasciitilde{} x, data = df)} \\[3pt]
+  \texttt{m2 <- lm(y \textasciitilde{} x + z1 + z2, data = df)} \\[3pt]
+  \texttt{m3 <- lm(y \textasciitilde{} x * z1 + z2, data = df)}
+\item[]
+  \texttt{modelsummary(list(m1, m2, m3))}
+\item[]
+  \texttt{modelplot(list(m1, m2, m3))}
+\item[]
+  \texttt{plot\_predictions(m3, condition = c("x", "z1"))}
+\end{itemize}
+
+\end{frame}
+% ----------------------------------------------------
+\note{}
+
+% ----------------------------------------------------
+\begin{frame}
+\frametitle{Summary: Key takeaways}
+\centering
+
+\begin{itemize}[<+->]
+\item Regression estimates conditional expectations
+\item Multiple regression: ``holding constant'' interpretation
+\item Control variables help only if chosen correctly
+\item Interactions model conditional relationships
+\item Present results clearly: tables, coefficient plots, marginal effects
+\end{itemize}
+
+\end{frame}
+% ----------------------------------------------------
+\note{}
+
+% ----------------------------------------------------
+\begin{frame}
+\frametitle{For next week}
+\centering
+
+\begin{itemize}
+\item Read Urdinez \& Cruz (2020), chapter 8
+\item Read Gelman et al., chapters 13--14
+\item Complete Assignment 2
+\item[]
+\item Next session: Binary outcomes
+  \begin{itemize}
+  \item Linear probability model vs. logistic regression
+  \item Interpreting logit results
+  \item Predicted probabilities and marginal effects
+  \end{itemize}
+\end{itemize}
+
+\end{frame}
+% ----------------------------------------------------
+\note{}
+
+% ----------------------------------------------------
+\begin{frame}
+\frametitle{}
+\centering
+
+Questions?
+
+\end{frame}
+% ----------------------------------------------------
+\note{}

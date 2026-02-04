@@ -1,0 +1,144 @@
+\input{preamble.tex}
+
+% Additional package for math
+\usepackage{amsmath}
+
+\begin{document}
+
+\thispagestyle{empty}
+
+\begin{center}
+\textbf{\Large Assignment 3: Binary Outcomes}\\\vspace{10pt}
+{\Large Applied Quantitative Methods for the Social Sciences II}\\\vspace{10pt}
+Carlos III--Juan March Institute, Spring 2026
+\end{center}
+
+\vspace{10pt}
+\noindent
+\textbf{\large Instructions:}
+
+\vspace{10pt}
+\begin{itemize}
+\setlength\itemsep{0pt}
+  \item {\color{red}{\textbf{Deadline}}}: \textbf{February 26, before class}
+  \item Submit your work as a \code{.R} file called \code{ps3.R} in your GitHub repository
+  \item Use comments in your R code to answer conceptual questions and explain your analysis
+  \item For model interpretation, use the \code{marginaleffects} package
+  \item You are encouraged to work together, but each person must submit their own code
+\end{itemize}
+
+\vspace{20pt}
+
+\section{Conceptual Questions}
+
+Answer these questions using comments in your R script.
+
+\subsection{Question 1: The Linear Probability Model}
+
+\begin{enumerate}[label=\alph*)]
+    \item What is the linear probability model (LPM)? How does the interpretation of the coefficient $\beta_1$ differ from standard OLS with a continuous outcome?
+    \item Describe two problems with the LPM. For each, explain why it is a problem and when it matters most.
+    \item Under what circumstances might the LPM be ``good enough'' despite its limitations?
+\end{enumerate}
+
+\subsection{Question 2: Logistic Regression}
+
+\begin{enumerate}[label=\alph*)]
+    \item Write down the logit model. What is being modeled as a linear function of $X$?
+    \item Explain in your own words why we cannot interpret logit coefficients as changes in probability.
+    \item If a logit model estimates $\beta_1 = 0.8$, what is the odds ratio? Interpret it in words.
+\end{enumerate}
+
+\subsection{Question 3: Marginal Effects}
+
+\begin{enumerate}[label=\alph*)]
+    \item What is an average marginal effect (AME)? How does it differ from a marginal effect at representative values?
+    \item Why are AMEs often similar to LPM coefficients? When might they diverge?
+    \item A researcher reports only the log-odds coefficients from a logit model. Why is this insufficient for understanding the substantive findings?
+\end{enumerate}
+
+\vspace{15pt}
+
+\section{Applied Analysis: Voter Turnout}
+
+For this assignment, you will analyze voter turnout using data from the American National Election Study (ANES) or a similar dataset on political participation.
+
+You can use the ANES data available through the \code{poliscidata} package, or download it from: \url{https://electionstudies.org/data-center/}
+
+\begin{lstlisting}
+install.packages("poliscidata")
+library(poliscidata)
+data(nes)
+\end{lstlisting}
+
+Key variables for analysis (variable names may vary depending on data source):
+
+\begin{itemize}
+    \item \code{voted}: Whether the respondent voted (binary: 0/1)
+    \item \code{age}: Age in years
+    \item \code{educ}: Education level (years or categories)
+    \item \code{income}: Household income (categories or continuous)
+    \item \code{pid}: Party identification strength
+    \item \code{female}: Gender indicator
+\end{itemize}
+
+\subsection{Question 4: Data Exploration}
+
+\begin{enumerate}[label=\alph*)]
+    \item Load and prepare the data. Create a binary turnout variable if needed. Report the overall turnout rate and sample size.
+    \item Create a bar chart showing turnout rates by education level. Comment on the pattern.
+    \item Create a table showing turnout rates by age group (e.g., 18--29, 30--44, 45--64, 65+). Discuss the pattern in a comment.
+\end{enumerate}
+
+\subsection{Question 5: Linear Probability Model}
+
+\begin{enumerate}[label=\alph*)]
+    \item Estimate an LPM with turnout as the outcome and age, education, income, and gender as predictors. Print a summary of the results.
+    \item Interpret the coefficient on education. What does it mean in terms of probability?
+    \item Check how many observations have predicted probabilities outside $[0, 1]$. Report the minimum and maximum predicted values.
+\end{enumerate}
+
+\subsection{Question 6: Logistic Regression}
+
+\begin{enumerate}[label=\alph*)]
+    \item Estimate a logit model with the same predictors as the LPM. Print the results.
+    \item Report the odds ratios for all predictors using \code{exp(coef(model))}. Interpret the odds ratio for education.
+    \item Calculate the average marginal effects using \code{marginaleffects::avg\_slopes()}. Compare these to the LPM coefficients---how similar are they?
+\end{enumerate}
+
+\subsection{Question 7: Predicted Probabilities and Visualization}
+
+\begin{enumerate}[label=\alph*)]
+    \item Using the logit model, calculate the predicted probability of voting for:
+    \begin{itemize}
+        \item A 25-year-old woman with low education and low income
+        \item A 55-year-old man with high education and high income
+    \end{itemize}
+    Report both point estimates and 95\% confidence intervals.
+    \item Use \code{marginaleffects::plot\_predictions()} to plot the predicted probability of voting across values of education, holding other variables at their means. Save the plot.
+    \item Create a similar plot showing predicted probabilities across age for different education levels (hint: use \code{condition = c("age", "educ")}). Save the plot and discuss the patterns in a comment.
+\end{enumerate}
+
+\subsection{Question 8: Model Comparison}
+
+\begin{enumerate}[label=\alph*)]
+    \item Using \code{modelsummary()}, create a table comparing the LPM and logit models side by side.
+    \item Briefly discuss in a comment: For this dataset, do the LPM and logit models lead to different substantive conclusions? When might the differences matter?
+\end{enumerate}
+
+\vspace{15pt}
+
+\section{Submission}
+
+Commit your \code{ps3.R} file to your GitHub repository before the deadline. Make sure your repository is public so I can access it.
+
+Your R script should:
+\begin{itemize}
+  \item Be well-organized with clear section headers (using comments)
+  \item Include all code needed to reproduce your analysis
+  \item Include your answers to conceptual questions as comments
+  \item Save any plots to files (e.g., using \code{ggsave()})
+  \item Run without errors from top to bottom
+\end{itemize}
+
+\end{document}
