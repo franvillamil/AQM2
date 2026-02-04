@@ -4,9 +4,7 @@ layout: default
 
 ## Spring 2026
 
-- [[**SYLLABUS 2026**]](https://raw.githack.com/franvillamil/syllabi/master/current/syllabus_quant.pdf)
-- [Download readings (Aula Global)](https://aulaglobal.uc3m.es)
-- [Resources / background readings](./resources.html)
+- [**SYLLABUS**](https://raw.githack.com/franvillamil/syllabi/master/current/syllabus_quant.pdf)
 
 ### Schedule
 
