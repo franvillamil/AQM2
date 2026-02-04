@@ -1,13 +1,5 @@
 \input{preamble.tex}
-
-\begin{document}
-
-\thispagestyle{empty}
-
-\begin{center}
-\textbf{\Large Assignment 1: Setting Up Workflow}\\\vspace{10pt}
-{\Large Applied Quantitative Methods for the Social Sciences II}\\\vspace{10pt}
-Carlos III--Juan March Institute, Spring 2026
+\textbf{\large Assignment 1: Setting Up Workflow}\\\vspace{10pt}
 \end{center}
 
 \vspace{10pt}
@@ -24,6 +16,8 @@ Carlos III--Juan March Institute, Spring 2026
 \end{itemize}
 
 \vspace{20pt}
+\tableofcontents
+\newpage
 
 \section{Task 1: Create a GitHub Account}
 
@@ -34,7 +28,7 @@ If you don't already have a GitHub account, create one at \url{https://github.co
   \item Choose a \textbf{professional username}---you may use this for years in your academic career
   \item Use your university email or a professional email address
   \item Complete the verification process
-  \item Optionally: Add a profile picture and brief bio
+  % \item Optionally: Add a profile picture and brief bio
 \end{enumerate}
 
 \newpage
@@ -343,7 +337,7 @@ To use Git in RStudio:
 
 \vspace{15pt}
 
-\section{Quick Reference: Common Git Commands}
+\section{Extra: Quick Reference on Common Git Commands}
 
 \begin{tabular}{ll}
 \textbf{Command} & \textbf{What it does} \\
@@ -360,7 +354,7 @@ To use Git in RStudio:
 
 \vspace{15pt}
 
-\section{Resources}
+\section{Extra: Resources}
 
 \begin{itemize}
   \item GitHub's official guides: \url{https://docs.github.com/en/get-started}
@@ -372,7 +366,7 @@ To use Git in RStudio:
 
 \newpage
 
-\section*{Appendix: Setting Up the Command Line on Windows}
+\section{Extra: Setting Up the Command Line on Windows}
 
 If you are using Windows and want to follow the command line instructions in this assignment, you need to set up a Unix-like terminal first. The default Windows terminals (Command Prompt and PowerShell) use different commands and syntax from what is shown in this assignment and in most online tutorials.
 
@@ -429,7 +423,7 @@ If this returns a version number (e.g., \code{git version 2.43.0}), you are read
 
 \vspace{15pt}
 
-\section{Using Positron Instead of RStudio}
+\section{Extra: Using Positron Instead of RStudio}
 
 In this course, we recommend using \textbf{Positron} (\url{https://positron.posit.co}) as your IDE instead of RStudio. Positron is a next-generation data science IDE built by Posit (the same company behind RStudio). It is based on VS Code and designed for R and Python. Here is what differs from RStudio when completing this assignment.
 
@@ -472,7 +466,8 @@ Tools $\rightarrow$ Global Options $\rightarrow$ Git/SVN & Git is detected autom
 
 \textbf{Note}: All the command line instructions in this assignment work identically regardless of whether you use RStudio, Positron, or a standalone terminal. The differences only apply when using the graphical interface.
 
-\section{Using Sublime Text 4 as a Code Editor}
+\clearpage
+\section{Extra: Using Sublime Text 4 as a Code Editor}
 
 Sublime Text is a fast, lightweight code editor. Unlike RStudio or Positron, it is not an IDE---it does not come with an R console, file browser, or plot viewer out of the box. Instead, you write R code in Sublime Text and send it to a separate R console running alongside it. This minimal setup requires only two packages.
 
