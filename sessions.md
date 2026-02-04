@@ -132,7 +132,7 @@ Count data: Poisson regression and overdispersion. Negative binomial regression.
 
 ### Session 11: Project Presentations (Apr 23)
 
-Student presentations of final essay proposals (10–15 min each). Peer feedback and discussion. Instructor guidance on data and analysis strategies.
+Student presentations of final essay proposals (10–15 min each). Peer feedback and discussion. Guidance on data and analysis strategies.
 
 ---
 

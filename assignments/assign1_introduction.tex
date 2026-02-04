@@ -5,7 +5,7 @@
 \thispagestyle{empty}
 
 \begin{center}
-\textbf{\Large Assignment 1: Setting Up Git and GitHub}\\\vspace{10pt}
+\textbf{\Large Assignment 1: Setting Up Workflow}\\\vspace{10pt}
 {\Large Applied Quantitative Methods for the Social Sciences II}\\\vspace{10pt}
 Carlos III--Juan March Institute, Spring 2026
 \end{center}
@@ -37,7 +37,7 @@ If you don't already have a GitHub account, create one at \url{https://github.co
   \item Optionally: Add a profile picture and brief bio
 \end{enumerate}
 
-\vspace{10pt}
+\newpage
 
 \section{Task 2: Create a Repository for This Course}
 
@@ -93,7 +93,7 @@ git push -u origin main
   \item Click ``Create Project''
 \end{enumerate}
 
-\vspace{10pt}
+\newpage
 
 \section{Task 3: Edit the README File}
 
@@ -135,7 +135,7 @@ git push
   \item Click ``Push'' to upload to GitHub
 \end{enumerate}
 
-\vspace{10pt}
+\newpage
 
 \section{Task 4: Create a Folder and R File}
 
@@ -183,9 +183,72 @@ git push
   \item In the Git pane, stage the new file, commit, and push
 \end{enumerate}
 
-\vspace{10pt}
+\newpage
 
-\section{Task 5: View Your Commit History}
+\section{Task 5: Load a Dataset and Make a Plot}
+
+In this task, you will download a public dataset, add it to your repository, load it in R, and create a simple plot.
+
+\subsection{Download the data}
+
+We will use the Gapminder dataset, which contains country-level data on life expectancy, GDP per capita, and population from 1952 to 2007.
+
+\begin{enumerate}
+  \item Create a \code{data/} folder in your repository
+  \item In R, run the following to download the data and save it as a CSV file:
+\begin{lstlisting}
+install.packages("gapminder")
+library(gapminder)
+write.csv(gapminder, "data/gapminder.csv", row.names = FALSE)
+\end{lstlisting}
+  \item Verify that the file \code{data/gapminder.csv} exists in your repository folder
+\end{enumerate}
+
+\subsection{Load the data and make a plot}
+
+Create a new R script called \code{problem\_sets/ps1\_plot.R} with the following steps:
+
+\begin{enumerate}
+  \item Load the data from the CSV file:
+\begin{lstlisting}
+library(ggplot2)
+gapminder <- read.csv("data/gapminder.csv")
+\end{lstlisting}
+  \item Explore the data briefly:
+\begin{lstlisting}
+head(gapminder)
+str(gapminder)
+\end{lstlisting}
+  \item Create a plot showing how life expectancy has changed over time for a few countries of your choice. For example:
+\begin{lstlisting}
+countries <- c("Spain", "France", "Germany", "United Kingdom")
+df <- gapminder[gapminder$country %in% countries, ]
+
+ggplot(df, aes(x = year, y = lifeExp, color = country)) +
+  geom_line() +
+  geom_point() +
+  labs(x = "Year", y = "Life expectancy",
+       title = "Life expectancy over time") +
+  theme_minimal()
+
+ggsave("problem_sets/ps1_plot.png", width = 7, height = 5)
+\end{lstlisting}
+  \item You can choose different countries or a different variable (e.g., \code{gdpPercap} or \code{pop})
+\end{enumerate}
+
+\subsection{Commit everything}
+
+Stage and commit the data file, the R script, and the plot:
+
+\begin{lstlisting}
+git add data/gapminder.csv problem_sets/ps1_plot.R problem_sets/ps1_plot.png
+git commit -m "Add gapminder data and first plot"
+git push
+\end{lstlisting}
+
+\newpage
+
+\section{Task 6: View Your Commit History}
 
 Check that your commits were recorded properly.
 
@@ -214,9 +277,9 @@ This shows a compact list of your commits.
 
 \vspace{10pt}
 
-\textbf{Take a screenshot} of your commit history showing at least 2--3 commits.
+\textbf{Take a screenshot} of your commit history showing at least 3--4 commits.
 
-\vspace{15pt}
+\newpage
 
 \section{Submission}
 
@@ -232,7 +295,8 @@ I will check that:
 \begin{itemize}
   \item Your repository is \textbf{public}
   \item It contains a README with your name
-  \item It has a \code{problem\_sets} folder with at least one \code{.R} file
+  \item It has a \code{data/} folder with the Gapminder CSV file
+  \item It has a \code{problem\_sets/} folder with your R files and a saved plot
   \item There are multiple commits in the history
 \end{itemize}
 
