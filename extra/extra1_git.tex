@@ -1,55 +1,333 @@
 \input{preamble.tex}
-\textbf{\large Appendix to Assignment 1:\\\vspace{5pt}Setting up Github account}\\\vspace{10pt}
+\textbf{\large Appendix to Assignment 1:\\\vspace{5pt}Introduction to Git and GitHub}\\\vspace{10pt}
 \end{center}
 
 \tableofcontents
+\newpage
 
-\section{Extra: Installing Git Locally}
+% ===========================================================================
+\section{What is Git and GitHub?}
+% ===========================================================================
 
-If you want to use Git from the command line, you need to install it first.
+\textbf{Git} is a version control system that tracks changes to your files over time. Think of it as an advanced ``undo'' system that remembers every version of your work, allowing you to go back to any previous state.
 
-\subsection{Installation}
-
+\textbf{GitHub} is a website that hosts Git repositories online. It allows you to:
 \begin{itemize}
-  \item \textbf{Mac}: Git comes pre-installed. Or install via Homebrew: \code{brew install git}
-  \item \textbf{Windows}: Download from \url{https://git-scm.com/download/win}
-  \item \textbf{Linux}: Use your package manager, e.g., \code{sudo apt install git}
+  \item Back up your code in the cloud
+  \item Share your work with others
+  \item Collaborate on projects
+  \item Access your files from any computer
 \end{itemize}
 
-\subsection{First-Time Configuration}
+In this guide, you will learn how to:
+\begin{enumerate}
+  \item Install Git on your computer
+  \item Clone a repository from GitHub
+  \item Make changes to files
+  \item Commit and push those changes back to GitHub
+\end{enumerate}
 
-After installing, configure your identity (run once):
+We will show you two ways to do this: using \textbf{RStudio} (graphical interface) and using the \textbf{command line} (terminal).
+
+% ===========================================================================
+\section{Installing Git}
+% ===========================================================================
+
+\subsection{macOS}
+
+Git is often pre-installed on macOS. To check, open the \textbf{Terminal} application (you can find it in Applications $\rightarrow$ Utilities, or search for it with Spotlight) and type:
+
+\begin{lstlisting}
+git --version
+\end{lstlisting}
+
+If Git is installed, you will see something like \code{git version 2.39.0}. If not, macOS will prompt you to install the Xcode Command Line Tools---follow the prompts to install them.
+
+\subsection{Windows}
+
+Download Git for Windows from \url{https://git-scm.com/download/win} and run the installer.
+
+\textbf{Important installation options:}
+\begin{itemize}
+  \item When asked about the default editor, you can leave the default (Vim) or choose Notepad
+  \item For ``Adjusting your PATH environment'', select \textbf{``Git from the command line and also from 3rd-party software''} (the recommended option)
+  \item For all other options, accept the defaults
+\end{itemize}
+
+After installation, you can open \textbf{Git Bash} (search for it in the Start menu) to use Git from the command line.
+
+% ===========================================================================
+\section{First-Time Git Configuration}
+% ===========================================================================
+
+Before using Git, you need to tell it who you are. This information is attached to every change you make.
+
+\subsection{macOS}
+
+Open the \textbf{Terminal} and run:
 
 \begin{lstlisting}
 git config --global user.name "Your Name"
 git config --global user.email "your@email.com"
 \end{lstlisting}
 
-\subsection{Cloning an Existing Repository}
+Replace ``Your Name'' with your actual name and use the email address associated with your GitHub account.
 
-If you created the repository on GitHub first, download it to your computer:
+\subsection{Windows}
+
+Open \textbf{Git Bash} (search for it in the Start menu) and run the same commands:
 
 \begin{lstlisting}
-git clone https://github.com/YOUR-USERNAME/aqmss2.git
-cd aqmss2
+git config --global user.name "Your Name"
+git config --global user.email "your@email.com"
 \end{lstlisting}
 
-\subsection{Configuring RStudio}
+\subsection{Verify your configuration}
 
-To use Git in RStudio:
+To check that everything is set up correctly, run:
+
+\begin{lstlisting}
+git config --global --list
+\end{lstlisting}
+
+You should see your name and email listed.
+
+% ===========================================================================
+\section{Setting Up RStudio for Git}
+% ===========================================================================
+
+Before using Git in RStudio, make sure RStudio knows where Git is installed:
+
 \begin{enumerate}
-  \item Go to Tools $\rightarrow$ Global Options $\rightarrow$ Git/SVN
-  \item Make sure ``Git executable'' points to your Git installation
-  \item Restart RStudio
+  \item Open RStudio
+  \item Go to \textbf{Tools} $\rightarrow$ \textbf{Global Options} $\rightarrow$ \textbf{Git/SVN}
+  \item Check that ``Git executable'' shows a path to Git:
+    \begin{itemize}
+      \item On macOS: usually \code{/usr/bin/git}
+      \item On Windows: usually \code{C:/Program Files/Git/bin/git.exe}
+    \end{itemize}
+  \item If the field is empty, click ``Browse'' and find the Git executable
+  \item Click OK and restart RStudio
 \end{enumerate}
 
-\vspace{15pt}
+% ===========================================================================
+\section{The Basic Git Workflow}
+% ===========================================================================
 
-\subsection*{Quick Reference on Common Git Commands}
+The workflow we will follow is:
+
+\begin{enumerate}
+  \item \textbf{Clone}: Download the repository from GitHub to your computer
+  \item \textbf{Modify}: Edit files (e.g., the README)
+  \item \textbf{Commit}: Save your changes with a descriptive message
+  \item \textbf{Push}: Upload your changes to GitHub
+\end{enumerate}
+
+We will now show you how to do this using RStudio (Section \ref{sec:rstudio}) and from the command line (Section \ref{sec:cli}).
+
+% ===========================================================================
+\section{Option 1: Using RStudio}
+\label{sec:rstudio}
+% ===========================================================================
+
+\subsection{Step 1: Clone the Repository}
+
+\begin{enumerate}
+  \item Go to your repository on GitHub
+  \item Click the green \textbf{Code} button
+  \item Make sure \textbf{HTTPS} is selected
+  \item Copy the URL (e.g., \code{https://github.com/YOUR-USERNAME/your-repo.git})
+\end{enumerate}
+
+Now in RStudio:
+
+\begin{enumerate}
+  \item Go to \textbf{File} $\rightarrow$ \textbf{New Project}
+  \item Select \textbf{Version Control}
+  \item Select \textbf{Git}
+  \item Paste the repository URL in ``Repository URL''
+  \item Choose where to save the project on your computer
+  \item Click \textbf{Create Project}
+\end{enumerate}
+
+RStudio will download the repository and open it as a project. You should see a \textbf{Git} tab in the upper-right panel.
+
+\subsection{Step 2: Modify a File}
+
+Open the \code{README.md} file from the Files panel and make a change. For example, add a new line:
+
+\begin{lstlisting}
+This is my first edit using Git!
+\end{lstlisting}
+
+Save the file.
+
+\subsection{Step 3: Commit Your Changes}
+
+\begin{enumerate}
+  \item Go to the \textbf{Git} tab in RStudio
+  \item You will see \code{README.md} listed with a blue ``M'' (modified)
+  \item Check the box next to \code{README.md} to stage it
+  \item Click \textbf{Commit}
+  \item In the popup window, write a commit message (e.g., ``Update README with first edit'')
+  \item Click \textbf{Commit}
+\end{enumerate}
+
+\subsection{Step 4: Push to GitHub}
+
+\begin{enumerate}
+  \item Still in the Git panel, click the \textbf{Push} button (green upward arrow)
+  \item If prompted for credentials, see Section \ref{sec:auth}
+  \item Once complete, your changes are now on GitHub!
+\end{enumerate}
+
+Go to your repository on GitHub and refresh the page---you should see your changes.
+
+% ===========================================================================
+\section{Option 2: Using the Command Line}
+\label{sec:cli}
+% ===========================================================================
+
+\subsection{Opening the Terminal}
+
+\textbf{macOS}: Open the \textbf{Terminal} application (Applications $\rightarrow$ Utilities $\rightarrow$ Terminal, or search with Spotlight).
+
+\textbf{Windows}: Open \textbf{Git Bash} (search for ``Git Bash'' in the Start menu). Do \emph{not} use Command Prompt or PowerShell---Git Bash provides a Unix-like environment that matches these instructions.
+
+\subsection{Step 1: Clone the Repository}
+
+First, navigate to the folder where you want to save your repository. For example, to go to your Documents folder:
+
+\textbf{macOS}:
+\begin{lstlisting}
+cd ~/Documents
+\end{lstlisting}
+
+\textbf{Windows} (Git Bash):
+\begin{lstlisting}
+cd ~/Documents
+\end{lstlisting}
+
+Now clone the repository:
+
+\begin{lstlisting}
+git clone https://github.com/YOUR-USERNAME/your-repo.git
+\end{lstlisting}
+
+Replace the URL with your actual repository URL (get it from the green ``Code'' button on GitHub).
+
+Then enter the repository folder:
+
+\begin{lstlisting}
+cd your-repo
+\end{lstlisting}
+
+\subsection{Step 2: Modify a File}
+
+You can edit the README file with any text editor. Or, to quickly add a line from the command line:
+
+\textbf{macOS}:
+\begin{lstlisting}
+echo "This is my first edit using Git!" >> README.md
+\end{lstlisting}
+
+\textbf{Windows} (Git Bash):
+\begin{lstlisting}
+echo "This is my first edit using Git!" >> README.md
+\end{lstlisting}
+
+To see what changed:
+\begin{lstlisting}
+git status
+\end{lstlisting}
+
+You should see \code{README.md} listed as modified.
+
+\subsection{Step 3: Stage and Commit Your Changes}
+
+First, stage the file (tell Git you want to include it in the next commit):
+
+\begin{lstlisting}
+git add README.md
+\end{lstlisting}
+
+Then commit with a message:
+
+\begin{lstlisting}
+git commit -m "Update README with first edit"
+\end{lstlisting}
+
+\subsection{Step 4: Push to GitHub}
+
+\begin{lstlisting}
+git push
+\end{lstlisting}
+
+If prompted for credentials, see Section \ref{sec:auth}.
+
+Once complete, go to your repository on GitHub and refresh---you should see your changes!
+
+% ===========================================================================
+\section{Authenticating with GitHub}
+\label{sec:auth}
+% ===========================================================================
+
+When you try to push for the first time, Git needs to verify that you have permission to modify the repository. GitHub no longer accepts your regular password for this---you need to use a \textbf{Personal Access Token} or authenticate through a browser.
+
+\subsection{Windows: The Easy Way}
+
+If you installed Git for Windows recently (version 2.29 or later), it includes \textbf{Git Credential Manager}, which handles authentication automatically:
+
+\begin{enumerate}
+  \item When you push for the first time, a browser window will open
+  \item Log in to GitHub
+  \item Authorize the application
+  \item Done! Your credentials are saved for future use
+\end{enumerate}
+
+If no browser window opens, see Section \ref{sec:pat}.
+
+\subsection{macOS: The Easy Way}
+\label{sec:pat}
+
+The simplest method on macOS is to create a \textbf{Personal Access Token} on GitHub and use it as your password:
+
+\begin{enumerate}
+  \item Go to GitHub $\rightarrow$ Click your profile picture $\rightarrow$ \textbf{Settings}
+  \item Scroll down and click \textbf{Developer settings} (left sidebar, at the bottom)
+  \item Click \textbf{Personal access tokens} $\rightarrow$ \textbf{Tokens (classic)}
+  \item Click \textbf{Generate new token} $\rightarrow$ \textbf{Generate new token (classic)}
+  \item Give it a name (e.g., ``My laptop'')
+  \item Set expiration (e.g., 90 days or ``No expiration'' for convenience)
+  \item Under ``Select scopes'', check \textbf{repo} (this gives access to your repositories)
+  \item Click \textbf{Generate token}
+  \item \textbf{Copy the token immediately}---you won't be able to see it again!
+\end{enumerate}
+
+Now, when Git asks for your credentials:
+\begin{itemize}
+  \item \textbf{Username}: your GitHub username
+  \item \textbf{Password}: paste the Personal Access Token (not your GitHub password)
+\end{itemize}
+
+To save the token so you don't have to enter it every time:
+
+\begin{lstlisting}
+git config --global credential.helper store
+\end{lstlisting}
+
+The next time you enter your credentials, they will be saved to a file on your computer.
+
+\textbf{Note}: This stores your token in plain text. For a more secure method, see Section \ref{sec:proper}.
+
+% ===========================================================================
+\section{Quick Reference: Common Git Commands}
+% ===========================================================================
 
 \begin{tabular}{ll}
 \textbf{Command} & \textbf{What it does} \\
 \hline
+\code{git clone <url>} & Download a repository from GitHub \\
 \code{git status} & Show which files have changed \\
 \code{git add <file>} & Stage a file for commit \\
 \code{git add .} & Stage all changed files \\
@@ -57,64 +335,124 @@ To use Git in RStudio:
 \code{git push} & Upload commits to GitHub \\
 \code{git pull} & Download changes from GitHub \\
 \code{git log --oneline} & Show commit history (compact) \\
-\code{git diff} & Show changes not yet staged \\
 \end{tabular}
 
-\clearpage
-\section{Extra: Setting Up the Command Line on Windows}
+% ===========================================================================
+\section{Troubleshooting}
+% ===========================================================================
 
-If you are using Windows and want to follow the command line instructions in this assignment, you need to set up a Unix-like terminal first. The default Windows terminals (Command Prompt and PowerShell) use different commands and syntax from what is shown in this assignment and in most online tutorials.
-
-\subsection{Recommended: Use Git Bash}
-
-When you install Git for Windows (from \url{https://git-scm.com/download/win}), it includes \textbf{Git Bash}---a terminal emulator that provides a Unix-like command line environment on Windows. This is the easiest way to get started.
-
-\begin{enumerate}
-  \item Download and run the Git for Windows installer
-  \item During installation, accept the default options. In particular:
-    \begin{itemize}
-      \item Select ``Use Git from Git Bash only'' (or the default option)
-      \item Select ``Use bundled OpenSSH''
-      \item Select ``Checkout Windows-style, commit Unix-style line endings''
-    \end{itemize}
-  \item After installation, you can open Git Bash by:
-    \begin{itemize}
-      \item Searching for ``Git Bash'' in the Start menu
-      \item Right-clicking in any folder and selecting ``Git Bash Here''
-    \end{itemize}
-\end{enumerate}
-
-Git Bash supports all the commands used in this assignment (\code{mkdir}, \code{cd}, \code{echo}, \code{git}, etc.) with the same syntax as on Mac and Linux.
-
-\subsection{Alternative: Windows Terminal with PowerShell}
-
-If you prefer to use PowerShell, be aware of these differences:
+\subsection{``Permission denied'' or authentication errors}
 
 \begin{itemize}
-  \item Most Git commands work the same (\code{git add}, \code{git commit}, etc.)
-  \item File paths use backslashes (\code{\textbackslash}) instead of forward slashes (\code{/}), though Git accepts both
-  \item The \code{echo} command syntax differs: use \code{Set-Content} or \code{Out-File} instead of \code{>} redirection
-  \item Some Unix commands (\code{touch}, \code{cat}) are not available by default
+  \item Make sure you are using the HTTPS URL (starts with \code{https://}), not SSH
+  \item On macOS: Create a Personal Access Token (Section \ref{sec:pat})
+  \item On Windows: Make sure you have Git for Windows 2.29 or later
 \end{itemize}
 
-\subsection{Setting up your PATH}
+\subsection{``Repository not found''}
 
-After installing Git, make sure it is accessible from your terminal:
+\begin{itemize}
+  \item Check that the URL is correct
+  \item Make sure the repository exists on GitHub
+  \item Make sure you have access to the repository (if it's private)
+\end{itemize}
+
+\subsection{``Updates were rejected''}
+
+This means someone else (or you, from another computer) pushed changes that you don't have locally. Run:
 
 \begin{lstlisting}
-# In Git Bash or PowerShell, run:
+git pull
+\end{lstlisting}
+
+Then try pushing again.
+
+\clearpage
+% ===========================================================================
+\section{Extra: The Proper Way to Log In}
+\label{sec:proper}
+% ===========================================================================
+
+The methods described above work, but there are more secure and convenient ways to authenticate with GitHub. This section describes the recommended setup for regular Git users.
+
+\subsection{macOS: Installing Homebrew}
+
+\textbf{Homebrew} is a package manager for macOS that makes it easy to install software from the command line. If you don't have it yet:
+
+\begin{enumerate}
+  \item Open Terminal
+  \item Go to \url{https://brew.sh} and copy the installation command
+  \item Paste it into Terminal and press Enter
+  \item Follow the prompts (you may need to enter your password)
+  \item After installation, follow any instructions to add Homebrew to your PATH
+\end{enumerate}
+
+Verify Homebrew is installed:
+\begin{lstlisting}
+brew --version
+\end{lstlisting}
+
+\subsection{macOS: Option A -- GitHub CLI (gh)}
+
+The GitHub CLI is a tool that lets you interact with GitHub from the command line. It handles authentication automatically.
+
+\textbf{Install:}
+\begin{lstlisting}
+brew install gh
+\end{lstlisting}
+
+\textbf{Authenticate:}
+\begin{lstlisting}
+gh auth login
+\end{lstlisting}
+
+When prompted:
+\begin{itemize}
+  \item Select \textbf{GitHub.com}
+  \item Select \textbf{HTTPS} as your preferred protocol
+  \item When asked ``Authenticate Git with your GitHub credentials?'', select \textbf{Yes}
+  \item Select \textbf{Login with a web browser}
+  \item Copy the one-time code and press Enter
+  \item Complete the authentication in your browser
+\end{itemize}
+
+Your credentials are now stored securely, and Git will use them automatically.
+
+\subsection{macOS: Option B -- Git Credential Manager}
+
+Git Credential Manager (GCM) stores your credentials securely in the macOS Keychain.
+
+\textbf{Install Git (if not already installed via Homebrew):}
+\begin{lstlisting}
+brew install git
+\end{lstlisting}
+
+\textbf{Install Git Credential Manager:}
+\begin{lstlisting}
+brew install --cask git-credential-manager
+\end{lstlisting}
+
+That's it! The next time you clone or push to a repository, a browser window will open for you to log in. Your credentials will be stored securely in the macOS Keychain.
+
+\subsection{Windows: Git Credential Manager}
+
+Good news: if you installed Git for Windows version 2.29 or later, Git Credential Manager is already included. There's nothing extra to install.
+
+The first time you push or clone a private repository, a browser window will open for authentication. After you log in, your credentials are stored in the Windows Credential Manager.
+
+To verify you have a recent version of Git:
+\begin{lstlisting}
 git --version
 \end{lstlisting}
 
-If this returns a version number (e.g., \code{git version 2.43.0}), you are ready to go. If not, you may need to add Git to your system PATH:
+If your version is older than 2.29, download the latest version from \url{https://git-scm.com/download/win}.
 
-\begin{enumerate}
-  \item Open Settings $\rightarrow$ System $\rightarrow$ About $\rightarrow$ Advanced system settings
-  \item Click ``Environment Variables''
-  \item Under ``System variables'', find \code{Path} and click ``Edit''
-  \item Add the path to your Git installation (usually \code{C:\textbackslash Program Files\textbackslash Git\textbackslash cmd})
-  \item Click OK and restart your terminal
-\end{enumerate}
+\subsection{Why Use These Methods?}
 
+\begin{itemize}
+  \item \textbf{More secure}: Credentials are stored in your operating system's secure credential storage (Keychain on macOS, Credential Manager on Windows) rather than in a plain text file
+  \item \textbf{More convenient}: You authenticate once through your browser and never have to enter credentials again
+  \item \textbf{Supports 2FA}: If you have two-factor authentication enabled on GitHub, these methods handle it automatically
+\end{itemize}
 
 \end{document}

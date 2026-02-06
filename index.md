@@ -4,8 +4,6 @@ layout: default
 
 ## Spring 2026
 
-- [**SYLLABUS**](https://raw.githack.com/franvillamil/syllabi/master/current/syllabus_quant.pdf)
-
 ### Schedule
 
 | Date        | Topic  | Slides | Exercises | Extras |
