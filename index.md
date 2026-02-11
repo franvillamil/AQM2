@@ -6,10 +6,10 @@ layout: default
 
 ### Schedule
 
-| Date        | Topic  | Slides | Exercises | Extras |
+| Date        | Topic  | Slides | Exercises |
 | :---        | :---   | :--- | :--- | :--- |
-| Feb 5    | [Introduction](./sessions.md) | [[PDF](./slides/01_introduction/introduction.pdf)] | [[Ex 1](./assignments/assign1_introduction.pdf)] |
-| Feb 12  | [Applied regression](./sessions.md) | [[PDF](./slides/applied_regression/applied_regression.pdf)] | [[Ex 1](./assignments/assign2_applied_regression.pdf)] |
+| Feb 5    | [Introduction](./sessions.md) | [[Slides 1](./slides/01_introduction/introduction.pdf)] | [[Ex 1](./assignments/assign1_introduction.pdf)] |
+| Feb 12  | [Applied regression](./sessions.md) | [[Slides 2](./slides/applied_regression/applied_regression.pdf)] | [[Ex 2](./assignments/assign2_applied_regression.pdf)] |
 | Feb 19  | [Binary outcomes](./sessions.md) | | |
 | Feb 26  | [Interpretation and diagnostics](./sessions.md) | | |
 | Mar 5   | [Best practices in computing](./sessions.md) | | |
@@ -22,6 +22,8 @@ layout: default
 | Apr 30  | [Exam](./logistics.md) / [Review & Advanced](./sessions.md) | | |
 
 ### Extras
+
+#### Session 1 / Introduction
 
 - [Using Git and Github](./extra/extra1_git.pdf)
 - [Notes on Code Editors](./extra/extra1_editors.pdf)
