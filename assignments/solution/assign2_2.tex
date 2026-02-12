@@ -1,0 +1,190 @@
+\input{../preamble.tex}
+\textbf{\large Assignment 2 -- Solutions: Part 2 (STAR Dataset)}\\\vspace{10pt}
+\end{center}
+
+\tableofcontents
+\newpage
+
+% ==========================================================================
+\section{Data preparation}
+% ==========================================================================
+
+\begin{enumerate}[label=\alph*)]
+
+\item Load the data:
+
+\begin{lstlisting}
+library(dplyr)
+library(broom)
+library(ggplot2)
+library(modelsummary)
+
+star = read.csv("https://raw.githubusercontent.com/franvillamil/AQM2/master/datasets/star.csv")
+\end{lstlisting}
+
+\item Create factor for class type:
+
+\begin{lstlisting}
+star$classtype = factor(star$classtype,
+  levels = 1:3,
+  labels = c("Small", "Regular", "Regular+Aide"))
+\end{lstlisting}
+
+\item Create factor for race:
+
+\begin{lstlisting}
+star$race = factor(star$race,
+  levels = 1:6,
+  labels = c("White", "Black", "Asian", "Hispanic",
+             "Native American", "Other"))
+\end{lstlisting}
+
+\item Binary indicator for small class:
+
+\begin{lstlisting}
+star$small = ifelse(star$classtype == "Small", 1, 0)
+\end{lstlisting}
+
+\item Report observations:
+
+\begin{lstlisting}
+nrow(star)
+sum(!is.na(star$g4reading))
+sum(!is.na(star$g4math))
+\end{lstlisting}
+
+The dataset has around 11,600 students total, but only about 4,000--5,000 have non-missing 4th grade test scores (many students were not followed up to 4th grade).
+
+\end{enumerate}
+
+% ==========================================================================
+\section{Comparing groups}
+% ==========================================================================
+
+\begin{enumerate}[label=\alph*)]
+
+\item Mean reading scores by class type:
+
+\begin{lstlisting}
+star %>%
+  group_by(classtype) %>%
+  summarise(mean_reading = mean(g4reading, na.rm = TRUE))
+\end{lstlisting}
+
+Students in small classes score highest on average, followed by regular+aide, then regular classes. The differences are relatively modest.
+
+\item Bivariate regression:
+
+\begin{lstlisting}
+m1 = lm(g4reading ~ small, data = star)
+tidy(m1)
+\end{lstlisting}
+
+The coefficient on \code{small} represents the average difference in 4th grade reading scores between students assigned to small classes vs.\ all others (regular + regular with aide). Because this is an experiment, this coefficient has a causal interpretation.
+
+\item The regression coefficient on \code{small} equals the difference in mean reading scores between the small-class group and the non-small group (regular and regular+aide combined). This is because the regression of $Y$ on a binary variable $D$ yields $\hat{\beta} = \bar{Y}_1 - \bar{Y}_0$.
+
+\item Repeat for math:
+
+\begin{lstlisting}
+m1_math = lm(g4math ~ small, data = star)
+tidy(m1_math)
+\end{lstlisting}
+
+The pattern is similar: small-class students score higher on average. The magnitude may differ slightly between reading and math.
+
+\end{enumerate}
+
+% ==========================================================================
+\section{Adding controls}
+% ==========================================================================
+
+\begin{enumerate}[label=\alph*)]
+
+\item Multiple regression:
+
+\begin{lstlisting}
+m2 = lm(g4reading ~ small + race + yearssmall, data = star)
+tidy(m2)
+\end{lstlisting}
+
+\item The coefficient on \code{small} should remain similar to the bivariate model. This is expected because the STAR data come from a randomized experiment: treatment assignment (small class) is independent of covariates by design. When controls don't change the treatment coefficient, it confirms that randomization was successful. If adding controls changed the estimate substantially, it would suggest a problem with the randomization.
+
+\item The coefficient on \code{yearssmall} captures the association between spending additional years in a small class and reading scores. A positive coefficient suggests a cumulative benefit of small classes: each additional year in a small class is associated with higher scores. Note that \code{yearssmall} and \code{small} partly overlap (being in a small class contributes to years in small class), so the coefficient on \code{small} now captures the effect of initial assignment net of cumulative exposure.
+
+\end{enumerate}
+
+% ==========================================================================
+\section{Interactions}
+% ==========================================================================
+
+\begin{enumerate}[label=\alph*)]
+
+\item Interaction model:
+
+\begin{lstlisting}
+m3 = lm(g4reading ~ small * race + yearssmall, data = star)
+\end{lstlisting}
+
+\item Print results:
+
+\begin{lstlisting}
+tidy(m3)
+\end{lstlisting}
+
+\item The effect of a small class for White students is the coefficient on \code{small} alone (since White is the reference category). The effect for Black students is \code{small} + \code{small:raceBlack}. For example, if \code{small} = 10 and \code{small:raceBlack} = 5, the effect for Black students is 15.
+
+\item The interaction terms test whether the benefit of small classes differs across racial groups. Some studies using STAR data find that minority students benefit more from small classes, though the interactions may not always be statistically significant given sample sizes.
+
+\end{enumerate}
+
+% ==========================================================================
+\section{Presenting results}
+% ==========================================================================
+
+\begin{enumerate}[label=\alph*)]
+
+\item Comparison table:
+
+\begin{lstlisting}
+modelsummary(
+  list("Bivariate" = m1, "Controls" = m2, "Interaction" = m3),
+  vcov = "robust")
+\end{lstlisting}
+
+\item Coefficient plot:
+
+\begin{lstlisting}
+p = modelplot(
+  list("Bivariate" = m1, "Controls" = m2, "Interaction" = m3),
+  vcov = "robust")
+p
+\end{lstlisting}
+
+\item Save:
+
+\begin{lstlisting}
+ggsave("coefplot_star.png", p, width = 7, height = 5)
+modelsummary(
+  list("Bivariate" = m1, "Controls" = m2, "Interaction" = m3),
+  vcov = "robust",
+  output = "table_star.png")
+\end{lstlisting}
+
+\end{enumerate}
+
+% ==========================================================================
+\section{Brief discussion}
+% ==========================================================================
+
+\begin{enumerate}[label=\alph*)]
+
+\item The STAR data show a positive effect of small class sizes on student achievement: students randomly assigned to small classes score higher on both reading and math tests in 4th grade. The effects are modest but consistent across outcomes.
+
+\item This evidence is more credible than typical observational studies because treatment was randomly assigned. In observational data, class size correlates with school resources, neighborhood characteristics, and student composition, making it impossible to isolate the causal effect. Random assignment eliminates these confounders by design.
+
+\item Limitations include: substantial attrition (many students lack 4th grade scores, and attrition may differ by treatment group), potential compliance issues (some students may have switched classrooms), and the specific context of Tennessee in the 1980s may limit generalizability to other settings.
+
+\end{enumerate}
+
+\end{document}

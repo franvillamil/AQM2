@@ -1,0 +1,208 @@
+\input{../preamble.tex}
+\textbf{\large Assignment 2 -- Solutions: Part 1 (QoG Dataset)}\\\vspace{10pt}
+\end{center}
+
+\tableofcontents
+\newpage
+
+% ==========================================================================
+\section{Setup and data preparation}
+% ==========================================================================
+
+\begin{enumerate}[label=\alph*)]
+
+\item Load and rename variables:
+
+\begin{lstlisting}
+library(dplyr)
+library(broom)
+library(ggplot2)
+library(modelsummary)
+
+qog = read.csv("https://www.qogdata.pol.gu.se/data/qog_std_cs_jan26.csv")
+
+df = qog %>%
+  select(country = cname, epi = epi_epi, women_parl = wdi_wip,
+         gov_eff = wbgi_gee, green_seats = cpds_lg)
+\end{lstlisting}
+
+\item Drop missing values:
+
+\begin{lstlisting}
+df = df %>% na.omit()
+nrow(df)
+\end{lstlisting}
+
+Around 30--35 countries remain (exact number depends on dataset version). The small sample is due to \code{green\_seats} being available only for a subset of (mostly European) countries.
+
+\item Summary statistics:
+
+\begin{lstlisting}
+summary(df)
+\end{lstlisting}
+
+\end{enumerate}
+
+% ==========================================================================
+\section{Exploratory visualization}
+% ==========================================================================
+
+\begin{enumerate}[label=\alph*)]
+
+\item[a--b)] Scatter plot with linear fit:
+
+\begin{lstlisting}
+ggplot(df, aes(x = women_parl, y = epi)) +
+  geom_point() +
+  geom_smooth(method = "lm") +
+  labs(x = "Women in Parliament (%)", y = "EPI Score")
+\end{lstlisting}
+
+\item[c)] There is a positive relationship: countries with more women in parliament tend to have higher environmental performance scores. This likely reflects that both variables are associated with broader development and governance quality.
+
+\end{enumerate}
+
+% ==========================================================================
+\section{Bivariate regression}
+% ==========================================================================
+
+\begin{enumerate}[label=\alph*)]
+
+\item Run the bivariate model:
+
+\begin{lstlisting}
+m1 = lm(epi ~ women_parl, data = df)
+\end{lstlisting}
+
+\item Extract results:
+
+\begin{lstlisting}
+tidy(m1)
+\end{lstlisting}
+
+\item Interpretation: the coefficient on \code{women\_parl} indicates the predicted change in EPI score for each additional percentage point of women in parliament. For the IQR difference (e.g., from about 20\% to 40\%), multiply the coefficient by 20 to get the predicted difference in EPI. For example, if $\hat{\beta} \approx 0.5$, the predicted difference would be around 10 EPI points.
+
+\end{enumerate}
+
+% ==========================================================================
+\section{Multiple regression}
+% ==========================================================================
+
+\begin{enumerate}[label=\alph*)]
+
+\item Add government effectiveness:
+
+\begin{lstlisting}
+m2 = lm(epi ~ women_parl + gov_eff, data = df)
+tidy(m2)
+\end{lstlisting}
+
+\item The coefficient on \code{women\_parl} decreases substantially once \code{gov\_eff} is included. This suggests that part of the bivariate association was driven by government effectiveness being correlated with both women in parliament and environmental performance. In other words, the bivariate model suffered from omitted variable bias.
+
+\end{enumerate}
+
+% ==========================================================================
+\section{Demonstrating OVB}
+% ==========================================================================
+
+Recall the OVB formula: $\tilde{\beta}_1 = \hat{\beta}_1 + \hat{\beta}_2 \cdot \tilde{\delta}$
+
+\begin{enumerate}[label=\alph*)]
+
+\item Extract the relevant coefficients:
+
+\begin{lstlisting}
+beta1_biva = tidy(m1) %>% filter(term == "women_parl") %>%
+  pull(estimate)
+beta1_mult = tidy(m2) %>% filter(term == "women_parl") %>%
+  pull(estimate)
+beta2_mult = tidy(m2) %>% filter(term == "gov_eff") %>%
+  pull(estimate)
+\end{lstlisting}
+
+\item Auxiliary regression:
+
+\begin{lstlisting}
+aux = lm(gov_eff ~ women_parl, data = df)
+delta = tidy(aux) %>% filter(term == "women_parl") %>%
+  pull(estimate)
+\end{lstlisting}
+
+\item Verify:
+
+\begin{lstlisting}
+round(beta1_mult + beta2_mult * delta, 2)
+round(beta1_biva, 2)
+\end{lstlisting}
+
+Both values should match (up to rounding), confirming the OVB formula.
+
+\item Interpretation: the bivariate coefficient on women in parliament was inflated because \code{gov\_eff} is positively correlated with both \code{women\_parl} ($\tilde{\delta} > 0$) and with \code{epi} ($\hat{\beta}_2 > 0$). The omitted variable bias was therefore positive, making the bivariate estimate larger than the multiple regression estimate.
+
+\end{enumerate}
+
+% ==========================================================================
+\section{Robust standard errors}
+% ==========================================================================
+
+\begin{enumerate}[label=\alph*)]
+
+\item Classical SEs:
+
+\begin{lstlisting}
+modelsummary(m2)
+\end{lstlisting}
+
+\item Robust SEs:
+
+\begin{lstlisting}
+modelsummary(m2, vcov = "robust")
+\end{lstlisting}
+
+\item With a small cross-sectional sample like this, robust SEs may differ somewhat from classical SEs but typically not enough to change substantive conclusions. The direction of differences depends on the heteroskedasticity pattern.
+
+\end{enumerate}
+
+% ==========================================================================
+\section{Presenting results}
+% ==========================================================================
+
+\begin{enumerate}[label=\alph*)]
+
+\item Side-by-side table:
+
+\begin{lstlisting}
+modelsummary(list("Bivariate" = m1, "Multiple" = m2),
+             vcov = "robust")
+\end{lstlisting}
+
+\item Coefficient plot:
+
+\begin{lstlisting}
+modelplot(list("Bivariate" = m1, "Multiple" = m2),
+          vcov = "robust")
+\end{lstlisting}
+
+\item Save:
+
+\begin{lstlisting}
+p = modelplot(list("Bivariate" = m1, "Multiple" = m2),
+              vcov = "robust")
+ggsave("coefplot_qog.png", p, width = 7, height = 4)
+\end{lstlisting}
+
+\end{enumerate}
+
+% ==========================================================================
+\section{Extra: effect size}
+% ==========================================================================
+
+Several strategies:
+
+\begin{itemize}
+  \item Compare the predicted change for a meaningful shift in the predictor (e.g., one standard deviation or the IQR) relative to the range or standard deviation of EPI.
+  \item Standardize both variables and re-run the regression to get a standardized coefficient (``beta coefficient'').
+  \item Use substantive knowledge: is a 5-point EPI difference meaningful in practice?
+\end{itemize}
+
+\end{document}
