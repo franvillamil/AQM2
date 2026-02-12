@@ -1,0 +1,164 @@
+---
+title: "Assignment 2 -- Solutions: Part 2 (STAR Dataset)"
+subtitle: "Applied Quantitative Methods II, UC3M"
+output:
+  pdf_document:
+    toc: false
+geometry: margin=2cm
+header-includes:
+  - \renewcommand*\rmdefault{ppl}
+  - \usepackage{setspace}\setstretch{1.2}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(warning = FALSE, message = FALSE)
+```
+
+# 1. Data preparation
+
+**a)** Load the data:
+
+```{r}
+library(dplyr)
+library(broom)
+library(ggplot2)
+library(modelsummary)
+
+star = read.csv("https://raw.githubusercontent.com/franvillamil/AQM2/master/datasets/star.csv")
+```
+
+**b)** Create factor for class type:
+
+```{r}
+star$classtype = factor(star$classtype,
+  levels = 1:3,
+  labels = c("Small", "Regular", "Regular+Aide"))
+```
+
+**c)** Create factor for race:
+
+```{r}
+star$race = factor(star$race,
+  levels = 1:6,
+  labels = c("White", "Black", "Asian", "Hispanic",
+             "Native American", "Other"))
+```
+
+**d)** Binary indicator for small class:
+
+```{r}
+star$small = ifelse(star$classtype == "Small", 1, 0)
+```
+
+**e)** Report observations:
+
+```{r}
+nrow(star)
+sum(!is.na(star$g4reading))
+sum(!is.na(star$g4math))
+```
+
+Many students lack 4th grade scores because they were not followed up to that point.
+
+# 2. Comparing groups
+
+**a)** Mean reading scores by class type:
+
+```{r}
+star %>%
+  group_by(classtype) %>%
+  summarise(mean_reading = mean(g4reading, na.rm = TRUE))
+```
+
+Students in small classes score highest on average.
+
+**b)** Bivariate regression:
+
+```{r}
+m1 = lm(g4reading ~ small, data = star)
+tidy(m1)
+```
+
+The coefficient on `small` is the average difference in 4th grade reading scores between students assigned to small classes vs. all others. Because this is an experiment, it has a causal interpretation.
+
+**c)** The regression coefficient equals the difference in group means:
+
+```{r}
+star %>%
+  group_by(small) %>%
+  summarise(mean_reading = mean(g4reading, na.rm = TRUE))
+```
+
+**d)** Repeat for math:
+
+```{r}
+m1_math = lm(g4math ~ small, data = star)
+tidy(m1_math)
+```
+
+Similar pattern: small-class students score higher on average.
+
+# 3. Adding controls
+
+**a)** Multiple regression:
+
+```{r}
+m2 = lm(g4reading ~ small + race + yearssmall, data = star)
+tidy(m2)
+```
+
+**b)** The coefficient on `small` should remain similar to the bivariate model. This is expected because treatment was randomly assigned, so covariates should be balanced across groups. Stability of the coefficient confirms successful randomization.
+
+**c)** The coefficient on `yearssmall` captures the cumulative benefit of spending additional years in a small class. A positive coefficient suggests each extra year is associated with higher scores.
+
+# 4. Interactions
+
+**a)** Interaction model:
+
+```{r}
+m3 = lm(g4reading ~ small * race + yearssmall, data = star)
+```
+
+**b)** Print results:
+
+```{r}
+tidy(m3)
+```
+
+**c)** Effect of small class for White students (reference category) = coefficient on `small`. For Black students = `small` + `small:raceBlack`:
+
+```{r}
+# White students
+coef(m3)["small"]
+
+# Black students
+coef(m3)["small"] + coef(m3)["small:raceBlack"]
+```
+
+**d)** The interaction terms test whether the benefit of small classes differs by race. Some studies find that minority students benefit more, though interactions may not always be statistically significant given sample sizes.
+
+# 5. Presenting results
+
+**a)** Comparison table:
+
+```{r}
+modelsummary(
+  list("Bivariate" = m1, "Controls" = m2, "Interaction" = m3),
+  vcov = "robust", output = "markdown")
+```
+
+**b--c)** Coefficient plot:
+
+```{r, fig.height=4}
+modelplot(
+  list("Bivariate" = m1, "Controls" = m2, "Interaction" = m3),
+  vcov = "robust")
+```
+
+# 6. Brief discussion
+
+**a)** The STAR data show a positive effect of small class sizes on student achievement: students randomly assigned to small classes score higher on both reading and math.
+
+**b)** This evidence is more credible than typical observational studies because treatment was randomly assigned, eliminating confounders by design. In observational data, class size correlates with school resources, neighborhood characteristics, and student composition.
+
+**c)** Limitations: substantial attrition (many students lack 4th grade scores, and attrition may differ by treatment group), potential compliance issues (some students may have switched classrooms), and the specific context (Tennessee, 1980s) may limit generalizability.

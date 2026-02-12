@@ -19,7 +19,8 @@ df = qog %>%
          gov_eff = wbgi_gee, green_seats = cpds_lg)
 
 # b) Drop missing values
-df = df %>% na.omit()
+# na.omit() drops too many observations because of green_seats
+# Better: just keep the full sample, R handles NAs in each regression
 nrow(df)
 
 # c) Summary statistics
@@ -49,8 +50,15 @@ m1 = lm(epi ~ women_parl, data = df)
 tidy(m1)
 
 # c) Predicted difference at IQR
-iqr = quantile(df$women_parl, 0.75) - quantile(df$women_parl, 0.25)
-coef(m1)["women_parl"] * iqr
+p25 = quantile(df$women_parl, 0.25, na.rm = TRUE)
+p75 = quantile(df$women_parl, 0.75, na.rm = TRUE)
+
+# Option 1: multiply coefficient by IQR
+coef(m1)["women_parl"] * (p75 - p25)
+
+# Option 2: use predict() -- same result
+pred = predict(m1, newdata = data.frame(women_parl = c(p25, p75)))
+pred[2] - pred[1]
 
 # ----------------------------------------------------------
 # 1.4 Multiple regression

@@ -1,0 +1,170 @@
+---
+title: "Assignment 2 -- Solutions: Part 1 (QoG Dataset)"
+subtitle: "Applied Quantitative Methods II, UC3M"
+output:
+  pdf_document:
+    toc: false
+geometry: margin=2cm
+header-includes:
+  - \renewcommand*\rmdefault{ppl}
+  - \usepackage{setspace}\setstretch{1.2}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(warning = FALSE, message = FALSE)
+```
+
+# 1. Setup and data preparation
+
+**a)** Load and rename variables:
+
+```{r}
+library(dplyr)
+library(broom)
+library(ggplot2)
+library(modelsummary)
+
+qog = read.csv("https://www.qogdata.pol.gu.se/data/qog_std_cs_jan26.csv")
+
+df = qog %>%
+  select(country = cname, epi = epi_epi, women_parl = wdi_wip,
+         gov_eff = wbgi_gee, green_seats = cpds_lg)
+```
+
+**b)** Using `na.omit()` drops too many observations because `green_seats` is only available for a small subset of (mostly European) countries. Since the exercises focus on the other variables, it is better to keep the full sample and let R handle missing values automatically in each regression.
+
+```{r}
+# na.omit() would leave very few countries -- not recommended here
+nrow(df)
+```
+
+**c)** Summary statistics:
+
+```{r}
+summary(df)
+```
+
+# 2. Exploratory visualization
+
+**a--b)** Scatter plot with linear fit:
+
+```{r, fig.height=4}
+ggplot(df, aes(x = women_parl, y = epi)) +
+  geom_point() +
+  geom_smooth(method = "lm") +
+  labs(x = "Women in Parliament (%)", y = "EPI Score")
+```
+
+**c)** Positive relationship: countries with more women in parliament tend to have higher EPI scores. This likely reflects that both variables are associated with broader development and governance quality.
+
+# 3. Bivariate regression
+
+**a)** Run the bivariate model:
+
+```{r}
+m1 = lm(epi ~ women_parl, data = df)
+```
+
+**b)** Extract results:
+
+```{r}
+tidy(m1)
+```
+
+**c)** The coefficient on `women_parl` indicates the predicted change in EPI score for each additional percentage point of women in parliament. To get the predicted difference between the 25th and 75th percentile, we can either multiply the coefficient by the IQR or use `predict()`. Both give the same result:
+
+```{r}
+p25 = quantile(df$women_parl, 0.25, na.rm = TRUE)
+p75 = quantile(df$women_parl, 0.75, na.rm = TRUE)
+
+# Option 1: multiply coefficient by IQR
+coef(m1)["women_parl"] * (p75 - p25)
+
+# Option 2: use predict()
+pred = predict(m1, newdata = data.frame(women_parl = c(p25, p75)))
+pred[2] - pred[1]
+```
+
+# 4. Multiple regression
+
+**a)** Add government effectiveness:
+
+```{r}
+m2 = lm(epi ~ women_parl + gov_eff, data = df)
+tidy(m2)
+```
+
+**b)** The coefficient on `women_parl` decreases substantially once `gov_eff` is included. This suggests that part of the bivariate association was driven by government effectiveness being correlated with both women in parliament and environmental performance (omitted variable bias).
+
+# 5. Demonstrating OVB
+
+Recall the OVB formula: $\tilde{\beta}_1 = \hat{\beta}_1 + \hat{\beta}_2 \cdot \tilde{\delta}$
+
+**a)** Extract the relevant coefficients:
+
+```{r}
+beta1_biva = tidy(m1) %>% filter(term == "women_parl") %>% pull(estimate)
+beta1_mult = tidy(m2) %>% filter(term == "women_parl") %>% pull(estimate)
+beta2_mult = tidy(m2) %>% filter(term == "gov_eff") %>% pull(estimate)
+```
+
+**b)** Auxiliary regression:
+
+```{r}
+aux = lm(gov_eff ~ women_parl, data = df)
+delta = tidy(aux) %>% filter(term == "women_parl") %>% pull(estimate)
+```
+
+**c)** Verify the OVB formula:
+
+```{r}
+# Right-hand side: beta1_mult + beta2_mult * delta
+round(beta1_mult + beta2_mult * delta, 4)
+
+# Left-hand side: beta1_biva
+round(beta1_biva, 4)
+```
+
+Both values match, confirming the OVB formula.
+
+**d)** The bias is positive because `gov_eff` is positively correlated with both `women_parl` ($\tilde{\delta} > 0$) and with `epi` ($\hat{\beta}_2 > 0$). This inflated the bivariate estimate.
+
+# 6. Robust standard errors
+
+**a)** Classical SEs:
+
+```{r}
+modelsummary(m2, output = "markdown")
+```
+
+**b)** Robust SEs:
+
+```{r}
+modelsummary(m2, vcov = "robust", output = "markdown")
+```
+
+**c)** SEs may differ somewhat but conclusions typically don't change with this sample.
+
+# 7. Presenting results
+
+**a)** Side-by-side table:
+
+```{r}
+modelsummary(list("Bivariate" = m1, "Multiple" = m2),
+             vcov = "robust", output = "markdown")
+```
+
+**b--c)** Coefficient plot:
+
+```{r, fig.height=3.5}
+modelplot(list("Bivariate" = m1, "Multiple" = m2),
+          vcov = "robust")
+```
+
+# 8. Extra: effect size
+
+Several strategies to assess effect size:
+
+- Compare the predicted change for a meaningful shift in the predictor (e.g., one SD or the IQR) relative to the SD of EPI.
+- Standardize both variables and re-run the regression to get a standardized ("beta") coefficient.
+- Use substantive knowledge about whether the predicted change matters in practice.
