@@ -17,6 +17,7 @@
   \item \textbf{Always use comments} in your R code -- and use them to answer questions
   \item You are encouraged to work together, but each person must submit their own code
   \item Plan is to start Part 1 in class and complete Part 2 at home
+  \item I'll upload a solution file to the website after next class
 \end{itemize}
 
 \vspace{20pt}
@@ -24,7 +25,7 @@
 \newpage
 
 % ==========================================================================
-\section{Part 1: QoG Dataset}
+\section{In class: QoG Dataset}
 % ==========================================================================
 
 In this lab, we explore cross-country data from the Quality of Government (QoG) dataset. You will practice bivariate and multiple regression, demonstrate omitted variable bias, use robust standard errors, and present results with \code{modelsummary}. Follow along in class.
@@ -100,12 +101,18 @@ The omitted variable bias formula says: $\tilde{\beta}_1 = \hat{\beta}_1 + \hat{
 \newpage
 
 % ==========================================================================
-\section{Part 2: Take-Home Exercises (STAR Dataset)}
+\section{Home: STAR Dataset}
 % ==========================================================================
 
 The Project STAR (Student/Teacher Achievement Ratio) experiment randomly assigned students in Tennessee to small classes (13--17 students), regular classes (22--25 students), or regular classes with a teacher's aide. We use data from this experiment to practice applied regression.
 
-Download \code{star.csv} from the course page. Each observation is a student. Key variables include:
+You can find the dataset at: \href{https://github.com/franvillamil/AQM2/tree/master/datasets}{github.com/franvillamil/AQM2/tree/master/datasets}
+
+\begin{quote}
+\textbf{Note:} Go to the \href{https://github.com/franvillamil/AQM2/raw/refs/heads/master/datasets/star.csv}{dataset page} in Github, right-click on the `Raw' button on the left, and copy the link. You can then use that link directly in \texttt{read.csv} in R.
+\end{quote}
+
+Each observation is a student. Key variables include:
 
 \begin{itemize}
   \item \code{classtype}: class type (1 = small, 2 = regular, 3 = regular + aide)
@@ -172,20 +179,10 @@ In a comment (5--10 sentences), discuss:
 
 \vspace{15pt}
 
-\section{Data Sources}
-
-\begin{itemize}
-  \item \textbf{QoG Standard dataset}: \url{https://www.gu.se/en/quality-government/qog-data/data-downloads/standard-dataset}. Use the cross-section version (CSV format), or the file provided on the course page.
-  \item \textbf{STAR dataset}: \code{star.csv}, provided on the course page. Original data from the Tennessee STAR experiment (Krueger, 1999).
-\end{itemize}
-
-\vspace{15pt}
-
 \section{Submission}
 
-Commit your \code{ps2.R} file to your GitHub repository before the deadline. Make sure your repository is public so I can access it.
+Commit/upload your \code{.R} file to your GitHub repository before the deadline. Your R script should:
 
-Your R script should:
 \begin{itemize}
   \item Be well-organized with clear section headers (using comments)
   \item Include all code needed to reproduce your analysis
