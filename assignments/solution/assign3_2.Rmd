@@ -1,0 +1,179 @@
+---
+title: "Assignment 3 -- Solutions: Part 2 (STAR --- High School Graduation)"
+subtitle: "Applied Quantitative Methods II, UC3M"
+output:
+  pdf_document:
+    toc: false
+geometry: margin=2cm
+header-includes:
+  - \renewcommand*\rmdefault{ppl}
+  - \usepackage{setspace}\setstretch{1.2}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(warning = FALSE, message = FALSE)
+```
+
+# 1. Data preparation
+
+**a)** Load and create factor variables:
+
+```{r}
+library(dplyr)
+library(broom)
+library(ggplot2)
+library(modelsummary)
+library(marginaleffects)
+
+star = read.csv("https://raw.githubusercontent.com/franvillamil/AQM2/refs/heads/master/datasets/star/star.csv")
+
+star$classtype = factor(star$classtype,
+  levels = 1:3,
+  labels = c("Small", "Regular", "Regular+Aide"))
+
+star$race = factor(star$race,
+  levels = 1:6,
+  labels = c("White", "Black", "Asian", "Hispanic",
+             "Native American", "Other"))
+```
+
+**b)** Create binary `small` indicator:
+
+```{r}
+star$small = ifelse(star$classtype == "Small", 1, 0)
+```
+
+**c)** Drop observations with missing `hsgrad`:
+
+```{r}
+df = star %>% filter(!is.na(hsgrad))
+nrow(df)
+```
+
+**d)** Graduation rate overall and by class type:
+
+```{r}
+mean(df$hsgrad)
+
+df %>%
+  group_by(classtype) %>%
+  summarise(grad_rate = mean(hsgrad), n = n())
+```
+
+Students in small classes have a slightly higher graduation rate than those in regular or regular+aide classes.
+
+# 2. LPM and logit
+
+**a)** LPM:
+
+```{r}
+lpm1 = lm(hsgrad ~ small, data = df)
+tidy(lpm1)
+```
+
+**b)** Logit:
+
+```{r}
+logit1 = glm(hsgrad ~ small, family = binomial, data = df)
+tidy(logit1)
+```
+
+**c)** The LPM coefficient on `small` is the estimated difference in graduation probability between small and non-small classes. Because this is experimental data, it has a causal interpretation.
+
+**d)** AME from logit:
+
+```{r}
+avg_slopes(logit1)
+```
+
+The AME is very close to the LPM coefficient, as expected when the outcome probability is moderate (around 0.8).
+
+# 3. Adding controls
+
+**a)** Controlled models:
+
+```{r}
+lpm2 = lm(hsgrad ~ small + race + yearssmall, data = df)
+logit2 = glm(hsgrad ~ small + race + yearssmall,
+             family = binomial, data = df)
+```
+
+**b)** Compare bivariate and controlled coefficients on `small`:
+
+```{r}
+tidy(lpm1) %>% filter(term == "small") %>% select(term, estimate)
+tidy(lpm2) %>% filter(term == "small") %>% select(term, estimate)
+```
+
+The coefficient on `small` changes little when controls are added. This is consistent with successful randomization: because treatment was randomly assigned, covariates are balanced across groups and do not confound the treatment effect.
+
+**c)** Interpret `yearssmall` from the logit:
+
+```{r}
+tidy(logit2)
+avg_slopes(logit2, variables = "yearssmall")
+```
+
+The coefficient on `yearssmall` captures the cumulative effect of each additional year in a small class on the probability of graduating. The AME converts the log-odds coefficient to a probability scale.
+
+# 4. Predicted probabilities
+
+**a)** Predicted probabilities for specific profiles:
+
+```{r}
+predictions(logit2,
+  newdata = datagrid(
+    small = c(1, 0),
+    race = c("White", "Black"),
+    yearssmall = c(3, 0)))
+```
+
+**b)** Plot across `yearssmall` by `small`:
+
+```{r, fig.height=4}
+p1 = plot_predictions(logit2, condition = c("yearssmall", "small"))
+p1
+ggsave("pred_prob_yearssmall.png", p1, width = 6, height = 4)
+```
+
+# 5. Interactions
+
+**a)** Interaction model:
+
+```{r}
+logit3 = glm(hsgrad ~ small * race + yearssmall,
+             family = binomial, data = df)
+```
+
+**b)** Marginal effect of `small` by race:
+
+```{r}
+avg_slopes(logit3, variables = "small", by = "race")
+```
+
+**c)** The small class effect differs somewhat across racial groups. Some groups show a larger benefit from small classes, though confidence intervals are wide for groups with fewer observations (Asian, Hispanic, Native American). The interaction results suggest that the benefits of small classes may not be uniform across all student populations.
+
+# 6. Presenting results and discussion
+
+**a)** Comparison table:
+
+```{r}
+modelsummary(
+  list("LPM biv." = lpm1, "LPM ctrl." = lpm2,
+       "Logit biv." = logit1, "Logit ctrl." = logit2),
+  vcov = list("robust", "robust", NULL, NULL),
+  output = "markdown")
+```
+
+**b)** Coefficient plot:
+
+```{r, fig.height=4}
+p2 = modelplot(
+  list("LPM biv." = lpm1, "LPM ctrl." = lpm2,
+       "Logit biv." = logit1, "Logit ctrl." = logit2),
+  vcov = list("robust", "robust", NULL, NULL))
+p2
+ggsave("coefplot_star.png", p2, width = 6, height = 4)
+```
+
+**c)** The STAR data provide experimental evidence that small class sizes have a positive effect on high school graduation. The estimated effect is modest but consistent across specifications. The LPM and logit results are very similar, both in magnitude and significance, which is expected when the outcome probability is not extreme. This similarity confirms that functional form assumptions make little practical difference here. The experimental design gives this evidence more credibility than observational studies, where class size correlates with school resources, neighborhood characteristics, and student composition. Random assignment eliminates these confounders by design, allowing a causal interpretation of the treatment effect. The stability of the small-class coefficient when controls are added further supports successful randomization.

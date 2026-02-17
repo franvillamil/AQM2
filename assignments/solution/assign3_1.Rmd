@@ -1,0 +1,170 @@
+---
+title: "Assignment 3 -- Solutions: Part 1 (ANES Voter Turnout)"
+subtitle: "Applied Quantitative Methods II, UC3M"
+output:
+  pdf_document:
+    toc: false
+geometry: margin=2cm
+header-includes:
+  - \renewcommand*\rmdefault{ppl}
+  - \usepackage{setspace}\setstretch{1.2}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(warning = FALSE, message = FALSE)
+```
+
+# 1. Setup and data preparation
+
+**a)** Load the dataset:
+
+```{r}
+library(dplyr)
+library(broom)
+library(ggplot2)
+library(modelsummary)
+library(marginaleffects)
+
+# Load pre-processed anes.csv from the course page
+# (Here we process from raw ANES 2020 to replicate it)
+raw = read.csv("https://raw.githubusercontent.com/franvillamil/AQM2/refs/heads/master/datasets/anes/anes_timeseries_2020.csv")
+
+df = raw %>%
+  transmute(
+    voted = ifelse(V202109x < 0, NA, V202109x),
+    age = ifelse(V201507x < 0, NA, V201507x),
+    female = case_when(V201600 == 2 ~ 1, V201600 == 1 ~ 0, TRUE ~ NA_real_),
+    education = case_when(
+      V201511x == 1 ~ 10, V201511x == 2 ~ 12, V201511x == 3 ~ 14,
+      V201511x == 4 ~ 16, V201511x == 5 ~ 20, TRUE ~ NA_real_),
+    income = ifelse(V201617x < 0, NA, V201617x),
+    party_id = ifelse(V201231x < 0, NA, V201231x)
+  )
+```
+
+**b)** Drop observations with missing values:
+
+```{r}
+df = na.omit(df)
+nrow(df)
+```
+
+**c)** Overall turnout rate and summary statistics:
+
+```{r}
+mean(df$voted)
+summary(df)
+```
+
+# 2. Exploratory visualization
+
+**a)** Bar chart of turnout by education level:
+
+```{r, fig.height=3.5}
+turnout_by_edu = df %>%
+  group_by(education) %>%
+  summarise(turnout = mean(voted))
+
+ggplot(turnout_by_edu, aes(x = factor(education), y = turnout)) +
+  geom_col() +
+  labs(x = "Years of education", y = "Turnout rate")
+```
+
+**b)** Turnout increases with education: respondents with more years of education are more likely to report voting. The pattern is monotonic.
+
+# 3. Linear probability model
+
+**a--b)** Estimate the LPM:
+
+```{r}
+lpm = lm(voted ~ age + education + income + female, data = df)
+tidy(lpm)
+```
+
+**c)** The coefficient on `education` represents the estimated change in the probability of voting for each additional year of education, holding the other variables constant.
+
+**d)** Check predicted probabilities:
+
+```{r}
+preds_lpm = predict(lpm)
+sum(preds_lpm < 0)
+sum(preds_lpm > 1)
+range(preds_lpm)
+```
+
+# 4. Logistic regression
+
+**a--b)** Estimate the logit model:
+
+```{r}
+logit = glm(voted ~ age + education + income + female,
+            family = binomial, data = df)
+tidy(logit)
+```
+
+**c)** Odds ratios:
+
+```{r}
+exp(coef(logit))
+```
+
+The odds ratio for `education` indicates the multiplicative change in the odds of voting for each additional year of education. An odds ratio above 1 means more education is associated with higher odds of voting.
+
+**d)** Verify all predicted probabilities are bounded:
+
+```{r}
+preds_logit = predict(logit, type = "response")
+range(preds_logit)
+```
+
+All predicted probabilities are between 0 and 1.
+
+# 5. Comparing LPM and logit
+
+**a)** Average marginal effects:
+
+```{r}
+avg_slopes(logit)
+```
+
+**b)** The AMEs from the logit model are similar to the LPM coefficients, as expected when predicted probabilities are mostly in a moderate range. Both approaches tell a broadly similar story about the relationship between each predictor and voter turnout.
+
+**c)** Side-by-side table:
+
+```{r}
+modelsummary(list("LPM" = lpm, "Logit" = logit),
+             vcov = list("robust", NULL), output = "markdown")
+```
+
+# 6. Predicted probabilities
+
+**a)** Predicted probability across education:
+
+```{r, fig.height=4}
+p1 = plot_predictions(logit, condition = "education")
+p1
+ggsave("pred_prob_education.png", p1, width = 6, height = 4)
+```
+
+**b)** Predicted probabilities by age and gender:
+
+```{r, fig.height=4}
+p2 = plot_predictions(logit, condition = c("age", "female"))
+p2
+ggsave("pred_prob_age_gender.png", p2, width = 6, height = 4)
+```
+
+**c)** Education shows a clear positive relationship with turnout. Age also has a positive effect. The plot by gender shows that both men and women follow similar age-turnout patterns, with any gender gap being modest relative to the age effect.
+
+# 7. Presenting results
+
+**a--b)** Coefficient plot:
+
+```{r, fig.height=3.5}
+p3 = modelplot(list("LPM" = lpm, "Logit" = logit),
+               vcov = list("robust", NULL))
+p3
+ggsave("coefplot_lpm_logit.png", p3, width = 6, height = 4)
+```
+
+**c)** For this dataset, the LPM and logit lead to similar substantive conclusions: age, education, and income are all positively associated with turnout, and gender has a modest or negligible effect. The differences between LPM and logit matter more when predicted probabilities are close to the boundaries (0 or 1). In this sample, turnout is relatively common, so the linear approximation works reasonably well.
