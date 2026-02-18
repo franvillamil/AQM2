@@ -1,0 +1,256 @@
+\input{preamble.tex}
+\textbf{\large Assignment 5: Best Practices in Computing}\\\vspace{10pt}
+\end{center}
+
+\vspace{10pt}
+\noindent
+\textbf{\large Instructions:}
+
+\vspace{10pt}
+\begin{itemize}
+\setlength\itemsep{0pt}
+  \item {\color{red}{\textbf{Deadline}}}: \textbf{March 12, before class}
+  \item Submit via your GitHub repository in a separate folder (\texttt{assignment5})
+  \item \textbf{Always use comments} in your R code -- and use them to answer questions
+  \item You are encouraged to work together, but each person must submit their own code
+  \item Plan is to start Part 1 in class and complete Part 2 at home
+  \item I'll upload a solution file to the website after next class
+\end{itemize}
+
+\vspace{20pt}
+\tableofcontents
+\newpage
+
+% ==========================================================================
+\section{Part 1: In-Class (Project Organization)}
+% ==========================================================================
+
+{\sloppy In this lab, you will create a properly organized mini-project that follows the \texttt{workflow\_example} pattern from the lecture. Recall the key principle: separate tasks into folders, each with its own script and output subfolder. You will use the \code{corruption.dta} dataset from Assignment~4 to build a complete, reproducible pipeline.\par}
+
+\subsection{Folder structure}
+
+Create a new folder \texttt{assignment5} in your course repository with the following structure:
+
+\begin{lstlisting}
+assignment5/
+  Makefile
+  README.md
+  data/
+    corruption.dta
+  analysis/
+    models.R
+    output/
+  plots/
+    figures.R
+    output/
+\end{lstlisting}
+
+\begin{enumerate}[label=\alph*)]
+  \item Create all the folders and empty files listed above. You can do this from the terminal using \code{mkdir} and \code{touch}, or manually.
+  \item Download the \code{corruption.dta} dataset and place it in the \code{data/} subfolder. The dataset is available at:
+  \begin{itemize}
+    \item \href{https://github.com/franvillamil/AQM2/tree/master/datasets/other}{github.com/franvillamil/AQM2/tree/master/datasets/other}
+  \end{itemize}
+  \item In \code{README.md}, write a brief description of the project and what each folder contains (3--5 sentences). For example: what question does the analysis address? What does the \code{data/} folder contain? What do the \code{analysis/} and \code{plots/} folders produce?
+\end{enumerate}
+
+\subsection{Analysis script}
+
+Create the file \code{analysis/models.R} with the following structure. The script should be self-contained: anyone should be able to run it from the \texttt{assignment5} folder and reproduce the results.
+
+\begin{enumerate}[label=\alph*)]
+  \item Start the script by loading necessary packages and reading the data:
+  \begin{lstlisting}
+# setwd("~/path/to/assignment5")
+options(stringsAsFactors = FALSE)
+
+library(readstata13)
+library(modelsummary)
+
+df = read.dta13("data/corruption.dta")
+  \end{lstlisting}
+  \item Define constants at the top of the script for the key variables:
+  \begin{lstlisting}
+dep_var = "ti_cpi"
+indep_var = "undp_gdp"
+  \end{lstlisting}
+  \item Drop observations with missing values on these two variables. Then print the number of observations after cleaning:
+  \begin{lstlisting}
+df = df[!is.na(df[[dep_var]]) & !is.na(df[[indep_var]]), ]
+cat("Observations:", nrow(df), "\n")
+  \end{lstlisting}
+  \item Add an assertion after cleaning to check that the dataset is not unexpectedly small:
+  \begin{lstlisting}
+if(nrow(df) < 10) stop("Too few observations")
+  \end{lstlisting}
+  \item Estimate two models --- one in levels and one using the log of GDP:
+  \begin{lstlisting}
+m1 = lm(ti_cpi ~ undp_gdp, data = df)
+m2 = lm(ti_cpi ~ log(undp_gdp), data = df)
+  \end{lstlisting}
+  \item Use \code{modelsummary()} to save a \LaTeX{} table to \code{analysis/output/table\_models.tex}:
+  \begin{lstlisting}
+modelsummary(
+  list("Level" = m1, "Log" = m2),
+  output = "analysis/output/table_models.tex",
+  stars = TRUE,
+  gof_map = c("r.squared", "nobs"))
+  \end{lstlisting}
+  \item Print a message when the script completes: \\\code{cat("Analysis complete. Table saved.\textbackslash n")}
+\end{enumerate}
+
+\subsection{Plots script}
+
+Create the file \code{plots/figures.R}. This script reads the same data and produces a scatter plot.
+
+\begin{enumerate}[label=\alph*)]
+  \item Load packages (\code{readstata13}, \code{ggplot2}), read the data, and drop missing values.
+  \item Create a scatter plot of corruption (y-axis) vs.\ log GDP (x-axis) using \code{geom\_point()}. Add a linear fit with \code{geom\_smooth()}.
+  \item Use \code{theme\_minimal()}, add informative axis labels and a title.
+  \item Save to \code{plots/output/scatter\_corruption.pdf} using \code{ggsave()}, specifying width and height explicitly.
+  \item Print a message when done: \code{cat("Scatter plot saved.\textbackslash n")}
+\end{enumerate}
+
+\subsection{Makefile}
+
+Create a \code{Makefile} in the \texttt{assignment5} folder that automates the pipeline. Recall from the lecture that a Makefile specifies targets, dependencies, and recipes.
+
+\begin{enumerate}[label=\alph*)]
+  \item Write an \code{all:} rule that lists both outputs as targets:
+  \begin{lstlisting}
+all: analysis/output/table_models.tex \
+     plots/output/scatter_corruption.pdf
+  \end{lstlisting}
+  \item Write a rule for the analysis table that depends on the R script and the dataset:
+  \begin{lstlisting}
+analysis/output/table_models.tex: analysis/models.R \
+                                  data/corruption.dta
+	Rscript --no-save analysis/models.R
+  \end{lstlisting}
+  \textbf{Important}: the recipe line (the \code{Rscript} command) must be indented with a \textbf{tab character}, not spaces. This is a Makefile requirement.
+  \item Write a similar rule for the scatter plot output, which depends on \code{plots/figures.R} and the dataset.
+  \item Test it by running \code{make} in the terminal from the \texttt{assignment5} folder. In a comment in your \code{README.md}, note whether it worked and what output was produced.
+\end{enumerate}
+
+\newpage
+
+% ==========================================================================
+\section{Part 2: Take-Home (Code Quality and Git)}
+% ==========================================================================
+
+\subsection{Code improvement}
+
+The following R script works but has multiple style and organization problems. Your task is to rewrite it following the best practices from the lecture (DRY, constants, meaningful names, comments, assertions).
+
+\begin{lstlisting}
+x=read.csv("mydata.csv")
+x=x[x$year>=2000,]
+x=x[x$year<=2020,]
+m=lm(x$outcome~x$gdp+x$pop)
+summary(m)
+m2=lm(x$outcome~x$gdp+x$pop+x$education)
+summary(m2)
+m3=lm(x$outcome~x$gdp+x$pop+x$education+x$health)
+summary(m3)
+pdf("fig.pdf")
+plot(x$gdp,x$outcome)
+dev.off()
+pdf("fig2.pdf")
+plot(x$education,x$outcome)
+dev.off()
+\end{lstlisting}
+
+Rewrite this script and save it as \code{assignment5/improved\_script.R}. Your improved version should include:
+
+\begin{enumerate}[label=\alph*)]
+  \item Meaningful variable names instead of \code{x}, \code{m}, \code{m2}, \code{m3}.
+  \item Constants defined at the top of the script for the year range (e.g., \code{start\_year = 2000}, \code{end\_year = 2020}).
+  \item Comments explaining what each section of the code does, with section dividers (\code{\# ============}).
+  \item A function to avoid repeating the \code{pdf()}/\code{plot()}/\code{dev.off()} pattern. For example:
+  \begin{lstlisting}
+save_scatter = function(data, xvar, yvar, filename) {
+  pdf(filename, width = 7, height = 5)
+  plot(data[[xvar]], data[[yvar]],
+       xlab = xvar, ylab = yvar)
+  dev.off()
+}
+  \end{lstlisting}
+  \item An assertion after loading the data (e.g., check that the number of rows is greater than zero, or check that the expected columns exist).
+  \item Proper formatting: spaces around operators, consistent indentation, use of the \code{data =} argument in \code{lm()} instead of the \code{\$} notation.
+  \item A diagnostic print statement after filtering, e.g.:
+  \begin{lstlisting}
+cat("Rows after filtering:", nrow(df), "\n")
+  \end{lstlisting}
+\end{enumerate}
+
+\subsection{Git practices}
+
+This exercise asks you to practice the Git habits discussed in the lecture: frequent commits with meaningful messages, and a proper \code{.gitignore}.
+
+\begin{enumerate}[label=\alph*)]
+  \item Make sure your \texttt{assignment5} folder is tracked by Git (it should be part of your course repository).
+  \item Create at least \textbf{3 separate commits} for this assignment. Each commit should correspond to a logical unit of work (e.g., one commit for the folder structure, one for the analysis script, one for the Makefile). Do \textbf{not} make one big commit with everything at the end.
+  \item Each commit must have a \textbf{meaningful message} --- not ``update'' or ``changes''. Recall from the lecture: the message should complete the sentence ``This commit will...''. Examples:
+  \begin{itemize}
+    \item \code{Add folder structure and README for assignment 5}
+    \item \code{Create analysis script with regression models}
+    \item \code{Add Makefile to automate pipeline}
+  \end{itemize}
+  \item Create a \code{.gitignore} file inside \texttt{assignment5/} that ignores generated and system files:
+  \begin{lstlisting}
+*.pdf
+*.aux
+*.log
+.DS_Store
+analysis/output/
+plots/output/
+  \end{lstlisting}
+  \item Push everything to GitHub.
+  \item In a comment at the end of your \code{README.md}, list the commit messages you used for this assignment.
+\end{enumerate}
+
+\subsection{Reflection}
+
+At the end of your \code{README.md}, answer the following questions in a few sentences each:
+
+\begin{enumerate}[label=\alph*)]
+  \item What was the most useful practice you learned from the computing lecture?
+  \item How would you apply these practices to your final project for this course?
+  \item What is one thing from the ``bad script'' example (in the code improvement exercise) that you recognized from your own coding habits?
+\end{enumerate}
+
+\vspace{15pt}
+
+% ==========================================================================
+\section{Data Sources}
+% ==========================================================================
+
+The corruption dataset is available at the course GitHub repository:
+\begin{itemize}
+  \item \href{https://github.com/franvillamil/AQM2/tree/master/datasets/other}{github.com/franvillamil/AQM2/tree/master/datasets/other} (\code{corruption.dta})
+\end{itemize}
+
+\vspace{15pt}
+
+% ==========================================================================
+\section{Submission}
+% ==========================================================================
+
+Commit your work to your GitHub repository before the deadline. Everything should be inside the \texttt{assignment5} folder. Make sure your repository is public so I can access it.
+
+Your \texttt{assignment5} folder should contain:
+\begin{itemize}
+  \item \code{README.md} --- project description, Makefile test results, commit messages, and reflection
+  \item \code{Makefile} --- automation rules for the analysis and plots
+  \item \code{.gitignore} --- ignoring generated output and system files
+  \item \code{data/corruption.dta} --- the dataset
+  \item \code{analysis/models.R} --- regression analysis script
+  \item \code{analysis/output/} --- (generated table, may be git-ignored)
+  \item \code{plots/figures.R} --- scatter plot script
+  \item \code{plots/output/} --- (generated figures, may be git-ignored)
+  \item \code{improved\_script.R} --- rewritten version of the bad script
+\end{itemize}
+
+All R scripts should run without errors from the \texttt{assignment5} directory.
+
+\end{document}

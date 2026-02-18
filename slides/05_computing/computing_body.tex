@@ -1,0 +1,762 @@
+% ----------------------------------------------------
+\begin{frame}
+  \titlepage
+\end{frame}
+% ----------------------------------------------------
+\note{}
+
+% ----------------------------------------------------
+\begin{frame}
+\frametitle{Today's goals}
+\centering
+
+\begin{itemize}[<+->]
+\item Understand why computing practices matter for research
+\item Learn to organize a research project with a clear folder structure
+\item Write better R code: functions, checks, and style
+\item Understand the role of plain text and command line tools
+\item Deepen your knowledge of version control with Git
+\end{itemize}
+
+\end{frame}
+% ----------------------------------------------------
+\note{This is a practical session --- a breather between the heavy methods content of the first four weeks and the panel data material coming next. The skills covered today are not statistical, but they are essential for doing good empirical work. Students who have struggled with organizing their assignments or tracking down bugs in their code will find this session especially useful. The goal is not to master all of these tools in one session, but to establish good habits early that will pay off for the rest of the course and beyond.}
+
+% ====================================================
+\section{Introduction}
+% ====================================================
+
+% ----------------------------------------------------
+\begin{frame}
+\frametitle{Why computing practices matter}
+\centering
+
+\begin{itemize}[<+->]
+\item \textbf{Reproducibility}: can you (or someone else) re-run your analysis?
+\vspace{8pt}
+\item \textbf{Avoiding errors}: manual steps introduce mistakes
+  \begin{itemize}
+  \item Copy-pasting results into Word
+  \item Renaming files by hand
+  \item Running scripts in the wrong order
+  \end{itemize}
+\vspace{8pt}
+\item \textbf{Efficiency}: time invested in workflow saves time later
+\vspace{8pt}
+\item On errors: \href{https://journals.sagepub.com/doi/10.1177/20531680221126454}{Bisbee et al.\ (2022)}
+\end{itemize}
+
+\end{frame}
+% ----------------------------------------------------
+\note{Start by motivating why we are spending a whole session on computing practices. The reproducibility crisis in social science is partly a computing problem: researchers cannot reproduce their own results because they lost track of which script produced which output, or because they made manual changes that were never recorded. The link at the bottom is a paper documenting how common coding errors are in published research, including errors introduced by tools like stargazer that silently reorder variables. Emphasize that these are not hypothetical problems --- they happen to experienced researchers regularly.}
+
+% ----------------------------------------------------
+\begin{frame}
+\centering
+\vspace{30pt}
+{\large You come back to a project after 6 months.\\\vspace{15pt}You need to update one figure.\\\vspace{15pt}How long does it take you?}
+\end{frame}
+% ----------------------------------------------------
+\note{Discussion prompt. Ask students to think about their own experience. Most will admit that going back to an old project is painful: they do not remember which script produces which output, what the file names mean, or what order to run things in. The goal of this session is to make the answer to this question ``a few minutes'' instead of ``a whole day.'' A well-organized project with a Makefile and clear folder structure can be re-run with a single command. A poorly organized project requires archaeology.}
+
+% ====================================================
+\section{Project Organization}
+% ====================================================
+
+% ----------------------------------------------------
+\begin{frame}
+\frametitle{The key principle: separate tasks into folders}
+\centering
+
+\begin{itemize}[<+->]
+\item Each \textbf{task} gets its own folder with its own script and output
+\vspace{8pt}
+\item A task is a self-contained step in the pipeline:
+  \begin{itemize}
+  \item Data collection / cleaning
+  \item Analysis (models, tables)
+  \item Plots and figures
+  \item Final document (paper, slides)
+  \end{itemize}
+\vspace{8pt}
+\item Each folder has:
+  \begin{itemize}
+  \item A script (e.g., \texttt{analyze.R})
+  \item An \texttt{output/} subfolder for results
+  \end{itemize}
+\vspace{8pt}
+\item \textbf{Never} one giant script that does everything
+\end{itemize}
+
+\end{frame}
+% ----------------------------------------------------
+\note{The single most important organizational principle: break the project into discrete tasks, each in its own folder. This makes the project navigable (you know where to look for each piece), modular (you can re-run one step without re-running everything), and debuggable (when something breaks, you know which script to check). The output subfolder is key: it creates a clear separation between code and results, and makes it obvious which files are generated (and therefore reproducible) versus which are source files. Contrast this with the common student pattern of having one enormous R script with 500 lines that loads data, cleans it, runs models, and makes plots all in one go.}
+
+% ----------------------------------------------------
+\begin{frame}
+\frametitle{Example: \texttt{workflow\_example} project}
+\centering
+
+\vspace{5pt}
+
+\begin{tikzpicture}[
+  every node/.style={font=\footnotesize\ttfamily, anchor=west},
+  level 1/.style={sibling distance=0pt, level distance=18pt},
+  edge from parent/.style={draw, thick, accent!70!black}
+]
+  \node[font=\footnotesize\ttfamily\bfseries] {\textcolor{accent}{workflow\_example/}}
+    child {node {Makefile}}
+    child {node {.gitignore}}
+    child {node {\textcolor{accent}{create\_data/}}
+      child {node {data.R}}
+      child {node {\textcolor{asher}{output/} data.csv}}
+    }
+    child {node {\textcolor{accent}{analyses/}}
+      child {node {analyze.R}}
+      child {node {\textcolor{asher}{output/} table\_models.tex}}
+    }
+    child {node {\textcolor{accent}{plots/}}
+      child {node {plots.R}}
+      child {node {\textcolor{asher}{output/} scatter.pdf}}
+    }
+    child {node {\textcolor{accent}{document/}}
+      child {node {doc.tex}}
+    };
+\end{tikzpicture}
+
+\vspace{10pt}
+
+\begin{itemize}
+\item Full example: \href{https://github.com/franvillamil/workflow_example}{\texttt{github.com/franvillamil/workflow\_example}}
+\end{itemize}
+
+\end{frame}
+% ----------------------------------------------------
+\note{Walk through the folder structure. Each folder is a task: create\_data generates the dataset, analyses runs models and produces a LaTeX table, plots creates figures, and document compiles the final paper. Each task folder has a script and an output subfolder. The Makefile ties everything together (we will see it shortly). The .gitignore tells Git which files to ignore. The key insight: the document folder does not contain any R code, and the analysis folders do not contain any LaTeX. Each piece does one thing. This is the structure students should aim for in their assignments and final projects.}
+
+% ----------------------------------------------------
+\begin{frame}
+\frametitle{File naming conventions}
+\centering
+
+\vspace{10pt}
+
+{\footnotesize
+\begin{tabular}{ll}
+\hline
+\textbf{\red{Bad}} & \textbf{\textcolor{accent}{Good}} \\
+\hline
+\texttt{Final Data.csv} & \texttt{data\_cleaned.csv} \\
+\texttt{Datos educaci\'{o}n.csv} & \texttt{datos\_educacion.csv} \\
+\texttt{analysis.R} (which one?) & \texttt{01\_clean\_data.R} \\
+\texttt{figure1final2.pdf} & \texttt{fig\_scatter\_income.pdf} \\
+\texttt{My Thesis Draft (3).docx} & \texttt{thesis\_draft.tex} \\
+\hline
+\end{tabular}
+}
+
+\vspace{15pt}
+
+\begin{itemize}[<+->]
+\item \textbf{No spaces} in file names (use underscores or hyphens)
+\item \textbf{No special characters} (accents, symbols)
+\item Use \textbf{numbered prefixes} for scripts that run in order
+\item Use \textbf{descriptive names}: what is in the file, not when you made it
+\end{itemize}
+
+\end{frame}
+% ----------------------------------------------------
+\note{File naming seems trivial but causes real problems. Spaces in file names break command-line tools and require quoting in scripts. Special characters cause encoding issues across operating systems. Numbered prefixes (01\_, 02\_) make the execution order obvious. Descriptive names mean you can find the right file without opening it. The ``Final Data (3).csv'' pattern is a sign of a disorganized project. If you need version control, use Git, not file names. The goal is that anyone (including your future self) can look at the file listing and understand what each file does.}
+
+% ----------------------------------------------------
+\begin{frame}
+\frametitle{Integrating R and \LaTeX}
+\centering
+
+\begin{itemize}[<+->]
+\item R produces output files (tables, figures)
+\item \LaTeX{} \texttt{\textbackslash input\{\}} or \texttt{\textbackslash includegraphics\{\}} reads them
+\vspace{8pt}
+\item Example from \texttt{workflow\_example}:
+  \begin{itemize}
+  \item \texttt{analyze.R} $\rightarrow$ \texttt{analyses/output/table\_models.tex}
+  \item \texttt{plots.R} $\rightarrow$ \texttt{plots/output/scatter.pdf}
+  \item \texttt{doc.tex}: \texttt{\textbackslash input\{../analyses/output/table\_models\}}
+  \item \texttt{doc.tex}: \texttt{\textbackslash includegraphics\{../plots/output/scatter\}}
+  \end{itemize}
+\vspace{8pt}
+\item \textbf{No copy-pasting}: update the analysis, recompile the document
+\item The document always reflects the latest results
+\end{itemize}
+
+\end{frame}
+% ----------------------------------------------------
+\note{This is one of the biggest practical payoffs of good project organization. When your LaTeX document reads tables and figures directly from the output folders, you never have to manually update them. Change a model specification? Re-run the R script, recompile the document, and everything updates automatically. This eliminates a major source of errors: the table in the paper not matching the actual analysis because you forgot to update it after a change. Students who are used to R Markdown get some of this automatically, but the folder-based approach is more flexible for larger projects where you want to separate analysis from writing.}
+
+% ----------------------------------------------------
+\begin{frame}
+\frametitle{Automating the pipeline: Makefiles}
+\centering
+
+\vspace{5pt}
+
+{\scriptsize
+\begin{itemize}
+\item[] \texttt{all: create\_data/output/data.csv analyses/output/table\_models.tex \textbackslash}
+\item[] \texttt{\ \ \ \ plots/output/scatter.pdf}
+\item[] \texttt{create\_data/output/data.csv: create\_data/data.R}
+\item[] \texttt{\ \ \ \ Rscript --no-save create\_data/data.R}
+\item[] \texttt{analyses/output/table\_models.tex: analyses/analyze.R \textbackslash}
+\item[] \texttt{\ \ \ \ \ \ \ \ create\_data/output/data.csv}
+\item[] \texttt{\ \ \ \ Rscript --no-save analyses/analyze.R}
+\item[] \texttt{plots/output/scatter.pdf: plots/plots.R \textbackslash}
+\item[] \texttt{\ \ \ \ \ \ \ \ create\_data/output/data.csv}
+\item[] \texttt{\ \ \ \ Rscript --no-save plots/plots.R}
+\end{itemize}
+}
+
+\vspace{5pt}
+{\footnotesize \textbf{Note:} Makefiles require \textbf{tabs} (not spaces) for indentation}
+
+\end{frame}
+% ----------------------------------------------------
+\note{Walk through the Makefile line by line. The first rule (all) lists all the final outputs. Each subsequent rule has a target (the output file), dependencies (the script and any input files), and a recipe (the command to run). The key feature: Make only re-runs a step if its dependencies have changed. If you modify plots.R but not analyze.R, only the plots step re-runs. This saves time on large projects and ensures consistency. To run everything: type \texttt{make} in the terminal. To run just one step: \texttt{make plots/output/scatter.pdf}. Makefiles require tabs (not spaces) for indentation --- this is a common source of errors. Reference: \texttt{makefiletutorial.com}.}
+
+% ----------------------------------------------------
+\begin{frame}
+\frametitle{Makefiles: the logic}
+\centering
+
+\vspace{10pt}
+
+\begin{tikzpicture}[scale=0.78, every node/.style={transform shape},
+  box/.style={draw, rounded corners, minimum width=2.4cm, minimum height=0.8cm, align=center, font=\footnotesize\ttfamily},
+  arrow/.style={->, thick, accent}
+]
+  % Nodes
+  \node[box, fill=accent!10] (data) at (0,0) {data.R};
+  \node[box, fill=accent!10] (csv) at (3.5,0) {data.csv};
+  \node[box, fill=accent!10] (analyze) at (7,1.2) {analyze.R};
+  \node[box, fill=accent!10] (plots) at (7,-1.2) {plots.R};
+  \node[box, fill=accent2!10] (table) at (10.5,1.2) {table.tex};
+  \node[box, fill=accent2!10] (scatter) at (10.5,-1.2) {scatter.pdf};
+  % Arrows
+  \draw[arrow] (data) -- (csv);
+  \draw[arrow] (csv) -- (analyze);
+  \draw[arrow] (csv) -- (plots);
+  \draw[arrow] (analyze) -- (table);
+  \draw[arrow] (plots) -- (scatter);
+  % Labels
+  \node[above, font=\scriptsize, asher] at (1.75,0.15) {produces};
+  \node[above, font=\scriptsize, asher] at (8.75,1.35) {produces};
+  \node[above, font=\scriptsize, asher] at (8.75,-1.05) {produces};
+\end{tikzpicture}
+
+\vspace{15pt}
+
+\begin{itemize}
+\item \texttt{make} only re-runs what has \textbf{changed}
+\item The dependency graph ensures correct ordering
+\end{itemize}
+
+\end{frame}
+% ----------------------------------------------------
+\note{This diagram shows the dependency graph that Make constructs from the Makefile. Each arrow represents a dependency: the analysis script depends on the data, and the table depends on the analysis script. If you change data.R, Make knows it needs to re-run data.R, then analyze.R, then plots.R (because they all depend on data.csv). If you only change plots.R, only the plots step re-runs. This is the power of Make: it tracks dependencies automatically. For small projects, running everything manually is fine. For larger projects (a dissertation with 10 scripts), Make saves hours and prevents errors from running things in the wrong order.}
+
+% ====================================================
+\section{Writing Better Code}
+% ====================================================
+
+% ----------------------------------------------------
+\begin{frame}
+\frametitle{DRY: Don't Repeat Yourself}
+\centering
+
+\begin{itemize}[<+->]
+\item If you write the same code \textbf{twice}, write a \textbf{function}
+\vspace{8pt}
+\item Why?
+  \begin{itemize}
+  \item Fix a bug in one place, not ten
+  \item Easier to test and debug
+  \item Shorter, cleaner scripts
+  \end{itemize}
+\vspace{8pt}
+\item Common candidates for functions:
+  \begin{itemize}
+  \item Cleaning steps applied to multiple datasets
+  \item Running the same model with different variables
+  \item Producing plots with consistent formatting
+  \end{itemize}
+\end{itemize}
+
+\end{frame}
+% ----------------------------------------------------
+\note{The DRY principle is the single most important coding habit. Whenever you find yourself copying and pasting code and changing one or two things, you should write a function instead. The reason is not just aesthetics: duplicated code means duplicated bugs. If you find an error in the cleaning step for one dataset, you have to remember to fix it in all the copies. With a function, you fix it once. Functions also make your code self-documenting: \texttt{clean\_survey(df)} is more readable than 20 lines of dplyr operations. Encourage students to start small: even a function that just wraps a few lines is better than copy-pasting.}
+
+% ----------------------------------------------------
+\begin{frame}
+\frametitle{Define constants at the top}
+\centering
+
+\vspace{10pt}
+
+{\footnotesize
+\begin{tabular}{ll}
+\hline
+\textbf{\red{Bad}} & \textbf{\textcolor{accent}{Good}} \\
+\hline
+\texttt{df = df[df\$year >= 2000, ]} & \texttt{start\_year = 2000} \\
+\texttt{...} & \texttt{...} \\
+\texttt{df2 = df2[df2\$year >= 2000, ]} & \texttt{df = df[df\$year >= start\_year, ]} \\
+ & \texttt{df2 = df2[df2\$year >= start\_year, ]} \\
+\hline
+\end{tabular}
+}
+
+\vspace{15pt}
+
+\begin{itemize}[<+->]
+\item Put parameters and thresholds at the \textbf{top of the script}
+\item Change once, applies everywhere
+\vspace{8pt}
+\item From the example project:
+  \begin{itemize}
+  \item \texttt{n\_obs = 1000}
+  \item Used throughout --- change it once to re-run with different sample size
+  \end{itemize}
+\end{itemize}
+
+\end{frame}
+% ----------------------------------------------------
+\note{This is a simple but powerful habit. Any number or string that appears more than once in your script should be defined as a constant at the top. Year cutoffs, sample size, file paths, variable names for analysis --- all of these should be constants. This way, when you need to change a parameter (e.g., switch from 2000 to 1990), you change it in one place. The alternative --- searching through a 200-line script for every occurrence of ``2000'' --- is error-prone and tedious. In the workflow\_example project, \texttt{n\_obs = 1000} is defined once and used in the data generation step. Changing it to 5000 requires editing one line.}
+
+% ----------------------------------------------------
+\begin{frame}
+\frametitle{Write checks and assertions}
+\centering
+
+\vspace{5pt}
+
+{\footnotesize
+\begin{itemize}
+\item[] \texttt{\# After merging two datasets}
+\item[] \texttt{merged = merge(df1, df2, by = "id")}
+\item[] \texttt{if(nrow(merged) != nrow(df1)) \{}
+\item[] \texttt{\ \ stop("Merge changed number of rows!")}
+\item[] \texttt{\}}
+\item[]
+\item[] \texttt{\# Check for duplicates}
+\item[] \texttt{if(any(duplicated(df\$id))) \{}
+\item[] \texttt{\ \ stop("Duplicate IDs found!")}
+\item[] \texttt{\}}
+\item[]
+\item[] \texttt{\# Sanity check on values}
+\item[] \texttt{if(any(df\$age < 0 | df\$age > 120, na.rm = TRUE)) \{}
+\item[] \texttt{\ \ warning("Suspicious age values detected")}
+\item[] \texttt{\}}
+\end{itemize}
+}
+
+\end{frame}
+% ----------------------------------------------------
+\note{Assertions are the best defense against silent errors. The idea: after every operation that could go wrong, add a check that verifies the result is what you expect. Merges are the classic example: a merge that unexpectedly creates duplicates can silently inflate your sample size and bias your results. The \texttt{stop()} function halts execution with an error message --- use it when something is definitely wrong. The \texttt{warning()} function prints a warning but continues --- use it when something is suspicious but might be okay. These checks cost nothing to write and can save you from publishing wrong results. Make it a habit to add a check after every merge, filter, or reshape operation.}
+
+% ----------------------------------------------------
+\begin{frame}
+\frametitle{Print diagnostics as you go}
+\centering
+
+\begin{itemize}[<+->]
+\item Sprinkle \texttt{print()} and \texttt{cat()} throughout your scripts
+\vspace{8pt}
+\item Examples:
+  \begin{itemize}
+  \item \texttt{cat("Rows after cleaning:", nrow(df), "\textbackslash n")}
+  \item \texttt{print(table(df\$treatment))}
+  \item \texttt{cat("Missing values:", sum(is.na(df\$outcome)), "\textbackslash n")}
+  \end{itemize}
+\vspace{8pt}
+\item When the script runs, you get a \textbf{log} of what happened
+\item If something goes wrong later, the log tells you where
+\vspace{8pt}
+\item This is especially valuable when running scripts via \texttt{Rscript} or \texttt{make}
+\end{itemize}
+
+\end{frame}
+% ----------------------------------------------------
+\note{Print statements are the simplest form of logging. When you run a script interactively in RStudio, you can inspect objects as you go. But when you run scripts via the command line (which is what Make does), you do not see intermediate results unless you print them. Adding print statements that show sample sizes, value distributions, and missing data counts creates a log that you can review to make sure everything went as expected. This is especially important for long-running scripts that process multiple datasets. If the final output looks wrong, the print log helps you narrow down where the problem occurred.}
+
+% ----------------------------------------------------
+\begin{frame}
+\frametitle{Code style matters}
+\centering
+
+\begin{itemize}[<+->]
+\item Use \textbf{meaningful variable names}:
+  \begin{itemize}
+  \item \texttt{pop\_2020} not \texttt{x1}, \texttt{income\_log} not \texttt{v}
+  \end{itemize}
+\vspace{8pt}
+\item Be \textbf{consistent}:
+  \begin{itemize}
+  \item Pick \texttt{snake\_case} and stick with it
+  \item Consistent indentation (2 spaces in R)
+  \end{itemize}
+\vspace{8pt}
+\item Write \textbf{comments} for non-obvious code
+  \begin{itemize}
+  \item Why, not what: \texttt{\# Drop obs before 1990 (pre-reform)}
+  \item Use section dividers: \texttt{\# ============}
+  \end{itemize}
+\vspace{8pt}
+\item Your code is read more often than it is written
+\end{itemize}
+
+\end{frame}
+% ----------------------------------------------------
+\note{Code style is about making your code readable --- for others and for your future self. Meaningful variable names eliminate the need for comments explaining what \texttt{x1} is. Consistent formatting (indentation, spacing, naming conventions) makes the code scannable. Comments should explain the reasoning behind non-obvious decisions, not narrate what the code does line by line. The section divider pattern (a line of equals signs or dashes) helps break long scripts into navigable chunks. The R community has adopted snake\_case as the standard; avoid dots in names (data.frame style) and camelCase (Java style). Reference: Hadley Wickham's R Style Guide.}
+
+% ====================================================
+\section{Plain Text and Tools}
+% ====================================================
+
+% ----------------------------------------------------
+\begin{frame}
+\frametitle{Why plain text?}
+\centering
+
+\begin{itemize}[<+->]
+\item Plain text files: \texttt{.R}, \texttt{.tex}, \texttt{.csv}, \texttt{.md}, \texttt{.py}
+\item Binary files: \texttt{.docx}, \texttt{.xlsx}, \texttt{.dta}, \texttt{.pdf}
+\vspace{8pt}
+\item Plain text advantages:
+  \begin{itemize}
+  \item \textbf{Portable}: works on any computer, any OS, forever
+  \item \textbf{Version control}: Git tracks changes line by line
+  \item \textbf{Scriptable}: can be processed by other tools
+  \item \textbf{No vendor lock-in}: does not require specific software
+  \end{itemize}
+\vspace{8pt}
+\item You are already using plain text: R scripts, \LaTeX{} files
+\item The goal: use it for \textbf{as much as possible}
+\end{itemize}
+
+\end{frame}
+% ----------------------------------------------------
+\note{Plain text is the foundation of a reproducible workflow. A .tex file from 1990 still compiles today; a Word 95 .doc file may not open in modern Word. Git can show you exactly which line changed between two versions of a .R file; for a .docx file, it can only tell you the file changed. CSV files can be read by any programming language; .xlsx files require special libraries. The point is not that binary formats are bad --- sometimes you need them (e.g., images, compiled PDFs). The point is that your source materials (code, text, data when possible) should be in plain text so they are portable, versionable, and scriptable. Reference: Kieran Healy's \textit{The Plain Person's Guide to Plain Text Social Science} at \texttt{plain-text.co}.}
+
+% ----------------------------------------------------
+\begin{frame}
+\frametitle{Code editors}
+\centering
+
+\begin{itemize}[<+->]
+\item RStudio is fine for R, but consider a \textbf{general-purpose editor}
+\vspace{8pt}
+\item Options:
+  \begin{itemize}
+  \item \textbf{VS Code}: free, huge ecosystem of extensions, very popular
+  \item \textbf{Positron}: new IDE by Posit (RStudio makers), for R and Python
+  \item \textbf{Sublime Text}: fast, lightweight, highly customizable
+  \end{itemize}
+\vspace{8pt}
+\item Why use a general editor?
+  \begin{itemize}
+  \item Edit R, \LaTeX{}, Python, Makefiles in the same tool
+  \item Better project navigation and search
+  \item Customizable snippets and shortcuts
+  \end{itemize}
+\end{itemize}
+
+\end{frame}
+% ----------------------------------------------------
+\note{Most students in the course use RStudio, which is a perfectly good tool for R. But as they start working with LaTeX, Makefiles, and possibly Python, having a general-purpose editor becomes valuable. VS Code is currently the most popular editor and has excellent R support through extensions. Positron is a new option from the same company that makes RStudio, designed for both R and Python. Sublime Text is lightweight and fast. The key message is not ``stop using RStudio'' but ``be aware that other tools exist and might serve you better as your workflow becomes more complex.'' Emphasize that the choice of editor is personal --- what matters is being comfortable and productive with your tool.}
+
+% ----------------------------------------------------
+\begin{frame}
+\frametitle{The command line: basics}
+\centering
+
+\begin{itemize}[<+->]
+\item The command line is how you talk directly to your computer
+\vspace{8pt}
+\item Essential commands:
+  \begin{itemize}
+  \item \texttt{cd} --- change directory
+  \item \texttt{ls} --- list files
+  \item \texttt{pwd} --- print working directory
+  \item \texttt{mkdir} --- create a directory
+  \item \texttt{Rscript file.R} --- run an R script
+  \item \texttt{make} --- run a Makefile
+  \end{itemize}
+\vspace{8pt}
+\item You \textbf{already use it} for Git (\texttt{git add}, \texttt{git commit}, \texttt{git push})
+\item Terminal on Mac/Linux, Git Bash or WSL on Windows
+\end{itemize}
+
+\end{frame}
+% ----------------------------------------------------
+\note{Many students are intimidated by the command line, but they have already been using it for Git since Session 1. The goal here is not to turn them into command-line experts, but to make them comfortable with basic navigation and script execution. Being able to \texttt{cd} into a project folder and type \texttt{make} is all they need for the workflow we are teaching. The six commands listed here cover 90\% of what a social science researcher needs. For those who want to go deeper, point them to MIT's Missing Semester course (\texttt{missing.csail.mit.edu}) and Software Carpentry's Unix Shell lesson.}
+
+% ----------------------------------------------------
+\begin{frame}
+\centering
+\vspace{30pt}
+{\large How do you currently organize your R projects?\\\vspace{15pt}One script or many? How do you keep track of output?}
+\end{frame}
+% ----------------------------------------------------
+\note{Discussion prompt. This is a good moment to pause and let students share their current practices. Some will have one giant script, others will have started organizing into folders. Use their answers to connect back to the principles covered: separating tasks, naming files well, using output subfolders. This also helps calibrate the rest of the lecture: if most students are already using good practices, you can move faster; if most are struggling, spend more time on the basics.}
+
+% ====================================================
+\section{Version Control with Git}
+% ====================================================
+
+% ----------------------------------------------------
+\begin{frame}
+\frametitle{Git: recap from Session 1}
+\centering
+
+\begin{itemize}[<+->]
+\item You have been using Git since the first session
+\vspace{8pt}
+\item The basic workflow:
+  \begin{itemize}
+  \item \texttt{git add file.R} --- stage changes
+  \item \texttt{git commit -m "message"} --- save a snapshot
+  \item \texttt{git push} --- upload to GitHub
+  \item \texttt{git pull} --- download from GitHub
+  \end{itemize}
+\vspace{8pt}
+\item Today: going deeper into \textbf{good practices}
+\end{itemize}
+
+\end{frame}
+% ----------------------------------------------------
+\note{Quick recap of what students already know. By this point they should be comfortable with the basic add-commit-push cycle. Today we go deeper into the practices that make Git actually useful rather than just a backup tool. The three topics: .gitignore (what not to track), commit messages (how to write useful history), and GitHub for sharing replication materials.}
+
+% ----------------------------------------------------
+\begin{frame}
+\frametitle{The \texttt{.gitignore} file}
+\centering
+
+\vspace{5pt}
+
+\begin{columns}[T]
+\begin{column}{0.48\textwidth}
+{\footnotesize \textbf{\textcolor{accent}{Track (source files):}}}
+
+{\footnotesize
+\begin{itemize}
+\item R scripts (\texttt{.R})
+\item \LaTeX{} source (\texttt{.tex})
+\item Makefiles
+\item Documentation (\texttt{.md})
+\item Small data files (\texttt{.csv})
+\end{itemize}
+}
+\end{column}
+\begin{column}{0.48\textwidth}
+{\footnotesize \textbf{\red{Do NOT track:}}}
+
+{\footnotesize
+\begin{itemize}
+\item Generated output (\texttt{.pdf}, \texttt{.png})
+\item \LaTeX{} auxiliary files (\texttt{.aux}, \texttt{.log})
+\item Large data files
+\item System files (\texttt{.DS\_Store})
+\item Sensitive data
+\end{itemize}
+}
+\end{column}
+\end{columns}
+
+\vspace{12pt}
+
+{\footnotesize
+\begin{itemize}
+\item[] \texttt{.gitignore:}
+\item[] \texttt{*.pdf}
+\item[] \texttt{*.aux}
+\item[] \texttt{*.log}
+\item[] \texttt{.DS\_Store}
+\item[] \texttt{output/}
+\end{itemize}
+}
+
+\end{frame}
+% ----------------------------------------------------
+\note{The .gitignore file tells Git which files to ignore. The principle: track source files, not generated files. If a file can be reproduced by running a script, it does not need to be in Git. This keeps the repository small and clean. LaTeX auxiliary files (.aux, .log, .synctex.gz) are generated every time you compile and should always be ignored. Output folders (tables, figures) are generated by R scripts and should also be ignored. Large data files should not be in Git because Git is not designed for binary files and the repository will grow very quickly. System files like .DS\_Store (Mac) and Thumbs.db (Windows) should always be ignored. Show students the .gitignore from the workflow\_example project as a minimal example.}
+
+% ----------------------------------------------------
+\begin{frame}
+\frametitle{Good commit habits}
+\centering
+
+\begin{itemize}[<+->]
+\item Commit \textbf{often}, in small logical units
+  \begin{itemize}
+  \item Not: one commit per day with everything
+  \item Yes: one commit per completed task or fix
+  \end{itemize}
+\vspace{8pt}
+\item Write \textbf{meaningful commit messages}:
+  \begin{itemize}
+  \item \red{Bad}: \texttt{"update"}, \texttt{"changes"}, \texttt{"asdf"}
+  \item \textcolor{accent}{Good}: \texttt{"Add robust SE to main models"}
+  \item \textcolor{accent}{Good}: \texttt{"Fix merge bug in cleaning script"}
+  \end{itemize}
+\vspace{8pt}
+\item Your commit history is a \textbf{lab notebook}
+  \begin{itemize}
+  \item You should be able to reconstruct what you did and why
+  \end{itemize}
+\end{itemize}
+
+\end{frame}
+% ----------------------------------------------------
+\note{The commit message is the most underappreciated part of Git. Good messages make the history useful: you can look back and see when you added a feature, when you fixed a bug, and what the reasoning was. Bad messages (``update'', ``stuff'', ``final'') make the history useless. The rule of thumb: the message should complete the sentence ``This commit will...'' So ``Add robust SE to main models'' reads as ``This commit will add robust SE to main models.'' Committing often in small units means each commit is easy to understand and easy to revert if something goes wrong. One giant commit that changes 15 files is hard to review and hard to undo.}
+
+% ----------------------------------------------------
+\begin{frame}
+\frametitle{GitHub for replication materials}
+\centering
+
+\begin{itemize}[<+->]
+\item Journals increasingly require \textbf{replication packages}
+\vspace{8pt}
+\item GitHub is the standard platform for sharing code:
+  \begin{itemize}
+  \item Public repository with all scripts
+  \item README explaining how to reproduce results
+  \item Data (if shareable) or instructions to obtain it
+  \end{itemize}
+\vspace{8pt}
+\item Good examples in political science:
+  \begin{itemize}
+  \item Most published papers now have a GitHub repo
+  \item Look at how others structure their replication packages
+  \end{itemize}
+\vspace{8pt}
+\item Your \texttt{workflow\_example}-style project is already a replication package
+\end{itemize}
+
+\end{frame}
+% ----------------------------------------------------
+\note{The connection between project organization and replication: if your project is well-organized with separate task folders, a Makefile, and clear naming, it is already a replication package. You just need to push it to GitHub and add a README. Journals like the APSR, AJPS, and JOP now require replication materials as a condition of publication. Having good workflow habits from the start means you do not have to scramble to create a replication package after the paper is accepted. The README should explain: what software is needed, what data to download, and how to run the scripts (ideally just \texttt{make}). Point students to the workflow\_example repo as a minimal template they can adapt.}
+
+% ----------------------------------------------------
+\begin{frame}
+\frametitle{Collaboration with Git}
+\centering
+
+\begin{itemize}[<+->]
+\item Git was designed for collaboration
+\vspace{8pt}
+\item Basic collaboration workflow:
+  \begin{itemize}
+  \item Both collaborators clone the same repo
+  \item Each works on their own computer
+  \item \texttt{push} and \texttt{pull} to sync
+  \end{itemize}
+\vspace{8pt}
+\item \textbf{Merge conflicts}: when two people edit the same line
+  \begin{itemize}
+  \item Git asks you to resolve manually
+  \item Rare if you communicate and divide tasks well
+  \end{itemize}
+\vspace{8pt}
+\item Even for solo work: syncing between laptop and desktop
+\end{itemize}
+
+\end{frame}
+% ----------------------------------------------------
+\note{Briefly cover collaboration because some students will co-author papers or work on group projects. The basic model is simple: both people push to and pull from the same GitHub repository. Merge conflicts happen when two people edit the same part of the same file, which Git cannot resolve automatically. In practice, merge conflicts are rare if collaborators divide the work by files (one person works on the analysis script, another on the plots script). For solo researchers, Git is still useful for syncing between multiple computers --- much more reliable than Dropbox for code projects, because Dropbox can create conflicting copies of files. Do not go deep into branches and pull requests --- that is beyond the scope of this course.}
+
+% ====================================================
+\section{Wrap-up}
+% ====================================================
+
+% ----------------------------------------------------
+\begin{frame}
+\frametitle{Key resources}
+\centering
+
+\begin{itemize}
+\item Kieran Healy, \textit{The Plain Person's Guide to Plain Text Social Science}:
+  \begin{itemize}
+  \item \href{https://plain-text.co/}{\texttt{plain-text.co}}
+  \end{itemize}
+\vspace{8pt}
+\item MIT, \textit{The Missing Semester of Your CS Education}:
+  \begin{itemize}
+  \item \href{https://missing.csail.mit.edu/}{\texttt{missing.csail.mit.edu}}
+  \end{itemize}
+\vspace{8pt}
+\item Software Carpentry lessons (Unix Shell, Git):
+  \begin{itemize}
+  \item \href{https://software-carpentry.org/lessons/}{\texttt{software-carpentry.org/lessons}}
+  \end{itemize}
+\vspace{8pt}
+\item Bruno Rodrigues, \textit{Building Reproducible Analytical Pipelines with R}:
+  \begin{itemize}
+  \item \href{https://raps-with-r.dev/}{\texttt{raps-with-r.dev}}
+  \end{itemize}
+\vspace{8pt}
+\item Example project: \href{https://github.com/franvillamil/workflow_example}{\texttt{github.com/franvillamil/workflow\_example}}
+\end{itemize}
+
+\end{frame}
+% ----------------------------------------------------
+\note{These are all free online resources. Healy's guide is the most directly relevant: it covers plain text, LaTeX, R, Git, and project organization from a social science perspective. The MIT Missing Semester is broader (covers the command line, editors, scripting, and more) but extremely well taught. Software Carpentry has hands-on lessons designed for researchers with no programming background. Rodrigues' book covers reproducible pipelines in R specifically, including Makefiles, Docker, and functional programming. The workflow\_example repo is a minimal but complete example they can fork and adapt for their own projects.}
+
+% ----------------------------------------------------
+\begin{frame}
+\frametitle{Summary}
+\centering
+
+\begin{itemize}[<+->]
+\item \textbf{Organize}: separate tasks into folders, each with script + output
+\item \textbf{Automate}: use Makefiles to run the pipeline
+\item \textbf{Integrate}: R output feeds directly into \LaTeX{} documents
+\vspace{8pt}
+\item \textbf{Code well}: DRY, constants at the top, checks and assertions
+\item \textbf{Print diagnostics}: log what your scripts do
+\vspace{8pt}
+\item \textbf{Use plain text}: portable, versionable, scriptable
+\item \textbf{Use Git}: commit often, write good messages, share via GitHub
+\end{itemize}
+
+\end{frame}
+% ----------------------------------------------------
+\note{Recap the main messages. The overarching theme is: invest a little time in your workflow now, save a lot of time (and errors) later. None of these practices are difficult on their own; the challenge is building them into habits. Encourage students to start with one change (e.g., separate their next assignment into task folders) and gradually adopt more practices. By the end of the course, their final projects should follow the workflow\_example structure.}
+
+% ----------------------------------------------------
+\begin{frame}
+\frametitle{For next week}
+\centering
+
+\begin{itemize}
+\item Complete Assignment 5
+\vspace{8pt}
+\item Next session: Panel Data
+  \begin{itemize}
+  \item Fixed effects and within-group variation
+  \item The \texttt{fixest} package in R
+  \end{itemize}
+\end{itemize}
+
+\end{frame}
+% ----------------------------------------------------
+\note{Brief logistics. Assignment 5 will ask students to apply the computing practices from today: organize a small project with proper folder structure, write a Makefile, and use Git. Next week returns to methods content with panel data, which is one of the most important tools in applied social science. Students should review the basics of panel/longitudinal data structure before the session.}
+
+% ----------------------------------------------------
+\begin{frame}
+\frametitle{}
+\centering
+
+Questions?
+
+\end{frame}
+% ----------------------------------------------------
+\note{}
