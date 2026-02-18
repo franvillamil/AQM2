@@ -1,0 +1,266 @@
+\input{preamble.tex}
+\textbf{\large Assignment 4: Model Interpretation and Diagnostics}\\\vspace{10pt}
+\end{center}
+
+\vspace{10pt}
+\noindent
+\textbf{\large Instructions:}
+
+\vspace{10pt}
+\begin{itemize}
+\setlength\itemsep{0pt}
+  \item {\color{red}{\textbf{Deadline}}}: \textbf{March 5, before class}
+  \item Submit your work in a separate folder in your GitHub repository
+  \begin{itemize}
+    \item You can include only the R file or additional ones (e.g. pdf with results)
+  \end{itemize}
+  \item \textbf{Always use comments} in your R code -- and use them to answer questions
+  \item You are encouraged to work together, but each person must submit their own code
+  \item Plan is to start Part 1 in class and complete Part 2 at home
+  \item I'll upload a solution file to the website after next class
+\end{itemize}
+
+\vspace{20pt}
+\tableofcontents
+\newpage
+
+% ==========================================================================
+\section{Part 1: In-Class (Corruption and Wealth)}
+% ==========================================================================
+
+In this lab, we analyze the relationship between corruption and economic development using cross-country data. You will practice computing predicted values, marginal effects, and creating publication-quality tables and plots. Recall from the lecture that raw coefficients are rarely enough --- we need to compute \textbf{quantities of interest} to communicate results effectively.
+
+\subsection{Setup and data exploration}
+
+Download the data here:
+\begin{itemize}
+  \item \href{https://github.com/franvillamil/AQM2/tree/master/datasets/other}{github.com/franvillamil/AQM2/tree/master/datasets/other}
+\end{itemize}
+
+\begin{enumerate}[label=\alph*)]
+  \item Load the \code{corruption.dta} dataset using \code{readstata13::read.dta13()}. Key variables:
+  \begin{itemize}
+    \item \code{cname} --- country name
+    \item \code{ti\_cpi} --- Corruption Perceptions Index (0--10 scale, higher = less corrupt)
+    \item \code{undp\_gdp} --- GDP per capita (PPP, in dollars)
+  \end{itemize}
+  \item Drop observations with missing values on \code{ti\_cpi} or \code{undp\_gdp}. How many countries remain?
+  \item Compute summary statistics for \code{ti\_cpi} and \code{undp\_gdp}. In a comment, note the range and standard deviation of each variable. Is GDP per capita right-skewed?
+\end{enumerate}
+
+\subsection{Exploratory visualization}
+
+\begin{enumerate}[label=\alph*)]
+  \item Create a scatter plot of \code{ti\_cpi} (y-axis) against \code{undp\_gdp} (x-axis) using \code{geom\_point()}. Add a smooth line with \code{geom\_smooth(method = "lm")}.
+  \item In a comment, describe the pattern. Does the relationship look linear?
+  \item Now create a second scatter plot with \code{log(undp\_gdp)} on the x-axis. Does the log transformation improve the linearity of the relationship?
+\end{enumerate}
+
+\subsection{Bivariate regression}
+
+\begin{enumerate}[label=\alph*)]
+  \item Estimate a bivariate regression of corruption on GDP per capita: \\\code{m1 = lm(ti\_cpi \textasciitilde{} undp\_gdp, data = df)}.
+  \item Print the results using \code{summary()} or \code{broom::tidy()}. In a comment, interpret the coefficient on \code{undp\_gdp}. What is the predicted change in the corruption index for a \$10,000 increase in GDP per capita?
+  \item Compute the 25th and 75th percentiles of GDP per capita using \code{quantile()}.
+  Then use \code{predictions()} to get predicted corruption scores at these values:
+  \begin{lstlisting}
+library(marginaleffects)
+predictions(m1, newdata = datagrid(undp_gdp = c(q25, q75)))
+  \end{lstlisting}
+  In a comment, report the predicted values and their 95\% confidence intervals. What is the difference in predicted corruption between a country at the 25th percentile vs.\ the 75th percentile of GDP?
+\end{enumerate}
+
+\subsection{Non-linear specifications}
+
+\begin{enumerate}[label=\alph*)]
+  \item Estimate a model using the log of GDP per capita: \\\code{m2 = lm(ti\_cpi \textasciitilde{} log(undp\_gdp), data = df)}.
+  \item Interpret the coefficient on \code{log(undp\_gdp)}. Recall from the lecture that this is a level-log model: a 1\% increase in GDP is associated with a change of $\beta_1 / 100$ in the corruption index. In a comment, compute the predicted change in corruption for a \textbf{doubling} of GDP per capita (hint: $\log(2) \approx 0.693$, so the change is approximately $\beta_1 \times 0.693$).
+  \item Estimate a model with a quadratic GDP term: \\\code{m3 = lm(ti\_cpi \textasciitilde{} undp\_gdp + I(undp\_gdp\^{}2), data = df)}.
+  \item Compare the $R^2$ of all three models. Which specification fits the data best? In a comment, explain why a non-linear specification might be appropriate for this relationship.
+\end{enumerate}
+
+\subsection{Marginal effects}
+
+\begin{enumerate}[label=\alph*)]
+  \item For the log model (\code{m2}), compute the average marginal effect of GDP using: \\\code{avg\_slopes(m2, variables = "undp\_gdp")}.
+  \item In a comment, explain why the AME differs from the raw coefficient on \code{log(undp\_gdp)}. What does the AME tell you in substantive terms?
+  \item For the quadratic model (\code{m3}), compute marginal effects at specific GDP values using:
+  \begin{lstlisting}
+slopes(m3, variables = "undp_gdp",
+       newdata = datagrid(undp_gdp = c(2000, 10000, 30000)))
+  \end{lstlisting}
+  In a comment, describe how the marginal effect of GDP changes as countries become richer. Does the effect diminish?
+\end{enumerate}
+
+\subsection{Prediction plots}
+
+\begin{enumerate}[label=\alph*)]
+  \item Create a prediction plot for the log model: \\\code{plot\_predictions(m2, condition = "undp\_gdp")}. Save the plot.
+  \item Create a prediction plot for the quadratic model (\code{m3}) on the same variable. Save this plot too.
+  \item In a comment, compare the two plots. Do the models tell a similar story about the corruption--wealth relationship? Where do they diverge?
+\end{enumerate}
+
+\subsection{Residual diagnostics}
+
+\begin{enumerate}[label=\alph*)]
+  \item Use \code{broom::augment(m1)} to get residuals and fitted values from the level-level model. Create a scatter plot of residuals (\code{.resid}) vs.\ fitted values (\code{.fitted}). Does the plot suggest non-linearity or heteroskedasticity?
+  \item Now do the same for the log model (\code{m2}). Does the log transformation improve the residual pattern?
+  \item Identify influential observations using Cook's distance. Use \code{plot(m2, which = 4)} or compute Cook's distance manually with \code{cooks.distance(m2)}. Which countries (if any) have Cook's distance above $4/n$? Look up their names.
+  \item In a comment, discuss: should these influential observations be removed? What would you recommend as a robustness check?
+\end{enumerate}
+
+\subsection{Publication-quality table}
+
+\begin{enumerate}[label=\alph*)]
+  \item Create a regression table comparing all three models using:
+  \begin{lstlisting}
+library(modelsummary)
+modelsummary(
+  list("Level-Level" = m1, "Level-Log" = m2, "Quadratic" = m3),
+  vcov = "robust",
+  stars = TRUE,
+  gof_map = c("r.squared", "nobs"))
+  \end{lstlisting}
+  \item In a comment, summarize: which model would you choose for a final presentation, and why?
+\end{enumerate}
+
+\newpage
+
+% ==========================================================================
+\section{Part 2: Take-Home (Wealth and Infant Mortality)}
+% ==========================================================================
+
+We now turn to another cross-country question: the relationship between national income and infant mortality. This exercise asks you to build and compare multiple specifications, compute predicted values for specific scenarios, and create a publication-quality visualization.
+
+Download \code{infantmortality.dta} from:
+\begin{itemize}
+  \item \href{https://github.com/franvillamil/AQM2/tree/master/datasets/other}{github.com/franvillamil/AQM2/tree/master/datasets/other}
+\end{itemize}
+
+Key variables:
+\begin{itemize}
+  \item \code{country} --- country name
+  \item \code{region} --- world region (Africa, Americas, Asia and Oceania, Europe)
+  \item \code{income} --- per-capita income (dollars)
+  \item \code{infant} --- infant mortality rate (per 1,000 live births)
+  \item \code{oil} --- oil-exporting country (yes/no)
+\end{itemize}
+
+\subsection{Data exploration}
+
+\begin{enumerate}[label=\alph*)]
+  \item Load the dataset and print summary statistics for all variables. How many countries are in the data?
+  \item Create a histogram of \code{infant} and a histogram of \code{income}. Are either of them right-skewed?
+  \item Create a scatter plot of \code{infant} (y-axis) against \code{income} (x-axis), coloring points by \code{region}. Describe the relationship in a comment.
+  \item Create the same scatter plot but using \code{log(income)} on the x-axis and \code{log(infant)} on the y-axis. Does the log-log relationship look more linear?
+\end{enumerate}
+
+\subsection{Comparing specifications}
+
+\begin{enumerate}[label=\alph*)]
+  \item Estimate a level-level model: \\\code{m1 = lm(infant \textasciitilde{} income, data = df)}.
+  \item Estimate a log-log model: \\\code{m2 = lm(log(infant) \textasciitilde{} log(income), data = df)}.
+  \item Interpret the coefficient on income in each model:
+  \begin{itemize}
+    \item In \code{m1}: what is the predicted change in infant mortality for a \$1,000 increase in income?
+    \item In \code{m2}: recall that the log-log coefficient is an \textbf{elasticity}. What does it mean here? (e.g., ``A 10\% increase in income is associated with a \_\% change in infant mortality.'')
+  \end{itemize}
+  \item Create a residuals vs.\ fitted values plot for both models. Which specification has a better residual pattern? Discuss in a comment.
+\end{enumerate}
+
+\subsection{Multiple regression with controls}
+
+\begin{enumerate}[label=\alph*)]
+  \item Estimate a log-log model with controls for region and oil-exporting status: \\\code{m3 = lm(log(infant) \textasciitilde{} log(income) + region + oil, data = df)}.
+  \item Print the results. In a comment, interpret the coefficient on \code{log(income)}: does controlling for region and oil status change the income effect?
+  \item Interpret the coefficient on the Africa region indicator (relative to the reference category). What does it tell you about infant mortality in Africa, controlling for income?
+  \item Compute average marginal effects using \code{avg\_slopes(m3)}. Focus on the AME of \code{income} and report it in a comment.
+\end{enumerate}
+
+\subsection{Interaction: oil status and income}
+
+\begin{enumerate}[label=\alph*)]
+  \item Estimate a model with an interaction between oil status and log income: \\\code{m4 = lm(log(infant) \textasciitilde{} log(income) * oil + region, data = df)}.
+  \item Use \code{avg\_slopes(m4, variables = "income", by = "oil")} to compute the marginal effect of income separately for oil-exporting and non-oil countries.
+  \item In a comment, discuss: does the relationship between income and infant mortality differ for oil-exporting countries? What might explain this?
+  \item Plot how the marginal effect of income varies by oil status: \\\code{plot\_slopes(m4, variables = "income", condition = "oil")}. Save the plot.
+\end{enumerate}
+
+\subsection{Predicted values for specific scenarios}
+
+\begin{enumerate}[label=\alph*)]
+  \item Using model \code{m3} (without interaction), compute predicted infant mortality rates for:
+  \begin{itemize}
+    \item A non-oil African country with income = \$1,000
+    \item A non-oil European country with income = \$20,000
+    \item An oil-exporting country in the Americas with income = \$10,000
+  \end{itemize}
+  Use:
+  \begin{lstlisting}
+predictions(m3,
+  newdata = datagrid(
+    income = c(1000, 20000, 10000),
+    region = c("Africa", "Europe", "Americas"),
+    oil = c("no", "no", "yes")))
+  \end{lstlisting}
+  Note: since the outcome is \code{log(infant)}, you need to exponentiate the predictions to get infant mortality in the original scale. Use \code{exp()} on the \code{estimate} column.
+  \item In a comment, discuss the predicted values. Are they plausible? How large is the gap between the African and European scenarios?
+\end{enumerate}
+
+\subsection{Publication-quality visualization}
+
+\begin{enumerate}[label=\alph*)]
+  \item Create a prediction plot showing predicted infant mortality across income levels, separately by region:
+  \begin{lstlisting}
+plot_predictions(m3, condition = c("income", "region"))
+  \end{lstlisting}
+  Customize the plot to make it suitable for a general audience: add informative axis labels, a title, and use \code{theme\_minimal()} or similar. Save the plot.
+  \item In a comment (5--10 sentences), discuss: what does this plot tell a general audience about the relationship between wealth and infant mortality? What role does geography play? What are the main limitations of this analysis (e.g., omitted variables, reverse causality, ecological fallacy)?
+\end{enumerate}
+
+\subsection{Diagnostics and robust inference}
+
+\begin{enumerate}[label=\alph*)]
+  \item Create a residuals vs.\ fitted values plot for \code{m3}. Does the plot suggest heteroskedasticity?
+  \item Create a regression table comparing all four models with robust standard errors:
+  \begin{lstlisting}
+modelsummary(
+  list("Level" = m1, "Log-Log" = m2,
+       "Controls" = m3, "Interaction" = m4),
+  vcov = "robust",
+  stars = TRUE,
+  gof_map = c("r.squared", "nobs"))
+  \end{lstlisting}
+  \item Compare the robust and default standard errors for \code{m3}. Run \code{modelsummary()} with and without \code{vcov = "robust"}. Do the conclusions change? Why use robust SEs?
+\end{enumerate}
+
+\vspace{15pt}
+
+% ==========================================================================
+\section{Data Sources}
+% ==========================================================================
+
+Both datasets are available at the course GitHub repository:
+\begin{itemize}
+  \item Corruption data: \href{https://github.com/franvillamil/AQM2/tree/master/datasets/other}{github.com/franvillamil/AQM2/tree/master/datasets/other}\\(\code{corruption.dta})
+  \item Infant mortality data: same folder (\code{infantmortality.dta})
+\end{itemize}
+
+\vspace{15pt}
+
+% ==========================================================================
+\section{Submission}
+% ==========================================================================
+
+Commit your file to your GitHub repository before the deadline. Put it in a different folder, e.g. \texttt{assignment4}. Make sure your repository is public so I can access it.
+
+Your R script should:
+\begin{itemize}
+  \item Be well-organized with clear section headers (using comments)
+  \item Include all code needed to reproduce your analysis
+  \item Include your answers and interpretations as comments
+  \item Save any plots to files (e.g., using \code{ggsave()})
+  \item Run without errors from top to bottom
+\end{itemize}
+
+\end{document}

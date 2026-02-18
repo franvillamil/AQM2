@@ -1,0 +1,828 @@
+% ----------------------------------------------------
+\begin{frame}
+  \titlepage
+\end{frame}
+% ----------------------------------------------------
+\note{}
+
+% ----------------------------------------------------
+\begin{frame}
+\frametitle{Today's goals}
+\centering
+
+\begin{itemize}[<+->]
+\item Move beyond coefficient tables to meaningful quantities
+\item Compute and plot predicted values, marginal effects, and first differences
+\item Present results with publication-quality tables and coefficient plots
+\item Understand simulation-based uncertainty
+\item Diagnose common regression problems: heteroskedasticity, non-linearity
+\end{itemize}
+
+\end{frame}
+% ----------------------------------------------------
+\note{This session bridges estimation and communication. Last week we saw that logit coefficients are hard to interpret and learned to use marginal effects and predicted probabilities. Today we generalize that lesson: even in OLS, raw coefficients are often not the best way to communicate results. We'll learn a toolkit for computing and presenting quantities of interest, plus some basic diagnostics to check whether our model assumptions hold.}
+
+% ====================================================
+\section{Beyond Coefficient Tables}
+% ====================================================
+
+% ----------------------------------------------------
+\begin{frame}
+\frametitle{The interpretation problem}
+\centering
+
+\begin{itemize}[<+->]
+\item We know how to estimate models and read output
+\item But what do the numbers actually \textbf{mean}?
+\vspace{8pt}
+\item Raw coefficients are often not directly informative:
+  \begin{itemize}
+  \item Logit: coefficients are in log-odds (last week)
+  \item Interactions: the coefficient on $X_1$ depends on $X_2$
+  \item Log transformations: coefficients are elasticities or semi-elasticities
+  \item Different scales: is $\hat{\beta} = 0.003$ big or small?
+  \end{itemize}
+\end{itemize}
+
+\end{frame}
+% ----------------------------------------------------
+\note{Start by recapping the lesson from last week's logit discussion: raw coefficients in log-odds are meaningless to a general audience. But the same problem applies to OLS in many cases. When you have interaction terms, the ``main effect'' coefficient only applies when the other variable is zero, which may not even be in the data. When variables are on different scales, comparing coefficient magnitudes is misleading. The solution is to compute quantities that have direct substantive meaning.}
+
+% ----------------------------------------------------
+\begin{frame}
+\frametitle{Coefficients vs.\ quantities of interest}
+\centering
+
+\vspace{10pt}
+
+\begin{tikzpicture}[
+  box/.style={draw, rounded corners, minimum width=3.2cm, minimum height=1cm, align=center, font=\small},
+  arrow/.style={->, thick, accent}
+]
+  % Left: what we estimate
+  \node[box, fill=accent!10] (coef) at (0,0) {Coefficients\\$\hat{\beta}_0, \hat{\beta}_1, \ldots$};
+  % Right: what we want
+  \node[box, fill=accent2!10] (pred) at (6,1.5) {Predicted values\\$E[Y \mid X]$};
+  \node[box, fill=accent2!10] (me) at (6,0) {Marginal effects\\$\partial E[Y] / \partial X$};
+  \node[box, fill=accent2!10] (fd) at (6,-1.5) {First differences\\$E[Y \mid X_1] - E[Y \mid X_0]$};
+  % Arrows
+  \draw[arrow] (coef) -- (pred);
+  \draw[arrow] (coef) -- (me);
+  \draw[arrow] (coef) -- (fd);
+  % Labels
+  \node[above, font=\footnotesize, accent] at (0,0.7) {What we estimate};
+  \node[above, font=\footnotesize, accent2] at (6,2.2) {What we communicate};
+\end{tikzpicture}
+
+\end{frame}
+% ----------------------------------------------------
+\note{This diagram captures the key idea of the lecture. Coefficients are the raw output of estimation, but they are rarely the end product. What readers and audiences care about are quantities of interest: predicted values (what does the model predict for a specific scenario?), marginal effects (how much does the outcome change when a predictor changes?), and first differences (how different are two scenarios?). All three are computed from the coefficients, but they present the information in a more interpretable way. The marginaleffects package in R makes all three easy to compute.}
+
+% ----------------------------------------------------
+\begin{frame}
+\centering
+\vspace{30pt}
+{\large You estimate a model with GDP (in dollars), population (in millions), and an interaction between them.\\\vspace{15pt}What does the coefficient on GDP tell you?}
+\end{frame}
+% ----------------------------------------------------
+\note{Discussion prompt. The answer: the coefficient on GDP gives the effect of GDP when population equals zero, which is meaningless. With interactions, the ``main effect'' is conditional on the other variable being at zero. And the scale issue: GDP in dollars produces tiny coefficients, population in millions produces large ones. You can't compare them directly. This motivates the need for predicted values and marginal effects that account for the full model structure.}
+
+% ====================================================
+\section{Predicted Values and Marginal Effects}
+% ====================================================
+
+% ----------------------------------------------------
+\begin{frame}
+\frametitle{Predicted values: $E[Y \mid X]$}
+\centering
+
+\begin{itemize}[<+->]
+\item The most intuitive quantity: ``What does the model predict for this scenario?''
+\vspace{8pt}
+\item Set predictors to specific values, compute $\hat{Y}$
+\item Example: ``What is predicted income for a 35-year-old with a college degree?''
+\vspace{8pt}
+\item In R:
+  \begin{itemize}
+  \item \texttt{predictions(model)}
+  \item \texttt{predictions(model, newdata = datagrid(age = 35, college = 1))}
+  \end{itemize}
+\end{itemize}
+
+\end{frame}
+% ----------------------------------------------------
+\note{Predicted values are the most direct way to interpret any model. You plug in values for the predictors and see what the model outputs. This works for OLS, logit, or any other model. The \texttt{predictions()} function from the marginaleffects package computes predictions with standard errors and confidence intervals. Without \texttt{newdata}, it returns predictions for every observation in the data. With \texttt{datagrid()}, you can specify hypothetical profiles. The function handles all the math, including the delta method for standard errors.}
+
+% ----------------------------------------------------
+\begin{frame}
+\frametitle{Plotting predictions}
+\centering
+
+\begin{itemize}[<+->]
+\item The gold standard for communicating model results
+\vspace{8pt}
+\item \texttt{plot\_predictions(model, condition = "age")}
+  \begin{itemize}
+  \item Shows $\hat{Y}$ across values of \texttt{age}
+  \item Includes 95\% confidence band
+  \item Holds other variables at their means (or modes)
+  \end{itemize}
+\vspace{8pt}
+\item With two conditions:
+  \begin{itemize}
+  \item \texttt{plot\_predictions(model, condition = c("age", "female"))}
+  \item Separate lines/panels for each group
+  \end{itemize}
+\end{itemize}
+
+\end{frame}
+% ----------------------------------------------------
+\note{Prediction plots are the single most effective way to communicate regression results to any audience. A line showing how predicted income changes with age is immediately understandable, whereas a coefficient table requires statistical training to parse. The \texttt{plot\_predictions()} function produces ggplot2 objects, so you can customize them further with standard ggplot2 syntax. Emphasize that the confidence band reflects uncertainty in the regression line (not prediction intervals for individual observations). When you use two conditions, you effectively visualize an interaction.}
+
+% ----------------------------------------------------
+\begin{frame}
+\frametitle{Marginal effects}
+\centering
+
+\vspace{10pt}
+
+$$\text{Marginal effect of } X_1 = \frac{\partial E[Y \mid X]}{\partial X_1}$$
+
+\vspace{10pt}
+
+\begin{itemize}[<+->]
+\item ``How much does $Y$ change for a small change in $X_1$?''
+\vspace{8pt}
+\item For OLS without interactions: marginal effect $= \hat{\beta}_1$ (constant)
+\item For logit, interactions, polynomials: marginal effect \textbf{varies}
+\vspace{8pt}
+\item \textbf{Average marginal effect (AME)}: average across all observations
+  \begin{itemize}
+  \item \texttt{avg\_slopes(model)}
+  \end{itemize}
+\end{itemize}
+
+\end{frame}
+% ----------------------------------------------------
+\note{The marginal effect is the derivative of the predicted value with respect to a predictor. For a simple OLS model $Y = \beta_0 + \beta_1 X$, the marginal effect is just $\beta_1$, everywhere. But as soon as you introduce interactions ($Y = \beta_0 + \beta_1 X_1 + \beta_2 X_2 + \beta_3 X_1 X_2$), the marginal effect of $X_1$ becomes $\beta_1 + \beta_3 X_2$, which depends on $X_2$. For logit, the marginal effect depends on all predictors (as we saw last week). The AME averages the observation-specific marginal effects across the sample, giving a single summary number.}
+
+% ----------------------------------------------------
+\begin{frame}
+\frametitle{Marginal effects with interactions}
+\centering
+
+\vspace{5pt}
+
+{\small $Y = \beta_0 + \beta_1 \text{Education} + \beta_2 \text{Female} + \beta_3 (\text{Education} \times \text{Female}) + \varepsilon$}
+
+\vspace{15pt}
+
+\begin{tikzpicture}[scale=0.75]
+  % Axes
+  \draw[->, thick] (0,0) -- (10,0) node[right] {\small Education};
+  \draw[->, thick] (0,0) -- (0,6) node[above] {\small $\hat{Y}$};
+  % Line for Male (Female = 0): slope = beta_1
+  \draw[accent, very thick] (0.5,1) -- (9,3.5);
+  \node[accent, right] at (9,3.5) {\small Male};
+  % Line for Female (Female = 1): slope = beta_1 + beta_3
+  \draw[accent2, very thick] (0.5,0.5) -- (9,5);
+  \node[accent2, right] at (9,5) {\small Female};
+  % Annotation
+  \draw[<->, thick, jet] (7,2.9) -- (7,4.3);
+  \node[jet, right, font=\footnotesize] at (7.1,3.6) {Gap varies};
+\end{tikzpicture}
+
+\vspace{5pt}
+
+\begin{itemize}
+\item ME of Education for males: $\beta_1$
+\item ME of Education for females: $\beta_1 + \beta_3$
+\end{itemize}
+
+\end{frame}
+% ----------------------------------------------------
+\note{This is the classic case where reporting just the coefficient on Education is misleading. The coefficient $\beta_1$ is only the effect for males (Female = 0). For females, the effect is $\beta_1 + \beta_3$. Neither the coefficient on Education nor the coefficient on the interaction alone tells you the full story. You need to compute marginal effects at specific values of Female. The plot makes this clear: the slopes differ. Using \texttt{avg\_slopes(model, variables = "education", by = "female")} gives you the marginal effect separately for each group.}
+
+% ----------------------------------------------------
+\begin{frame}
+\frametitle{Conditional marginal effects in R}
+\centering
+
+\begin{itemize}[<+->]
+\item Marginal effect of $X_1$ at specific values of $X_2$:
+  \begin{itemize}
+  \item \texttt{slopes(model, variables = "education",}\\
+  \texttt{\hspace{30pt}newdata = datagrid(female = c(0, 1)))}
+  \end{itemize}
+\vspace{8pt}
+\item Plot how the marginal effect varies:
+  \begin{itemize}
+  \item \texttt{plot\_slopes(model, variables = "education",}\\
+  \texttt{\hspace{30pt}condition = "female")}
+  \end{itemize}
+\vspace{8pt}
+\item This replaces the old manual approach of computing $\beta_1 + \beta_3 \cdot X_2$ by hand
+\end{itemize}
+
+\end{frame}
+% ----------------------------------------------------
+\note{The \texttt{slopes()} function computes marginal effects at specific predictor values. Combined with \texttt{datagrid()}, you can evaluate the effect at any combination of covariate values. The \texttt{plot\_slopes()} function visualizes how the marginal effect changes across the conditioning variable, with confidence intervals. This is especially useful for continuous-by-continuous interactions, where the effect of $X_1$ varies smoothly across values of $X_2$. Emphasize that this replaces the tedious and error-prone approach of manually combining coefficients and computing standard errors with the delta method.}
+
+% ----------------------------------------------------
+\begin{frame}
+\frametitle{First differences (comparisons)}
+\centering
+
+\begin{itemize}[<+->]
+\item ``How different is $\hat{Y}$ between two scenarios?''
+\vspace{8pt}
+\item Example: predicted income for college vs.\ no college
+  \begin{itemize}
+  \item $\Delta = E[Y \mid \text{college} = 1] - E[Y \mid \text{college} = 0]$
+  \end{itemize}
+\vspace{8pt}
+\item In R:
+  \begin{itemize}
+  \item \texttt{comparisons(model, variables = list(college = c(0, 1)))}
+  \item \texttt{avg\_comparisons(model, variables = "college")}
+  \end{itemize}
+\vspace{8pt}
+\item Especially useful for:
+  \begin{itemize}
+  \item Binary/categorical predictors
+  \item Comparing meaningful scenarios (e.g., min vs.\ max)
+  \end{itemize}
+\end{itemize}
+
+\end{frame}
+% ----------------------------------------------------
+\note{First differences answer the most natural research question: ``How much does the outcome change when we move from one scenario to another?'' For a binary predictor like college, the first difference is the predicted gap between college-educated and non-college-educated individuals, averaged across all other characteristics. The \texttt{comparisons()} function computes this with proper uncertainty. You can also define custom comparisons: \texttt{variables = list(age = c(25, 65))} gives you the predicted difference between 25-year-olds and 65-year-olds. This is far more informative than saying ``the coefficient on age is 0.003.''}
+
+% ----------------------------------------------------
+\begin{frame}
+\frametitle{Choosing the right quantity}
+\centering
+
+\vspace{10pt}
+
+{\footnotesize
+\begin{tabular}{lll}
+\hline
+\textbf{Quantity} & \textbf{Question} & \textbf{R function} \\
+\hline
+Predicted value & What does the model predict here? & \texttt{predictions()} \\
+Marginal effect & How much does $Y$ change per unit of $X$? & \texttt{slopes()} \\
+Average ME & What is the average effect across the sample? & \texttt{avg\_slopes()} \\
+First difference & How different are two scenarios? & \texttt{comparisons()} \\
+\hline
+\end{tabular}
+}
+
+\vspace{15pt}
+
+\begin{itemize}[<+->]
+\item All from the \texttt{marginaleffects} package (Arel-Bundock et al.)
+\item All compute standard errors and CIs automatically
+\item All work with \texttt{lm()}, \texttt{glm()}, and many other model types
+\end{itemize}
+
+\end{frame}
+% ----------------------------------------------------
+\note{This is a reference slide that students can come back to. The marginaleffects package provides a unified interface for all these quantities. The key insight: you don't need to know the formula for the delta method or how to compute standard errors for nonlinear transformations. The package handles everything. Emphasize the consistency: the same functions work regardless of whether you're using OLS, logit, or other models. The package documentation (the Arel-Bundock, Greifer, and Heiss online book) is excellent and has many worked examples.}
+
+% ====================================================
+\section{Presenting Results}
+% ====================================================
+
+% ----------------------------------------------------
+\begin{frame}
+\frametitle{Publication-quality tables with \texttt{modelsummary()}}
+\centering
+
+\begin{itemize}[<+->]
+\item We already know \texttt{modelsummary()} from Session 2
+\vspace{8pt}
+\item Key options:
+  \begin{itemize}
+  \item \texttt{stars = TRUE} for significance stars
+  \item \texttt{vcov = "robust"} for robust SEs
+  \item \texttt{coef\_rename} to clean up variable names
+  \item \texttt{gof\_map} to select goodness-of-fit statistics
+  \end{itemize}
+\vspace{8pt}
+\item Multiple models side by side:
+  \begin{itemize}
+  \item \texttt{modelsummary(list("OLS" = m1, "Logit" = m2))}
+  \end{itemize}
+\vspace{8pt}
+\item Output to LaTeX, Word, HTML, or the console
+\end{itemize}
+
+\end{frame}
+% ----------------------------------------------------
+\note{Quick recap since they've seen modelsummary before. The main new points: (1) \texttt{coef\_rename} takes a named vector to replace ugly variable names with readable ones, e.g., \texttt{c("educ\_years" = "Education (years)")}. (2) \texttt{gof\_map} lets you choose which fit statistics appear at the bottom (e.g., drop AIC/BIC, keep N and $R^2$). (3) You can pass a named list of models to compare specifications side by side. (4) \texttt{output = "latex"} produces a LaTeX table you can paste directly into a paper. These are the things that save you from spending hours formatting tables manually.}
+
+% ----------------------------------------------------
+\begin{frame}
+\frametitle{Coefficient plots with \texttt{modelplot()}}
+\centering
+
+\begin{itemize}[<+->]
+\item Visual alternative to coefficient tables
+\vspace{8pt}
+\item \texttt{modelplot(model)}
+  \begin{itemize}
+  \item Point = estimate, line = 95\% CI
+  \item Vertical line at zero = ``no effect''
+  \end{itemize}
+\vspace{8pt}
+\item When are coefficient plots better than tables?
+  \begin{itemize}
+  \item Many predictors
+  \item Comparing across model specifications
+  \item Audience that finds tables intimidating
+  \end{itemize}
+\vspace{8pt}
+\item \texttt{modelplot(list("Model 1" = m1, "Model 2" = m2))}
+\end{itemize}
+
+\end{frame}
+% ----------------------------------------------------
+\note{Coefficient plots (also called forest plots or dot-and-whisker plots) show the same information as a regression table, but in visual form. The key advantage: you can immediately see which coefficients are statistically different from zero (their CI doesn't cross the vertical line), and you can compare magnitudes visually. The key limitation: they work well when variables are on comparable scales, but can be misleading when one variable has a tiny coefficient and another has a huge one. Remind students that \texttt{modelplot()} returns a ggplot2 object, so you can customize it with \texttt{+ theme()}, \texttt{+ labs()}, etc.}
+
+% ----------------------------------------------------
+\begin{frame}
+\frametitle{Prediction plots: the gold standard}
+\centering
+
+\vspace{10pt}
+
+\begin{tikzpicture}[scale=0.75]
+  % Axes
+  \draw[->, thick] (0,0) -- (10,0) node[right] {\small $X$};
+  \draw[->, thick] (0,0) -- (0,6) node[above] {\small $\hat{Y}$};
+  % Confidence band (shaded)
+  \fill[accent, opacity=0.15] (0.5,1.3) -- (9,4.3) -- (9,3.3) -- (0.5,0.7) -- cycle;
+  % Regression line
+  \draw[accent, very thick] (0.5,1) -- (9,3.8);
+  % Rug/tick marks at bottom
+  \foreach \x in {1,1.5,2,2.3,3,3.5,4,4.2,5,5.5,6,6.3,7,7.5,8,8.5} {
+    \draw[asher, thin] (\x,0) -- (\x,0.15);
+  }
+  % Labels
+  \node[accent, font=\footnotesize] at (5,5) {95\% CI};
+  \draw[->, accent, thin] (5,4.8) -- (6.5,3.9);
+\end{tikzpicture}
+
+\vspace{5pt}
+
+\begin{itemize}
+\item Shows the \textbf{full relationship}, not just one number
+\item Any audience can read it
+\item \texttt{plot\_predictions(model, condition = "x")}
+\end{itemize}
+
+\end{frame}
+% ----------------------------------------------------
+\note{This schematic illustrates what a prediction plot looks like. The line shows the predicted value of $Y$ across values of $X$, and the shaded band shows the uncertainty. This is far more informative than a single coefficient because it shows the relationship over the entire range of the data. The rug marks at the bottom show where the actual data points are, which helps the reader gauge where the predictions are well-supported and where they're extrapolating. Emphasize that \texttt{plot\_predictions()} does all of this automatically, including computing the confidence intervals using the delta method.}
+
+% ----------------------------------------------------
+\begin{frame}
+\frametitle{Tables vs.\ plots: when to use which}
+\centering
+
+\vspace{10pt}
+
+{\footnotesize
+\begin{tabular}{lcc}
+\hline
+ & \textbf{Table} & \textbf{Plot} \\
+\hline
+Exact numbers needed & $\checkmark$ & \\
+Many models side by side & $\checkmark$ & \\
+Conveying one key relationship & & $\checkmark$ \\
+Non-specialist audience & & $\checkmark$ \\
+Interactions / non-linearities & & $\checkmark$ \\
+Appendix / robustness checks & $\checkmark$ & \\
+\hline
+\end{tabular}
+}
+
+\vspace{15pt}
+
+\begin{itemize}[<+->]
+\item Best practice: prediction plots in the main text, tables in the appendix
+\item Both are easy to produce with \texttt{modelsummary} and \texttt{marginaleffects}
+\end{itemize}
+
+\end{frame}
+% ----------------------------------------------------
+\note{This is practical advice for writing papers and presentations. The trend in top journals is toward more visualization and fewer dense tables. A prediction plot in the main text, accompanied by a full regression table in the appendix, is the current best practice. For a presentation or policy brief, prediction plots are almost always better than tables. For a journal article, you typically need both: plots for the main results, tables for the full specification details. Coefficient tables are still necessary for transparency and replication, but they shouldn't be the primary way you communicate your findings.}
+
+% ----------------------------------------------------
+\begin{frame}
+\frametitle{Simulation-based uncertainty}
+\centering
+
+\begin{itemize}[<+->]
+\item All quantities of interest have \textbf{uncertainty}
+\item Standard approach: delta method (what marginaleffects uses)
+\vspace{8pt}
+\item Alternative: \textbf{simulation}
+  \begin{itemize}
+  \item Draw $\tilde{\beta}$ from $N(\hat{\beta}, \hat{V})$ many times
+  \item Compute the quantity of interest for each draw
+  \item Use the distribution of results as the uncertainty estimate
+  \end{itemize}
+\vspace{8pt}
+\item Why simulate?
+  \begin{itemize}
+  \item Works for any quantity, no matter how complex
+  \item Easy to combine multiple quantities
+  \item Confidence intervals are automatic
+  \end{itemize}
+\end{itemize}
+
+\end{frame}
+% ----------------------------------------------------
+\note{The simulation approach is conceptually simple: (1) your estimated coefficients have a sampling distribution, approximately $N(\hat{\beta}, \hat{V})$; (2) draw many sets of coefficients from this distribution; (3) for each draw, compute whatever quantity you care about (predicted value, marginal effect, first difference, etc.); (4) the distribution of computed quantities gives you the uncertainty. This is the approach advocated by King, Tomz, and Wittenberg (2000) and implemented in the original Clarify package for Stata. The marginaleffects package uses the delta method by default, which is faster and usually equivalent, but simulation is more flexible for complex quantities.}
+
+% ----------------------------------------------------
+\begin{frame}
+\frametitle{Simulation: the logic}
+\centering
+
+\vspace{5pt}
+
+\begin{tikzpicture}[
+  box/.style={draw, rounded corners, minimum width=3cm, minimum height=0.9cm, align=center, font=\footnotesize},
+  arrow/.style={->, thick, accent}
+]
+  % Step 1
+  \node[box, fill=accent!10] (est) at (0,3) {Estimate model\\$\hat{\beta}, \hat{V}$};
+  % Step 2
+  \node[box, fill=accent!10] (draw) at (0,1.2) {Draw $\tilde{\beta}^{(s)}$ from\\$N(\hat{\beta}, \hat{V})$, $s = 1, \ldots, S$};
+  % Step 3
+  \node[box, fill=accent!10] (compute) at (0,-0.6) {For each draw, compute\\quantity of interest $Q^{(s)}$};
+  % Step 4
+  \node[box, fill=accent2!10] (result) at (0,-2.4) {Use distribution of\\$Q^{(1)}, \ldots, Q^{(S)}$};
+  % Arrows
+  \draw[arrow] (est) -- (draw);
+  \draw[arrow] (draw) -- (compute);
+  \draw[arrow] (compute) -- (result);
+  % Right side annotations
+  \node[right, font=\scriptsize, asher] at (2.2,3) {\texttt{m = lm(y \textasciitilde{} x, data = df)}};
+  \node[right, font=\scriptsize, asher] at (2.2,1.2) {\texttt{sim\_betas = MASS::mvrnorm(1000, coef(m), vcov(m))}};
+  \node[right, font=\scriptsize, asher] at (2.2,-0.6) {\texttt{sim\_pred = sim\_betas \%*\% x\_scenario}};
+  \node[right, font=\scriptsize, asher] at (2.2,-2.4) {\texttt{quantile(sim\_pred, c(0.025, 0.975))}};
+\end{tikzpicture}
+
+\end{frame}
+% ----------------------------------------------------
+\note{Walk through the four steps with the R code on the right. Step 1: estimate the model as usual. Step 2: draw many sets of coefficients from the multivariate normal defined by the estimated coefficients and variance-covariance matrix. \texttt{MASS::mvrnorm()} does this. Step 3: for each drawn set of coefficients, compute whatever quantity you care about --- here, a predicted value for a specific scenario. Step 4: the 2.5th and 97.5th percentiles of the simulated quantities give you a 95\% confidence interval. This is equivalent to the delta method for simple quantities but extends to arbitrarily complex ones. For most practical purposes, the marginaleffects package handles uncertainty automatically, but understanding the simulation approach helps you build intuition about what confidence intervals actually mean.}
+
+% ----------------------------------------------------
+\begin{frame}
+\frametitle{Worked example: predicted values with uncertainty}
+\centering
+
+\vspace{5pt}
+
+{\footnotesize
+\begin{itemize}
+\item[] \texttt{m = lm(income \textasciitilde{} age + education + female, data = df)}
+\item[]
+\item[] \texttt{\# Using marginaleffects (delta method)}
+\item[] \texttt{predictions(m, newdata = datagrid(age = 40, education = 16, female = 1))}
+\item[]
+\item[] \texttt{\# Using simulation}
+\item[] \texttt{library(MASS)}
+\item[] \texttt{sim\_b = mvrnorm(1000, coef(m), vcov(m))}
+\item[] \texttt{x = c(1, 40, 16, 1)  \# intercept, age, educ, female}
+\item[] \texttt{sim\_pred = sim\_b \%*\% x}
+\item[] \texttt{quantile(sim\_pred, c(0.025, 0.5, 0.975))}
+\end{itemize}
+}
+
+\vspace{8pt}
+
+\begin{itemize}
+\item Both approaches give (nearly) identical results
+\end{itemize}
+
+\end{frame}
+% ----------------------------------------------------
+\note{This worked example shows both approaches side by side. The marginaleffects approach is much shorter and should be the default in practice. The simulation approach is shown for pedagogical purposes: it makes explicit what is happening ``under the hood'' when we compute standard errors for predicted values. The two approaches will give nearly identical results for linear models and simple quantities. For complex nonlinear quantities (e.g., the ratio of two predicted values), the simulation approach may be more reliable because the delta method relies on a linear approximation. In practice, use marginaleffects; understand simulation so you know what the numbers mean.}
+
+% ====================================================
+\section{Diagnostics}
+% ====================================================
+
+% ----------------------------------------------------
+\begin{frame}
+\frametitle{What can go wrong?}
+\centering
+
+\begin{itemize}[<+->]
+\item OLS assumes:
+  \begin{itemize}
+  \item Linear relationship between $X$ and $E[Y]$
+  \item Constant error variance (\textbf{homoskedasticity})
+  \item No extreme outliers driving results
+  \end{itemize}
+\vspace{8pt}
+\item When these fail:
+  \begin{itemize}
+  \item Coefficients may be biased (non-linearity)
+  \item Standard errors may be wrong (heteroskedasticity)
+  \item Results may be driven by a few observations (outliers)
+  \end{itemize}
+\vspace{8pt}
+\item How do we check? \textbf{Residual diagnostics}
+\end{itemize}
+
+\end{frame}
+% ----------------------------------------------------
+\note{This section covers the basics of regression diagnostics. We're not going deep into the theory --- the goal is practical awareness. Students should know (1) what to check, (2) how to spot problems, and (3) what to do about them. The three issues we focus on are heteroskedasticity (wrong SEs), non-linearity (biased coefficients), and influential observations (fragile results). All three can be diagnosed visually using residual plots.}
+
+% ----------------------------------------------------
+\begin{frame}
+\frametitle{Residuals vs.\ fitted values}
+\centering
+
+\vspace{5pt}
+
+\begin{tikzpicture}[scale=0.7]
+  % Left plot: good
+  \begin{scope}[xshift=0cm]
+    \draw[->, thick] (-0.3,0) -- (5,0) node[right] {\scriptsize $\hat{Y}$};
+    \draw[->, thick] (0,-2.5) -- (0,2.5) node[above] {\scriptsize $e$};
+    \draw[dashed, gray] (0,0) -- (5,0);
+    \node[above, font=\small\bfseries, accent] at (2.5,2.5) {Good};
+    % Random scatter
+    \foreach \x/\y in {0.5/0.3, 0.8/-0.5, 1.2/0.7, 1.5/-0.2, 1.8/0.4, 2.0/-0.8, 2.3/0.1, 2.8/-0.3, 3.0/0.6, 3.3/-0.5, 3.5/0.2, 3.8/-0.7, 4.0/0.5, 4.3/-0.1, 4.5/0.3} {
+      \fill[accent, opacity=0.6] (\x,\y) circle (2.5pt);
+    }
+  \end{scope}
+  % Right plot: bad (funnel)
+  \begin{scope}[xshift=7cm]
+    \draw[->, thick] (-0.3,0) -- (5,0) node[right] {\scriptsize $\hat{Y}$};
+    \draw[->, thick] (0,-2.5) -- (0,2.5) node[above] {\scriptsize $e$};
+    \draw[dashed, gray] (0,0) -- (5,0);
+    \node[above, font=\small\bfseries, accent2] at (2.5,2.5) {Heteroskedasticity};
+    % Funnel pattern
+    \foreach \x/\y in {0.5/0.1, 0.8/-0.15, 1.0/0.2, 1.3/-0.1, 1.5/0.3, 1.8/-0.4, 2.0/0.5, 2.3/-0.6, 2.5/0.7, 2.8/-0.8, 3.0/1.0, 3.3/-1.1, 3.5/1.3, 3.8/-1.5, 4.2/1.8, 4.5/-2.0} {
+      \fill[accent2, opacity=0.6] (\x,\y) circle (2.5pt);
+    }
+    % Funnel lines
+    \draw[accent2, dashed, thin] (0.3,0.05) -- (4.5,2.1);
+    \draw[accent2, dashed, thin] (0.3,-0.05) -- (4.5,-2.1);
+  \end{scope}
+\end{tikzpicture}
+
+\vspace{10pt}
+
+\begin{itemize}
+\item In R: \texttt{plot(model, which = 1)}
+\item Look for patterns: funnel shape, curves, clusters
+\end{itemize}
+
+\end{frame}
+% ----------------------------------------------------
+\note{The residuals vs.\ fitted values plot is the single most useful diagnostic. On the left: what you want to see --- a random cloud of points with no discernible pattern, centered around zero. This means the model's assumptions are approximately satisfied. On the right: a funnel (or fan) shape, where the spread of residuals increases with the fitted value. This is the classic signature of heteroskedasticity: the error variance is not constant. In R, \texttt{plot(model, which = 1)} produces this automatically. Other patterns to watch for: a curved pattern (non-linearity) or a cluster of points far from the rest (outliers).}
+
+% ----------------------------------------------------
+\begin{frame}
+\frametitle{Heteroskedasticity}
+\centering
+
+\begin{itemize}[<+->]
+\item \textbf{Heteroskedasticity}: $\text{Var}(\varepsilon \mid X)$ is not constant
+\vspace{8pt}
+\item Consequences:
+  \begin{itemize}
+  \item Coefficients are still unbiased
+  \item But standard errors are \textbf{wrong}
+  \item So confidence intervals and p-values are unreliable
+  \end{itemize}
+\vspace{8pt}
+\item Very common in practice:
+  \begin{itemize}
+  \item Income models (richer countries, more variance)
+  \item Any outcome with natural bounds
+  \item Binary outcomes (always heteroskedastic, as in LPM)
+  \end{itemize}
+\end{itemize}
+
+\end{frame}
+% ----------------------------------------------------
+\note{Heteroskedasticity is probably the most common violation of OLS assumptions in social science data. The word means ``different variance'' (hetero = different, skedastic = scatter). The key practical consequence: your coefficients are fine, but your standard errors are wrong. This means you might think an effect is significant when it isn't, or vice versa. The good news: there's a simple fix. The bad news: the standard \texttt{lm()} function doesn't account for it by default. Common examples: income varies more in rich countries than poor ones; test scores vary more in heterogeneous classrooms; any outcome that is bounded (like hours worked) will have compressed variance near the bounds.}
+
+% ----------------------------------------------------
+\begin{frame}
+\frametitle{Robust standard errors}
+\centering
+
+\begin{itemize}[<+->]
+\item The fix: \textbf{heteroskedasticity-consistent (HC) standard errors}
+\item Also called ``robust'' or ``White'' standard errors
+\vspace{8pt}
+\item In R (multiple options):
+  \begin{itemize}
+  \item \texttt{modelsummary(model, vcov = "robust")}
+  \item \texttt{modelsummary(model, vcov = "HC3")}
+  \item \texttt{estimatr::lm\_robust(y \textasciitilde{} x, data = df)}
+  \end{itemize}
+\vspace{8pt}
+\item Best practice: \textbf{always use robust SEs}
+  \begin{itemize}
+  \item If homoskedastic: robust SEs $\approx$ classical SEs
+  \item If heteroskedastic: robust SEs are correct, classical are not
+  \end{itemize}
+\end{itemize}
+
+\end{frame}
+% ----------------------------------------------------
+\note{Robust standard errors are the standard solution to heteroskedasticity. The idea: instead of assuming constant variance, estimate the variance of each residual separately and use those to construct the standard errors. HC3 is the recommended variant for small samples (it's the default in \texttt{estimatr::lm\_robust()}). The ``always use robust SEs'' advice is standard in economics and increasingly common in political science. The logic: if homoskedasticity holds, robust and classical SEs will be nearly identical, so you lose nothing. If heteroskedasticity is present, robust SEs are correct and classical are not. It's an insurance policy with no cost.}
+
+% ----------------------------------------------------
+\begin{frame}
+\frametitle{Log transformations: when and why}
+\centering
+
+\begin{itemize}[<+->]
+\item Many variables are right-skewed:
+  \begin{itemize}
+  \item Income, GDP, population, firm size, casualties
+  \end{itemize}
+\vspace{8pt}
+\item Taking $\log(X)$ compresses the right tail
+\item Makes the distribution more symmetric
+\item Can reduce heteroskedasticity
+\vspace{8pt}
+\item But interpretation changes!
+\end{itemize}
+
+\end{frame}
+% ----------------------------------------------------
+\note{Log transformations are one of the most common data transformations in applied work. Any variable that is strictly positive and right-skewed is a candidate. The log compresses large values and spreads out small values, which often makes the relationship with the outcome more linear and reduces heteroskedasticity. But the trade-off is that interpretation becomes more complex: the coefficient is no longer a simple ``one unit change'' effect. We need to think in terms of percentage changes. Remind students: always use the natural log ($\ln$), not log base 10. In R, \texttt{log()} is the natural log by default.}
+
+% ----------------------------------------------------
+\begin{frame}
+\frametitle{Interpreting logs}
+\centering
+
+\vspace{10pt}
+
+{\footnotesize
+\begin{tabular}{llll}
+\hline
+\textbf{Model} & \textbf{Equation} & \textbf{Interpretation of $\beta_1$} \\
+\hline
+Level-level & $Y = \beta_0 + \beta_1 X$ & $\Delta X = 1 \Rightarrow \Delta Y = \beta_1$ \\[4pt]
+Log-level & $\log(Y) = \beta_0 + \beta_1 X$ & $\Delta X = 1 \Rightarrow \%\Delta Y \approx 100 \cdot \beta_1$ \\[4pt]
+Level-log & $Y = \beta_0 + \beta_1 \log(X)$ & $\%\Delta X = 1 \Rightarrow \Delta Y \approx \beta_1 / 100$ \\[4pt]
+Log-log & $\log(Y) = \beta_0 + \beta_1 \log(X)$ & $\%\Delta X = 1 \Rightarrow \%\Delta Y \approx \beta_1$ \\
+\hline
+\end{tabular}
+}
+
+\vspace{15pt}
+
+\begin{itemize}[<+->]
+\item Log-log: $\beta_1$ is the \textbf{elasticity}
+\item Log-level: $\beta_1$ is a semi-elasticity
+\item Most common in practice: log-level and log-log
+\end{itemize}
+
+\end{frame}
+% ----------------------------------------------------
+\note{This table is the key reference for interpreting logged variables. Walk through each row. Level-level: the standard OLS interpretation. Log-level: a one-unit change in $X$ is associated with a $100\beta_1$\% change in $Y$. For example, if $\beta_1 = 0.05$, a one-unit increase in $X$ is associated with a 5\% increase in $Y$. Level-log: a 1\% change in $X$ is associated with a $\beta_1/100$ change in $Y$. Log-log: the elasticity --- a 1\% change in $X$ is associated with a $\beta_1$\% change in $Y$. The approximation $\log(1 + r) \approx r$ for small $r$ is what makes these interpretations work. For large changes (say $\beta_1 > 0.2$), the exact formula $e^{\beta_1} - 1$ gives the percent change more accurately.}
+
+% ----------------------------------------------------
+\begin{frame}
+\frametitle{Residual plots: checking linearity}
+\centering
+
+\vspace{5pt}
+
+\begin{tikzpicture}[scale=0.7]
+  % Left plot: non-linear pattern
+  \begin{scope}[xshift=0cm]
+    \draw[->, thick] (-0.3,0) -- (5,0) node[right] {\scriptsize $\hat{Y}$};
+    \draw[->, thick] (0,-2.5) -- (0,2.5) node[above] {\scriptsize $e$};
+    \draw[dashed, gray] (0,0) -- (5,0);
+    \node[above, font=\small\bfseries, accent2] at (2.5,2.5) {Non-linearity};
+    % U-shaped pattern
+    \foreach \x/\y in {0.3/1.0, 0.6/0.8, 0.9/0.5, 1.2/0.2, 1.5/-0.1, 1.8/-0.4, 2.1/-0.6, 2.4/-0.7, 2.7/-0.6, 3.0/-0.4, 3.3/-0.2, 3.6/0.1, 3.9/0.4, 4.2/0.8, 4.5/1.2} {
+      \fill[accent2, opacity=0.6] (\x,\y) circle (2.5pt);
+    }
+    \draw[accent2, thick, domain=0.3:4.5, samples=50] plot (\x, {0.3*(\x-2.4)*(\x-2.4) - 0.7});
+  \end{scope}
+  % Right plot: fixed with polynomial or log
+  \begin{scope}[xshift=7cm]
+    \draw[->, thick] (-0.3,0) -- (5,0) node[right] {\scriptsize $\hat{Y}$};
+    \draw[->, thick] (0,-2.5) -- (0,2.5) node[above] {\scriptsize $e$};
+    \draw[dashed, gray] (0,0) -- (5,0);
+    \node[above, font=\small\bfseries, accent] at (2.5,2.5) {After adding $X^2$};
+    % Random scatter (fixed)
+    \foreach \x/\y in {0.5/0.2, 0.8/-0.4, 1.2/0.5, 1.5/-0.3, 1.8/0.1, 2.0/-0.6, 2.3/0.4, 2.8/-0.2, 3.0/0.3, 3.3/-0.5, 3.5/0.1, 3.8/-0.3, 4.0/0.4, 4.3/-0.1, 4.5/0.2} {
+      \fill[accent, opacity=0.6] (\x,\y) circle (2.5pt);
+    }
+  \end{scope}
+\end{tikzpicture}
+
+\vspace{10pt}
+
+\begin{itemize}[<+->]
+\item A U-shape in residuals $\Rightarrow$ missing non-linearity
+\item Fixes: add $X^2$, use $\log(X)$, or use a more flexible model
+\end{itemize}
+
+\end{frame}
+% ----------------------------------------------------
+\note{Non-linearity shows up as a systematic curved pattern in the residuals. The left panel shows the classic U-shape: the model under-predicts at the extremes and over-predicts in the middle. This means the true relationship is not linear. Common fixes: (1) add a quadratic term ($X^2$), (2) log-transform $X$ if it's right-skewed, (3) use a polynomial or spline. The right panel shows what the residuals look like after adding the quadratic --- the pattern disappears. In R, \texttt{plot(model, which = 1)} shows this. The built-in smooth line (red) helps identify the pattern. If it's roughly flat, you're fine; if it curves, you need to address non-linearity.}
+
+% ----------------------------------------------------
+\begin{frame}
+\frametitle{Influential observations}
+\centering
+
+\begin{itemize}[<+->]
+\item Some observations can disproportionately influence results
+\vspace{8pt}
+\item \textbf{Cook's distance}: measures how much the model changes if you remove observation $i$
+  \begin{itemize}
+  \item In R: \texttt{plot(model, which = 4)}
+  \item Observations with Cook's $D > 4/n$: investigate further
+  \end{itemize}
+\vspace{8pt}
+\item What to do with influential observations?
+  \begin{itemize}
+  \item Do NOT automatically delete them
+  \item Check if they are data errors
+  \item Re-run the model without them as a robustness check
+  \item Report both results
+  \end{itemize}
+\end{itemize}
+
+\end{frame}
+% ----------------------------------------------------
+\note{Cook's distance combines leverage (how unusual is the observation's $X$ values?) and residual size (how far is the observation from the fitted line?) into a single measure. High Cook's distance means the observation is both unusual and poorly fitted, so it pulls the regression line toward it. The threshold $4/n$ is a common rule of thumb. Important: influential observations are not automatically ``bad'' --- they might be the most interesting observations in your data. A country that is a large outlier might be the case that challenges the theory. The advice is to investigate, not to blindly delete. Re-running without the influential observations tells you whether your conclusions depend on them.}
+
+% ====================================================
+\section{Wrap-up}
+% ====================================================
+
+% ----------------------------------------------------
+\begin{frame}
+\frametitle{Summary: key takeaways}
+\centering
+
+\begin{itemize}[<+->]
+\item Raw coefficients are rarely enough --- compute \textbf{quantities of interest}
+\item Predicted values, marginal effects, and first differences are your tools
+\item The \texttt{marginaleffects} package handles everything
+\vspace{8pt}
+\item Present results with plots (prediction plots, coefficient plots)
+\item Tables go in the appendix, plots in the main text
+\vspace{8pt}
+\item Always check diagnostics: residual plots, heteroskedasticity
+\item Always use robust standard errors
+\item Use log transformations for skewed variables (but interpret carefully)
+\end{itemize}
+
+\end{frame}
+% ----------------------------------------------------
+\note{Recap the four main themes. (1) Interpretation: move beyond raw coefficients to predicted values, marginal effects, and first differences. (2) Presentation: use prediction plots as the primary communication tool, with tables for completeness. (3) Uncertainty: understand that all quantities have uncertainty, computed via the delta method or simulation. (4) Diagnostics: check residual plots for heteroskedasticity and non-linearity, use robust SEs as standard practice, and investigate influential observations. These skills apply to all the models we've covered so far (OLS and logit) and will carry forward to panel data and other models.}
+
+% ----------------------------------------------------
+\begin{frame}
+\frametitle{For next week}
+\centering
+
+\begin{itemize}
+\item Complete Assignment 4
+\vspace{8pt}
+\item Next session: Best Practices in Computing
+  \begin{itemize}
+  \item Reproducible workflows
+  \item Project organization
+  \item Writing clean R code
+  \end{itemize}
+\end{itemize}
+
+\end{frame}
+% ----------------------------------------------------
+\note{Brief logistics slide. The assignment will ask students to apply the tools from today: compute and plot predicted values, marginal effects, and first differences for a model of their choice. They should also run basic diagnostics (residual plot, test for heteroskedasticity) and use robust standard errors. Next week shifts gears to computing best practices --- project organization, reproducible workflows, and writing clean code. This is a practical session that will help them with their final projects.}
+
+% ----------------------------------------------------
+\begin{frame}
+\frametitle{}
+\centering
+
+Questions?
+
+\end{frame}
+% ----------------------------------------------------
+\note{}
