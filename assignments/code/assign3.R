@@ -23,11 +23,22 @@ library(marginaleffects)
 # a)
 raw = read.csv("https://raw.githubusercontent.com/franvillamil/AQM2/refs/heads/master/datasets/anes/anes_timeseries_2020.csv")
 
+## Warn
+print("NOTE: mutate vs transmute")
+print("NOTE: case_when and ifelse")
+
+class(NA_character_)
+class(NA_real_)
+class(NA)
+
 df = raw %>%
   transmute(
     voted = ifelse(V202109x < 0, NA, V202109x),
     age = ifelse(V201507x < 0, NA, V201507x),
-    female = case_when(V201600 == 2 ~ 1, V201600 == 1 ~ 0, TRUE ~ NA_real_),
+    female = case_when(
+      V201600 == 2 ~ 1,
+      V201600 == 1 ~ 0,
+      TRUE ~ NA_real_),
     education = case_when(
       V201511x == 1 ~ 10, V201511x == 2 ~ 12, V201511x == 3 ~ 14,
       V201511x == 4 ~ 16, V201511x == 5 ~ 20, TRUE ~ NA_real_),
