@@ -1,21 +1,24 @@
-# ==========================================================================
+# setwd("~/Documents/AQM2")
+options(stringsAsFactors = FALSE)
+
+# ============================================================
 # Assignment 3: Binary Outcomes
 # Applied Quantitative Methods II, UC3M
-# ==========================================================================
+# ============================================================
 
+# List of packages
 library(dplyr)
 library(broom)
 library(ggplot2)
 library(modelsummary)
 library(marginaleffects)
 
-# ==========================================================================
+# ============================================================
 # Part 1: ANES Voter Turnout
-# ==========================================================================
+# ============================================================
 
-# ----------------------------------------------------------
-# 1. Setup and data preparation
-# ----------------------------------------------------------
+# --------
+## 1. Setup and data preparation
 
 # a)
 raw = read.csv("https://raw.githubusercontent.com/franvillamil/AQM2/refs/heads/master/datasets/anes/anes_timeseries_2020.csv")
@@ -40,9 +43,8 @@ nrow(df)
 mean(df$voted)
 summary(df)
 
-# ----------------------------------------------------------
-# 2. Exploratory visualization
-# ----------------------------------------------------------
+# --------
+## 2. Exploratory visualization
 
 # a)
 turnout_by_edu = df %>%
@@ -53,9 +55,8 @@ ggplot(turnout_by_edu, aes(x = factor(education), y = turnout)) +
   geom_col() +
   labs(x = "Years of education", y = "Turnout rate")
 
-# ----------------------------------------------------------
-# 3. Linear probability model
-# ----------------------------------------------------------
+# --------
+## 3. Linear probability model
 
 # a)
 lpm = lm(voted ~ age + education + income + female, data = df)
@@ -69,9 +70,8 @@ sum(preds_lpm < 0)
 sum(preds_lpm > 1)
 range(preds_lpm)
 
-# ----------------------------------------------------------
-# 4. Logistic regression
-# ----------------------------------------------------------
+# --------
+## 4. Logistic regression
 
 # a)
 logit = glm(voted ~ age + education + income + female,
@@ -87,9 +87,8 @@ exp(coef(logit))
 preds_logit = predict(logit, type = "response")
 range(preds_logit)
 
-# ----------------------------------------------------------
-# 5. Comparing LPM and logit
-# ----------------------------------------------------------
+# --------
+## 5. Comparing LPM and logit
 
 # a)
 avg_slopes(logit)
@@ -98,9 +97,8 @@ avg_slopes(logit)
 modelsummary(list("LPM" = lpm, "Logit" = logit),
              vcov = list("robust", NULL))
 
-# ----------------------------------------------------------
-# 6. Predicted probabilities
-# ----------------------------------------------------------
+# --------
+## 6. Predicted probabilities
 
 # a)
 p1 = plot_predictions(logit, condition = "education")
@@ -110,22 +108,20 @@ ggsave("pred_prob_education.png", p1, width = 6, height = 4)
 p2 = plot_predictions(logit, condition = c("age", "female"))
 ggsave("pred_prob_age_gender.png", p2, width = 6, height = 4)
 
-# ----------------------------------------------------------
-# 7. Presenting results
-# ----------------------------------------------------------
+# --------
+## 7. Presenting results
 
 # a-b)
 p3 = modelplot(list("LPM" = lpm, "Logit" = logit),
                vcov = list("robust", NULL))
 ggsave("coefplot_lpm_logit.png", p3, width = 6, height = 4)
 
-# ==========================================================================
+# ============================================================
 # Part 2: STAR --- High School Graduation
-# ==========================================================================
+# ============================================================
 
-# ----------------------------------------------------------
-# 1. Data preparation
-# ----------------------------------------------------------
+# --------
+## 1. Data preparation
 
 # a)
 star = read.csv("https://raw.githubusercontent.com/franvillamil/AQM2/refs/heads/master/datasets/star/star.csv")
@@ -153,9 +149,8 @@ df %>%
   group_by(classtype) %>%
   summarise(grad_rate = mean(hsgrad), n = n())
 
-# ----------------------------------------------------------
-# 2. LPM and logit
-# ----------------------------------------------------------
+# --------
+## 2. LPM and logit
 
 # a)
 lpm1 = lm(hsgrad ~ small, data = df)
@@ -168,9 +163,8 @@ tidy(logit1)
 # d)
 avg_slopes(logit1)
 
-# ----------------------------------------------------------
-# 3. Adding controls
-# ----------------------------------------------------------
+# --------
+## 3. Adding controls
 
 # a)
 lpm2 = lm(hsgrad ~ small + race + yearssmall, data = df)
@@ -185,9 +179,8 @@ tidy(lpm2) %>% filter(term == "small") %>% select(term, estimate)
 tidy(logit2)
 avg_slopes(logit2, variables = "yearssmall")
 
-# ----------------------------------------------------------
-# 4. Predicted probabilities
-# ----------------------------------------------------------
+# --------
+## 4. Predicted probabilities
 
 # a)
 predictions(logit2,
@@ -200,9 +193,8 @@ predictions(logit2,
 p1 = plot_predictions(logit2, condition = c("yearssmall", "small"))
 ggsave("pred_prob_yearssmall.png", p1, width = 6, height = 4)
 
-# ----------------------------------------------------------
-# 5. Interactions
-# ----------------------------------------------------------
+# --------
+## 5. Interactions
 
 # a)
 logit3 = glm(hsgrad ~ small * race + yearssmall,
@@ -211,9 +203,8 @@ logit3 = glm(hsgrad ~ small * race + yearssmall,
 # b)
 avg_slopes(logit3, variables = "small", by = "race")
 
-# ----------------------------------------------------------
-# 6. Presenting results and discussion
-# ----------------------------------------------------------
+# --------
+## 6. Presenting results and discussion
 
 # a)
 modelsummary(

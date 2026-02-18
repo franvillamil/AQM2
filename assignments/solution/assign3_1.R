@@ -1,20 +1,22 @@
-# ==============================================================================
+# setwd("~/Documents/AQM2")
+options(stringsAsFactors = FALSE)
+
+# ============================================================
 # Assignment 3 -- Part 1: ANES Voter Turnout
 # Applied Quantitative Methods II, UC3M
-# ==============================================================================
+# ============================================================
 
+# List of packages
 library(dplyr)
 library(broom)
 library(ggplot2)
 library(modelsummary)
 library(marginaleffects)
 
-# ----------------------------------------------------------
-# 1. Setup and data preparation
-# ----------------------------------------------------------
+# --------
+## 1. Setup and data preparation
 
-# a) Load the dataset
-# (Students load anes.csv from the course page; here we process from raw ANES)
+# a) Load and recode variables
 raw = read.csv("https://raw.githubusercontent.com/franvillamil/AQM2/refs/heads/master/datasets/anes/anes_timeseries_2020.csv")
 
 df = raw %>%
@@ -37,9 +39,8 @@ nrow(df)
 mean(df$voted)
 summary(df)
 
-# ----------------------------------------------------------
-# 2. Exploratory visualization
-# ----------------------------------------------------------
+# --------
+## 2. Exploratory visualization
 
 # a) Bar chart of turnout by education level
 turnout_by_edu = df %>%
@@ -52,9 +53,8 @@ ggplot(turnout_by_edu, aes(x = factor(education), y = turnout)) +
 
 # b) Turnout increases monotonically with education.
 
-# ----------------------------------------------------------
-# 3. Linear probability model
-# ----------------------------------------------------------
+# --------
+## 3. Linear probability model
 
 # a) Estimate LPM
 lpm = lm(voted ~ age + education + income + female, data = df)
@@ -72,9 +72,8 @@ sum(preds_lpm < 0)
 sum(preds_lpm > 1)
 range(preds_lpm)
 
-# ----------------------------------------------------------
-# 4. Logistic regression
-# ----------------------------------------------------------
+# --------
+## 4. Logistic regression
 
 # a) Estimate logit
 logit = glm(voted ~ age + education + income + female,
@@ -92,9 +91,8 @@ exp(coef(logit))
 preds_logit = predict(logit, type = "response")
 range(preds_logit)
 
-# ----------------------------------------------------------
-# 5. Comparing LPM and logit
-# ----------------------------------------------------------
+# --------
+## 5. Comparing LPM and logit
 
 # a) Average marginal effects
 avg_slopes(logit)
@@ -106,9 +104,8 @@ avg_slopes(logit)
 modelsummary(list("LPM" = lpm, "Logit" = logit),
              vcov = list("robust", NULL))
 
-# ----------------------------------------------------------
-# 6. Predicted probabilities
-# ----------------------------------------------------------
+# --------
+## 6. Predicted probabilities
 
 # a) Predicted probability across education
 p1 = plot_predictions(logit, condition = "education")
@@ -121,9 +118,8 @@ ggsave("pred_prob_age_gender.png", p2, width = 6, height = 4)
 # c) Education shows a clear positive relationship with turnout. Age also
 # has a positive effect. The gender gap is modest relative to the age effect.
 
-# ----------------------------------------------------------
-# 7. Presenting results
-# ----------------------------------------------------------
+# --------
+## 7. Presenting results
 
 # a-b) Coefficient plot
 p3 = modelplot(list("LPM" = lpm, "Logit" = logit),

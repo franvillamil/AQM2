@@ -1,17 +1,20 @@
-# ==============================================================================
+# setwd("~/Documents/AQM2")
+options(stringsAsFactors = FALSE)
+
+# ============================================================
 # Assignment 3 -- Part 2: STAR --- High School Graduation
 # Applied Quantitative Methods II, UC3M
-# ==============================================================================
+# ============================================================
 
+# List of packages
 library(dplyr)
 library(broom)
 library(ggplot2)
 library(modelsummary)
 library(marginaleffects)
 
-# ----------------------------------------------------------
-# 1. Data preparation
-# ----------------------------------------------------------
+# --------
+## 1. Data preparation
 
 # a) Load and create factor variables
 star = read.csv("https://raw.githubusercontent.com/franvillamil/AQM2/refs/heads/master/datasets/star/star.csv")
@@ -41,9 +44,8 @@ df %>%
 
 # Students in small classes have a slightly higher graduation rate.
 
-# ----------------------------------------------------------
-# 2. LPM and logit
-# ----------------------------------------------------------
+# --------
+## 2. LPM and logit
 
 # a) LPM
 lpm1 = lm(hsgrad ~ small, data = df)
@@ -61,9 +63,8 @@ tidy(logit1)
 avg_slopes(logit1)
 # The AME is very close to the LPM coefficient.
 
-# ----------------------------------------------------------
-# 3. Adding controls
-# ----------------------------------------------------------
+# --------
+## 3. Adding controls
 
 # a) Controlled models
 lpm2 = lm(hsgrad ~ small + race + yearssmall, data = df)
@@ -81,9 +82,8 @@ avg_slopes(logit2, variables = "yearssmall")
 # Each additional year in a small class is associated with a higher probability
 # of graduating. The AME converts the log-odds to the probability scale.
 
-# ----------------------------------------------------------
-# 4. Predicted probabilities
-# ----------------------------------------------------------
+# --------
+## 4. Predicted probabilities
 
 # a) Predictions for specific profiles
 predictions(logit2,
@@ -96,9 +96,8 @@ predictions(logit2,
 p1 = plot_predictions(logit2, condition = c("yearssmall", "small"))
 ggsave("pred_prob_yearssmall.png", p1, width = 6, height = 4)
 
-# ----------------------------------------------------------
-# 5. Interactions
-# ----------------------------------------------------------
+# --------
+## 5. Interactions
 
 # a) Interaction model
 logit3 = glm(hsgrad ~ small * race + yearssmall,
@@ -111,9 +110,8 @@ avg_slopes(logit3, variables = "small", by = "race")
 # a larger benefit, though confidence intervals are wide for groups with
 # fewer observations. The results suggest the benefits may not be uniform.
 
-# ----------------------------------------------------------
-# 6. Presenting results and discussion
-# ----------------------------------------------------------
+# --------
+## 6. Presenting results and discussion
 
 # a) Comparison table
 modelsummary(

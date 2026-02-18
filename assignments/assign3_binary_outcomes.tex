@@ -61,7 +61,7 @@ Download the data (and related files) here:
 \subsection{Linear probability model}
 
 \begin{enumerate}[label=\alph*)]
-  \item Estimate an LPM with \code{voted} as the outcome and \code{age}, \code{education}, \code{income}, and \code{female} as predictors: \\\code{lpm <- lm(voted \textasciitilde{} age + education + income + female, data = df)}.
+  \item Estimate an LPM with \code{voted} as the outcome and \code{age}, \code{education}, \code{income}, and \code{female} as predictors: \\\code{lpm = lm(voted \textasciitilde{} age + education + income + female, data = df)}.
   \item Print the results using \code{broom::tidy()}.
   \item Interpret the coefficient on \code{education} in a comment. What does it mean in terms of probability?
   \item Check the predicted probabilities: how many are below 0 or above 1? Report the minimum and maximum predicted values.
@@ -70,7 +70,7 @@ Download the data (and related files) here:
 \subsection{Logistic regression}
 
 \begin{enumerate}[label=\alph*)]
-  \item Estimate a logit model with the same predictors: \\\code{logit <- glm(voted \textasciitilde{} age + education + income + female,} \\\code{\hspace{60pt}family = binomial, data = df)}.
+  \item Estimate a logit model with the same predictors: \\\code{logit = glm(voted \textasciitilde{} age + education + income + female,} \\\code{\hspace{60pt}family = binomial, data = df)}.
   \item Print the results using \code{broom::tidy()}.
   \item Compute the odds ratios using \code{exp(coef(logit))}. Interpret the odds ratio for \code{education} in a comment.
   \item Verify that all predicted probabilities are between 0 and 1.
@@ -130,8 +130,8 @@ Use the same \code{star.csv} from the \href{https://github.com/franvillamil/AQM2
 \subsection{LPM and logit}
 
 \begin{enumerate}[label=\alph*)]
-  \item Estimate an LPM predicting \code{hsgrad} from \code{small}: \\\code{lpm1 <- lm(hsgrad \textasciitilde{} small, data = df)}.
-  \item Estimate a logit model with the same predictor: \\\code{logit1 <- glm(hsgrad \textasciitilde{} small, family = binomial, data = df)}.
+  \item Estimate an LPM predicting \code{hsgrad} from \code{small}: \\\code{lpm1 = lm(hsgrad \textasciitilde{} small, data = df)}.
+  \item Estimate a logit model with the same predictor: \\\code{logit1 = glm(hsgrad \textasciitilde{} small, family = binomial, data = df)}.
   \item Interpret the LPM coefficient on \code{small}: what is the estimated difference in graduation probability between small and non-small classes?
   \item Compute the AME from the logit using \code{avg\_slopes(logit1)}. How does it compare to the LPM coefficient?
 \end{enumerate}
@@ -139,7 +139,7 @@ Use the same \code{star.csv} from the \href{https://github.com/franvillamil/AQM2
 \subsection{Adding controls}
 
 \begin{enumerate}[label=\alph*)]
-  \item Estimate both LPM and logit with controls: \\\code{lpm2 <- lm(hsgrad \textasciitilde{} small + race + yearssmall, data = df)} \\\code{logit2 <- glm(hsgrad \textasciitilde{} small + race + yearssmall,} \\\code{\hspace{60pt}family = binomial, data = df)}.
+  \item Estimate both LPM and logit with controls: \\\code{lpm2 = lm(hsgrad \textasciitilde{} small + race + yearssmall, data = df)} \\\code{logit2 = glm(hsgrad \textasciitilde{} small + race + yearssmall,} \\\code{\hspace{60pt}family = binomial, data = df)}.
   \item Compare the coefficient on \code{small} between the bivariate and controlled models. Does it change much? What does this tell you about the randomization?
   \item Interpret the coefficient on \code{yearssmall} from the logit model. Use \code{avg\_slopes()} to convert to a marginal effect.
 \end{enumerate}
@@ -159,7 +159,7 @@ Use the same \code{star.csv} from the \href{https://github.com/franvillamil/AQM2
 \subsection{Interactions}
 
 \begin{enumerate}[label=\alph*)]
-  \item Does the small class effect on graduation differ by race? Estimate: \\\code{logit3 <- glm(hsgrad \textasciitilde{} small * race + yearssmall,} \\\code{\hspace{60pt}family = binomial, data = df)}.
+  \item Does the small class effect on graduation differ by race? Estimate: \\\code{logit3 = glm(hsgrad \textasciitilde{} small * race + yearssmall,} \\\code{\hspace{60pt}family = binomial, data = df)}.
   \item Use \code{avg\_slopes(logit3, variables = "small", by = "race")} to compute the marginal effect of \code{small} separately for each racial group.
   \item In a comment, discuss: is the small class effect larger for some groups than others?
 \end{enumerate}

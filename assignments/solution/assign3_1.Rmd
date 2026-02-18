@@ -12,6 +12,7 @@ header-includes:
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(warning = FALSE, message = FALSE)
+options(stringsAsFactors = FALSE)
 ```
 
 # 1. Setup and data preparation
