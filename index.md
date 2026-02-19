@@ -8,18 +8,19 @@ layout: default
 
 | Date        | Topic  | Slides | Exercises | Solution |
 | :---        | :---   | :--- | :--- | :--- | :---     |
-| Feb 5    | [Introduction](./sessions.md) | [[Slides 1](./slides/01_introduction/introduction.pdf)] | [[Ex 1](./assignments/assign1_introduction.pdf)] |
-| Feb 12  | [Applied regression](./sessions.md) | [[Slides 2](./slides/02_applied_regression/applied_regression.pdf)] | [[Ex 2](./assignments/assign2_applied_regression.pdf)] | [[1](./assignments/solution/assign2_1.pdf)] [[2](./assignments/solution/assign2_2.pdf)]
-| Feb 19  | [Binary outcomes](./sessions.md) | [[Slides 3](./slides/03_binary_outcomes/binary_outcomes.pdf)] | [[Ex 3](./assignments/assign3_binary_outcomes.pdf)] | [[1](./assignments/solution/assign3_1.pdf)]
-| Feb 26  | [Interpretation and diagnostics](./sessions.md) | | |
-| Mar 5   | [Panel data (I)](./sessions.md) | | |
-| Mar 12  | [Panel data (II)](./sessions.md) | | |
-| Mar 19  | [Spatial data (I)](./sessions.md) | | |
-| Mar 26  | [Spatial data (II)](./sessions.md) | | |
-| Apr 9   | [Other outcomes](./sessions.md) | | |
-| Apr 16  | [Best practices in computing](./sessions.md) | | |
-| Apr 23  | [Project presentations](./logistics.md) | | |
-| Apr 30  | [Exam](./logistics.md) / [Review & Advanced](./sessions.md) | | |
+| Feb 5    | 1. [Introduction](./sessions.md) | [[Slides 1](./slides/01_introduction/introduction.pdf)] | [[Ex 1](./assignments/assign1_introduction.pdf)] |
+| Feb 12  | 2. [Applied regression](./sessions.md) | [[Slides 2](./slides/02_applied_regression/applied_regression.pdf)] | [[Ex 2](./assignments/assign2_applied_regression.pdf)] | [[1](./assignments/solution/assign2_1.pdf)] [[2](./assignments/solution/assign2_2.pdf)]
+| Feb 19  | 3. [Binary outcomes](./sessions.md) | [[Slides 3](./slides/03_binary_outcomes/binary_outcomes.pdf)] | [[Ex 3](./assignments/assign3_binary_outcomes.pdf)] | [[1](./assignments/solution/assign3_1.pdf)]
+| Feb 26  | 4. [Interpretation & diagnostics](./sessions.md) | | |
+| Mar 5   | 5. [Panel data (I)](./sessions.md) | | |
+| Mar 12  | 6. [Panel data (II)](./sessions.md) | | |
+| Mar 19  | 7. [Spatial data (I)](./sessions.md) | | |
+| Mar 26  | 8. [Spatial data (II)](./sessions.md) | | |
+|| *Easter break* |||
+| Apr 9   | 9. [Other outcomes](./sessions.md) | | |
+| Apr 16  | 10. [Computing best practices](./sessions.md) | | |
+| Apr 23  | 11. [Project presentations](./logistics.md) | | |
+| Apr 30  | 12. [Exam](./logistics.md) / [Review & Advanced](./sessions.md) | | |
 
 ### Extras
 
