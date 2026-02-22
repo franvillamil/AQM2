@@ -1,0 +1,941 @@
+% ----------------------------------------------------
+\begin{frame}
+  \titlepage
+\end{frame}
+% ----------------------------------------------------
+\note{}
+
+% ----------------------------------------------------
+\begin{frame}
+\frametitle{Today's goals}
+\centering
+
+\begin{itemize}[<+->]
+\item Understand why location matters in social science research
+\item Learn the main types of spatial data: vector and raster
+\item Grasp what a coordinate reference system (CRS) is and why it matters
+\item Work with spatial data in R using the \texttt{sf} package
+\item Visualize spatial data with \texttt{ggplot2}
+\end{itemize}
+
+\end{frame}
+% ----------------------------------------------------
+\note{This session opens the two-part spatial data block. We are building on students' R and regression skills but introducing an entirely new data structure. The key insight to drive home early: spatial data is just a data frame with an extra geometry column. Once students see that, the \texttt{sf} package feels natural because it works with \texttt{dplyr} just like any other data frame. Plan roughly 15 minutes per section. The visualization section at the end can expand or contract depending on time.}
+
+% ====================================================
+\section{Why Spatial Data?}
+% ====================================================
+
+% ----------------------------------------------------
+\begin{frame}
+\frametitle{Location matters}
+\centering
+
+\vspace{10pt}
+
+\begin{tikzpicture}[
+  box/.style={draw, rounded corners, minimum width=4.0cm, minimum height=0.85cm, align=center, font=\small},
+  arrow/.style={->, thick, accent}
+]
+  \node[box, fill=accent!10]  (q)   at (0, 3.2) {Social phenomena unfold\\in \textbf{geographic space}};
+  \node[box, fill=accent!15]  (b1)  at (-3.2, 1.6) {Conflict\\diffusion};
+  \node[box, fill=accent!15]  (b2)  at (0.0,  1.6) {Electoral\\geography};
+  \node[box, fill=accent!15]  (b3)  at ( 3.2, 1.6) {Environmental\\effects};
+  \node[box, fill=accent2!10] (impl) at (0, 0.1) {Where something happens\\shapes \textit{what} happens};
+  \draw[arrow] (q) -- (b1);
+  \draw[arrow] (q) -- (b2);
+  \draw[arrow] (q) -- (b3);
+  \draw[arrow] (b1) -- (impl);
+  \draw[arrow] (b2) -- (impl);
+  \draw[arrow] (b3) -- (impl);
+\end{tikzpicture}
+
+\end{frame}
+% ----------------------------------------------------
+\note{Open by motivating the session. Ask students: how many of the research designs we have discussed depend on geography? Conflict events cluster in space; electoral behavior varies by region; pollution affects nearby residents; migration flows follow geographic paths. The point is that ignoring the spatial dimension of data is like ignoring the temporal dimension --- you lose structure that can help or, worse, you get wrong answers because of spatial correlation. Spend about 2 minutes here before moving to concrete examples.}
+
+% ----------------------------------------------------
+\begin{frame}
+\frametitle{Spatial questions in political science}
+\centering
+
+\vspace{8pt}
+
+\begin{itemize}[<+->]
+\item \textbf{Conflict}: Do armed events cluster? Does violence diffuse across borders?
+  \begin{itemize}
+  \item Data: ACLED event locations (lat/lon coordinates)
+  \end{itemize}
+\vspace{8pt}
+\item \textbf{Elections}: How does vote share vary across districts?
+  \begin{itemize}
+  \item Data: municipality-level polygons with electoral results
+  \end{itemize}
+\vspace{8pt}
+\item \textbf{Environment}: Do voters near polluting facilities vote differently?
+  \begin{itemize}
+  \item Data: facility locations + electoral district polygons
+  \end{itemize}
+\vspace{8pt}
+\item \textbf{Inequality}: How does poverty vary within a city?
+  \begin{itemize}
+  \item Data: census tract polygons + socioeconomic attributes
+  \end{itemize}
+\end{itemize}
+
+\end{frame}
+% ----------------------------------------------------
+\note{Concrete examples are essential here. ACLED (Armed Conflict Location and Event Data) is a widely used dataset in conflict research that provides exact GPS coordinates for conflict events. Electoral studies increasingly use fine-grained geographic data at the municipality or polling station level. The environmental politics literature asks whether exposure to pollution --- measured by distance to facilities --- shapes political attitudes. Each of these requires spatial data skills. These examples also preview two key data types: point data (event coordinates) and polygon data (district boundaries). Note to students: many of these datasets are freely available and they may want to use them for their final essays.}
+
+% ----------------------------------------------------
+\begin{frame}
+\centering
+\vspace{30pt}
+{\large Think about your own research topic.\\[18pt]
+What is its \textbf{spatial dimension}?\\[18pt]
+What data would you need --- points, lines, or polygons?}
+\end{frame}
+% ----------------------------------------------------
+\note{Brief discussion: 1--2 minutes. Ask students to think about their research interests or final essay topics. The goal is to activate prior knowledge and personal investment in the material before the technical content begins. Expected answers: electoral geography (municipality polygons), conflict (event point coordinates), immigration (country or region polygons), environmental effects (facility locations as points, district polygons as receiving units). This also previews the geometry types covered in Section 2.}
+
+% ----------------------------------------------------
+% IMAGE NEEDED: Map of Africa with ACLED conflict event locations (points or density),
+% showing spatial clustering of violence in Sahel, Horn of Africa, and DRC.
+% Suggested filename: acled_africa_map.png
+% Source: acleddata.com or create with R using ggplot2 + geom_sf
+% Uncomment frame below once image is in slides/img/
+%
+% \begin{frame}[plain]
+%   \begin{tikzpicture}[remember picture, overlay]
+%     \node[at = (current page.center), yshift = 0cm] (cover) {%
+%       \includegraphics[keepaspectratio, height=\paperheight]{../img/acled_africa_map}};
+%   \end{tikzpicture}
+% \end{frame}
+% ----------------------------------------------------
+\note{[IMAGE PLACEHOLDER] This frame will show a map of Africa with armed conflict event locations (ACLED data), demonstrating spatial clustering of violence in the Sahel, Horn of Africa, and DRC. Describe verbally if the image is not yet available: dots representing individual events, clearly concentrated in certain sub-regions. This visual makes the motivation for spatial analysis immediate and concrete.}
+
+% ====================================================
+\section{Types of Spatial Data}
+% ====================================================
+
+% ----------------------------------------------------
+\begin{frame}
+\frametitle{Two families of spatial data}
+\centering
+
+\vspace{10pt}
+
+\begin{tikzpicture}[
+  box/.style={draw, rounded corners, minimum width=4.5cm, minimum height=1.0cm, align=center, font=\small},
+  sub/.style={draw, rounded corners, minimum width=4.5cm, minimum height=0.75cm, align=center, font=\footnotesize},
+  arrow/.style={->, thick, accent}
+]
+  \node[box, fill=accent!15]  (vec) at (-2.8, 2.0) {\textbf{Vector}\\Discrete objects};
+  \node[box, fill=accent2!10] (ras) at ( 2.8, 2.0) {\textbf{Raster}\\Continuous surface};
+  \node[sub, fill=accent!8]   (pt)  at (-2.8, 0.8) {Points, Lines, Polygons};
+  \node[sub, fill=accent2!8]  (gr)  at ( 2.8, 0.8) {Grid of cells with values};
+  \node[font=\footnotesize, align=center] (ve) at (-2.8,-0.1) {Elections, cities,\\borders, districts};
+  \node[font=\footnotesize, align=center] (ra) at ( 2.8,-0.1) {Elevation, temperature,\\nighttime lights};
+  \draw[arrow] (vec) -- (pt);
+  \draw[arrow] (ras) -- (gr);
+\end{tikzpicture}
+
+\vspace{8pt}
+
+\begin{itemize}[<+->]
+\item Today: \textbf{vector} data only (by far the most common in social science)
+\item Raster: briefly in Session 10 (Spatial data II)
+\end{itemize}
+
+\end{frame}
+% ----------------------------------------------------
+\note{Set expectations clearly: we focus on vector data today. Raster data is important (nighttime lights as a proxy for economic activity, precipitation data for agricultural analysis, land cover for environmental studies) but it requires different tools and is covered in Session 10. The key conceptual distinction is discrete vs.\ continuous: vector data represents identifiable objects (a city, a border, a district), while raster data represents a field that varies continuously across space (temperature measured at every point on the Earth's surface). Most political science and sociology research uses vector data, because we are interested in units (countries, municipalities, people) rather than continuous surfaces.}
+
+% ----------------------------------------------------
+\begin{frame}
+\frametitle{Vector data: three geometry types}
+\centering
+
+\vspace{8pt}
+
+\begin{tikzpicture}
+
+  % --- POINTS ---
+  \begin{scope}[xshift=-3.8cm]
+    \node[font=\small\bfseries, accent] at (0, 2.3) {Points};
+    \draw[fill=accent!15, draw=accent!40] (-1.3,-1.3) rectangle (1.3,2.0);
+    \fill[accent2] (-0.4, 1.3) circle (4pt);
+    \fill[accent2] ( 0.5, 0.7) circle (4pt);
+    \fill[accent2] (-0.7, 0.1) circle (4pt);
+    \fill[accent2] ( 0.2,-0.6) circle (4pt);
+    \node[font=\scriptsize, asher, align=center] at (0,-1.7) {Cities\\Events\\Survey respondents};
+  \end{scope}
+
+  % --- LINES ---
+  \begin{scope}[xshift=0cm]
+    \node[font=\small\bfseries, accent] at (0, 2.3) {Lines};
+    \draw[fill=accent!15, draw=accent!40] (-1.3,-1.3) rectangle (1.3,2.0);
+    \draw[accent2, very thick] (-1.0, 1.5) -- (-0.3, 0.8) -- (0.4, 0.3) -- (1.0,-0.2);
+    \draw[accent2, very thick] (-0.8, 0.0) -- (0.0, 0.5) -- (0.8, 1.2);
+    \node[font=\scriptsize, asher, align=center] at (0,-1.7) {Roads\\Rivers\\Administrative borders};
+  \end{scope}
+
+  % --- POLYGONS ---
+  \begin{scope}[xshift=3.8cm]
+    \node[font=\small\bfseries, accent] at (0, 2.3) {Polygons};
+    \draw[fill=accent!15, draw=accent!40] (-1.3,-1.3) rectangle (1.3,2.0);
+    \draw[fill=accent2!30, draw=accent2, thick]
+      (-0.9, 1.6) -- (-0.2, 1.8) -- (0.8, 1.2) -- (0.9,-0.0)
+      -- (0.3,-0.2) -- (-0.5, 0.3) -- (-0.9, 1.6);
+    \draw[fill=accent!30, draw=accent, thick]
+      (-1.0,-0.2) -- (-0.6, 0.2) -- (-0.1,-0.2) -- (-0.2,-1.1)
+      -- (-0.9,-1.0) -- (-1.0,-0.2);
+    \node[font=\scriptsize, asher, align=center] at (0,-1.7) {Countries\\Municipalities\\Electoral districts};
+  \end{scope}
+
+\end{tikzpicture}
+
+\end{frame}
+% ----------------------------------------------------
+\note{Walk through each geometry type with a political science example. Points: conflict events in ACLED, city locations, household survey respondents. Lines: trade routes, rivers that serve as borders, road networks for accessibility research. Polygons: the workhorse of political science spatial data --- country boundaries, municipality boundaries, electoral constituencies, census tracts. Each geometry type can carry an arbitrary number of attribute columns (population, vote share, GDP). The geometry is just one more column in the data frame. Spend about 1 minute on each type and ask students to suggest examples from their own research interests.}
+
+% ----------------------------------------------------
+\begin{frame}
+\frametitle{Vector data: geometry + attributes}
+\centering
+
+\vspace{6pt}
+
+{\footnotesize
+\begin{tabular}{lcccc}
+\hline
+\textbf{name} & \textbf{population} & \textbf{vote\_share} & \textbf{gdp\_pc} & \textbf{geometry} \\
+\hline
+Madrid      & 3,305,408 & 0.34 & 38,200 & POLYGON((-3.8 40.7, \ldots)) \\
+Barcelona   & 1,620,343 & 0.21 & 41,500 & POLYGON((2.0 41.2, \ldots)) \\
+Valencia    &   814,208 & 0.29 & 29,100 & POLYGON((-0.4 39.4, \ldots)) \\
+Sevilla     &   690,566 & 0.41 & 24,800 & POLYGON((-6.0 37.3, \ldots)) \\
+\hline
+\end{tabular}
+}
+
+\vspace{10pt}
+
+\begin{itemize}[<+->]
+\item A spatial object is a \textbf{data frame} with a \texttt{geometry} column
+\item All regular data operations work as usual
+\item Geometry encodes the shape: coordinates of vertices for polygons
+\item One row = one spatial feature (a city, a district, a country)
+\end{itemize}
+
+\end{frame}
+% ----------------------------------------------------
+\note{This is the key conceptual slide for vector data. The table shows that a spatial data frame is exactly like any other data frame --- it just has a \texttt{geometry} column appended. Students who already know \texttt{dplyr} can immediately apply \texttt{filter()}, \texttt{mutate()}, \texttt{group\_by()} to spatial data. The geometry column stores the actual shape: for points, a pair of coordinates; for lines, a sequence of coordinate pairs; for polygons, a closed sequence of coordinate pairs. In the Simple Features standard, these are encoded as Well-Known Text (WKT) strings like \texttt{POLYGON((-3.8 40.7, -3.6 40.8, ...))}, which is what appears in the \texttt{geometry} column. The \texttt{sf} package handles all of this automatically.}
+
+% ----------------------------------------------------
+\begin{frame}
+\frametitle{Raster data: a brief preview}
+\centering
+
+\vspace{8pt}
+
+\begin{tikzpicture}[scale=0.95]
+  % 5x7 grid with fixed color levels (low=white, high=accent)
+  % Row 0 (bottom)
+  \foreach \col/\pct in {0/20,1/30,2/40,3/50,4/55,5/60,6/65} {
+    \fill[accent!\pct!white] (\col*0.85, 0) rectangle (\col*0.85+0.85, 0.85);
+    \draw[white, thin] (\col*0.85, 0) rectangle (\col*0.85+0.85, 0.85);
+  }
+  % Row 1
+  \foreach \col/\pct in {0/30,1/40,2/55,3/65,4/70,5/75,6/80} {
+    \fill[accent!\pct!white] (\col*0.85, 0.85) rectangle (\col*0.85+0.85, 1.70);
+    \draw[white, thin] (\col*0.85, 0.85) rectangle (\col*0.85+0.85, 1.70);
+  }
+  % Row 2
+  \foreach \col/\pct in {0/10,1/20,2/35,3/50,4/60,5/70,6/75} {
+    \fill[accent!\pct!white] (\col*0.85, 1.70) rectangle (\col*0.85+0.85, 2.55);
+    \draw[white, thin] (\col*0.85, 1.70) rectangle (\col*0.85+0.85, 2.55);
+  }
+  % Row 3
+  \foreach \col/\pct in {0/5,1/10,2/20,3/30,4/40,5/55,6/60} {
+    \fill[accent!\pct!white] (\col*0.85, 2.55) rectangle (\col*0.85+0.85, 3.40);
+    \draw[white, thin] (\col*0.85, 2.55) rectangle (\col*0.85+0.85, 3.40);
+  }
+  % Row 4 (top)
+  \foreach \col/\pct in {0/5,1/8,2/12,3/18,4/25,5/35,6/45} {
+    \fill[accent!\pct!white] (\col*0.85, 3.40) rectangle (\col*0.85+0.85, 4.25);
+    \draw[white, thin] (\col*0.85, 3.40) rectangle (\col*0.85+0.85, 4.25);
+  }
+  % Label
+  \node[font=\scriptsize, asher] at (3.0*0.85+0.4, -0.35) {Each cell stores one value};
+  % Simple colorbar
+  \fill[accent!10!white] (6.5, 3.90) rectangle (6.85, 4.25);
+  \fill[accent!35!white] (6.5, 3.55) rectangle (6.85, 3.90);
+  \fill[accent!55!white] (6.5, 3.20) rectangle (6.85, 3.55);
+  \fill[accent!75!white] (6.5, 2.85) rectangle (6.85, 3.20);
+  \fill[accent!90!white] (6.5, 2.50) rectangle (6.85, 2.85);
+  \node[font=\scriptsize, anchor=west] at (6.9, 4.05) {Low};
+  \node[font=\scriptsize, anchor=west] at (6.9, 2.65) {High};
+\end{tikzpicture}
+
+\vspace{6pt}
+
+\begin{itemize}
+\item Grid of equal-size cells, each storing a value (elevation, precipitation, \ldots)
+\item \textbf{Continuous surface}: the entire area is covered
+\item In R: \texttt{terra} package (\texttt{rast()} objects)
+\end{itemize}
+
+\end{frame}
+% ----------------------------------------------------
+\note{Keep this slide brief --- it is a preview only. The raster grid shows the key difference: every cell in the grid has a value, so the entire geographic surface is represented. Compare this with polygon data, where only the interior of each polygon has attributes. Raster data is used in political science mainly when the variable of interest is inherently continuous: nighttime light intensity (a proxy for economic development), precipitation (affecting agricultural productivity and potentially conflict), land cover type (forest, urban, agricultural). The \texttt{terra} package has largely replaced the older \texttt{raster} package. We will come back to raster data in Session 10.}
+
+% ====================================================
+\section{Coordinate Reference Systems}
+% ====================================================
+
+% ----------------------------------------------------
+\begin{frame}
+\frametitle{How do we locate things on Earth?}
+\centering
+
+\vspace{8pt}
+
+\begin{itemize}[<+->]
+\item The Earth is a (roughly) spherical three-dimensional object
+\item We need a system to assign coordinates to locations on its surface
+\item A \textbf{Coordinate Reference System (CRS)} defines:
+  \begin{itemize}
+  \item The \textbf{origin} and \textbf{axes} of the coordinate system
+  \item The \textbf{shape} of the Earth used (datum / ellipsoid)
+  \item How coordinates map to the actual surface
+  \end{itemize}
+\vspace{8pt}
+\item Two main families:
+  \begin{itemize}
+  \item \textbf{Geographic CRS}: longitude and latitude on a sphere
+  \item \textbf{Projected CRS}: Cartesian $x/y$ on a flat surface
+  \end{itemize}
+\end{itemize}
+
+\end{frame}
+% ----------------------------------------------------
+\note{Students often find CRS confusing because they have been using GPS coordinates (latitude, longitude) their whole lives without thinking about what system they refer to. The key message: coordinates are meaningless without knowing the CRS, because the same (x, y) pair means different things in different systems. The CRS defines how numbers map to real-world locations. Start with the intuition: to say where a point is on a globe, you need to agree on (1) where the origin is, (2) how the axes are oriented, and (3) what model of the Earth's shape you use. The two families (geographic vs.\ projected) are conceptually distinct: one works directly on the 3D sphere, the other flattens it.}
+
+% ----------------------------------------------------
+\begin{frame}
+\frametitle{Geographic CRS: longitude and latitude}
+\centering
+
+\vspace{6pt}
+
+\begin{tikzpicture}[scale=0.85]
+  % Globe outline
+  \draw[thick, accent!50] (0,0) circle (2.2cm);
+  % Equator
+  \draw[dashed, asher] (-2.2,0) -- (2.2,0) node[right, font=\scriptsize] {Equator (0\textdegree)};
+  % Prime meridian
+  \draw[dashed, asher] (0,-2.2) -- (0,2.2) node[above, font=\scriptsize] {Prime meridian (0\textdegree)};
+  % Latitude lines
+  \draw[asher!40] (-2.0, 1.1) -- (2.0, 1.1) node[right, font=\scriptsize, asher] {45\textdegree N};
+  \draw[asher!40] (-2.0,-1.1) -- (2.0,-1.1) node[right, font=\scriptsize, asher] {45\textdegree S};
+  % Example point: Madrid
+  \fill[accent2] (0.55, 0.9) circle (3.5pt);
+  \draw[accent2, dashed, thin] (0.55, 0) -- (0.55, 0.9);
+  \draw[accent2, dashed, thin] (0, 0.9) -- (0.55, 0.9);
+  \node[accent2, font=\scriptsize, anchor=west] at (0.62, 1.05) {Madrid};
+  \node[accent2, font=\scriptsize, anchor=west] at (0.62, 0.72) {lon: $-3.7$\textdegree, lat: $40.4$\textdegree};
+  % Axes labels
+  \node[asher, font=\scriptsize] at (-2.6, 0.5) {$+90$\textdegree N};
+  \node[asher, font=\scriptsize] at (-2.6,-0.5) {$-90$\textdegree S};
+\end{tikzpicture}
+
+\vspace{4pt}
+
+\begin{itemize}[<+->]
+\item \textbf{Longitude}: degrees East/West from the Prime Meridian ($-180$ to $+180$)
+\item \textbf{Latitude}: degrees North/South from the Equator ($-90$ to $+90$)
+\item \textbf{WGS84} (EPSG:4326): the universal standard --- used by GPS, Google Maps
+\end{itemize}
+
+\end{frame}
+% ----------------------------------------------------
+\note{WGS84 is the most important CRS to know. It is what GPS devices use, what Google Maps uses, and what most raw datasets come with when coordinates are provided as longitude and latitude columns. When students download a CSV with a \texttt{lon} and \texttt{lat} column, they should almost always assume WGS84 (EPSG:4326). The EPSG code (European Petroleum Survey Group) is a standard registry of CRS definitions --- each CRS has a unique integer code. EPSG:4326 is the code for WGS84. Longitude comes first in most programming contexts (even though we usually say ``latitude and longitude'' in speech). This trips up many beginners: when converting a CSV to an sf object, the syntax is \texttt{coords = c("lon", "lat")}, not \texttt{c("lat", "lon")}.}
+
+% ----------------------------------------------------
+\begin{frame}
+\frametitle{Projected CRS: flattening the Earth}
+\centering
+
+\vspace{6pt}
+
+\begin{tikzpicture}[scale=0.80]
+  % Sphere on left
+  \draw[thick, accent!50] (-3.5, 1.5) circle (1.8cm);
+  \draw[dashed, asher!60] (-3.5, 1.5) ellipse (1.8cm and 0.5cm);
+  \node[font=\small, accent] at (-3.5, -0.7) {Globe (3D)};
+  % Arrow
+  \draw[->, very thick, asher] (-1.2, 1.5) -- (0.0, 1.5)
+    node[midway, above, font=\scriptsize] {project};
+  % Flat map on right
+  \draw[thick, accent2!40, fill=accent2!5] (0.3, -0.2) rectangle (5.0, 3.2);
+  % Grid lines
+  \foreach \x in {1.0, 1.8, 2.6, 3.4, 4.2} {
+    \draw[asher!30, thin] (\x, -0.2) -- (\x, 3.2);
+  }
+  \foreach \y in {0.6, 1.4, 2.2, 3.0} {
+    \draw[asher!30, thin] (0.3, \y) -- (5.0, \y);
+  }
+  \node[font=\small, accent2] at (2.65, -0.6) {Flat map (2D)};
+  % Distortion label
+  \node[font=\footnotesize, asher, align=center] at (2.65, 3.7)
+    {Always some distortion:\\area, shape, distance, or direction};
+\end{tikzpicture}
+
+\vspace{4pt}
+
+\begin{itemize}[<+->]
+\item Converts degrees to meters (or feet) on a flat surface
+\item \textbf{Mercator} (EPSG:3857): shapes preserved, areas hugely distorted at poles
+\item \textbf{UTM zones}: accurate locally, 60 zones worldwide
+\item Use projected CRS for \textbf{distance and area calculations}
+\end{itemize}
+
+\end{frame}
+% ----------------------------------------------------
+\note{The key practical point: you cannot accurately measure distances or areas using WGS84 (geographic) coordinates, because the Earth is not flat. A degree of longitude in Madrid corresponds to about 80 km, but a degree of longitude in Helsinki corresponds to only about 55 km (the Earth is narrower near the poles). If you compute Euclidean distance between two lat/lon points, you get garbage. Always transform to a projected CRS before computing distances or areas. For Europe, ETRS89-LAEA (EPSG:3035) is a common choice; for the US, EPSG:5070 (Albers Equal Area). UTM zones give accurate local measurements but different zones apply to different parts of the world. The Mercator distortion is a good pedagogical example: Greenland appears as large as Africa on a Mercator map, even though Africa is 14 times larger.}
+
+% ----------------------------------------------------
+\begin{frame}
+\frametitle{EPSG codes: the practical shorthand}
+\centering
+
+\vspace{10pt}
+
+{\footnotesize
+\begin{tabular}{lll}
+\hline
+\textbf{EPSG} & \textbf{Name} & \textbf{Use case} \\
+\hline
+4326 & WGS84 (geographic) & GPS, raw CSV coordinates, global data \\
+3857 & Web Mercator & Google Maps, web tiles (not for analysis) \\
+3035 & ETRS89-LAEA & Europe: equal-area, good for area/distance \\
+32630 & UTM Zone 30N & Spain and Portugal (local accuracy) \\
+5070 & Albers Equal Area & USA (equal-area for national maps) \\
+\hline
+\end{tabular}
+}
+
+\vspace{12pt}
+
+\begin{itemize}[<+->]
+\item Always check the CRS of your data with \texttt{st\_crs()}
+\item All layers in an analysis must use the \textbf{same CRS}
+\item Transform with \texttt{st\_transform(data, crs = 3035)}
+\end{itemize}
+
+\end{frame}
+% ----------------------------------------------------
+\note{This table is a practical reference students can keep. The most important rule: before any spatial operation involving two datasets, make sure they are in the same CRS. Spatial joins, intersections, and buffer operations all silently fail or give wrong results if CRS do not match. The \texttt{sf} package will sometimes warn about mismatching CRS, but not always. Make it a habit to check with \texttt{st\_crs()} at the start of every analysis. The choice of projected CRS depends on the region and the type of analysis: for equal-area operations (computing region areas, density), use an equal-area projection (EPSG:3035 for Europe); for distance operations, use a conformal or UTM projection. Web Mercator (EPSG:3857) is designed for web map tiles and should almost never be used for analysis.}
+
+% ====================================================
+\section{The \texttt{sf} Package}
+% ====================================================
+
+% ----------------------------------------------------
+\begin{frame}
+\frametitle{\texttt{sf}: Simple Features for R}
+\centering
+
+\vspace{8pt}
+
+\begin{itemize}[<+->]
+\item \textbf{Simple Features} is an open standard for vector spatial data (ISO 19125)
+\item The \texttt{sf} package is the modern R implementation
+  \begin{itemize}
+  \item Replaced the older \texttt{sp} + \texttt{rgdal} + \texttt{rgeos} ecosystem
+  \item Seamless \texttt{dplyr} and \texttt{ggplot2} integration
+  \end{itemize}
+\vspace{8pt}
+\item An \texttt{sf} object is a \textbf{data frame} with:
+  \begin{itemize}
+  \item Regular attribute columns (any type)
+  \item A \texttt{geometry} column (type \texttt{sfc}) storing the shapes
+  \item CRS metadata attached to the object
+  \end{itemize}
+\vspace{8pt}
+\item All geometry types: \texttt{POINT}, \texttt{LINESTRING}, \texttt{POLYGON} and their multi-variants
+\end{itemize}
+
+\end{frame}
+% ----------------------------------------------------
+\note{The historical context is useful: until about 2017, the dominant approach was the \texttt{sp} package (for spatial points, lines, polygons) combined with \texttt{rgdal} (for reading/writing files) and \texttt{rgeos} (for geometric operations). These worked, but the objects were S4 classes that did not play well with \texttt{dplyr}. The \texttt{sf} package (Pebesma 2018) unified all of this: it reads files, stores geometry, performs operations, and plugs directly into the tidyverse. The \texttt{sp} ecosystem is largely deprecated and students should use \texttt{sf} for all new work. The ``multi-'' variants (\texttt{MULTIPOINT}, \texttt{MULTILINESTRING}, \texttt{MULTIPOLYGON}) handle features that consist of multiple separate geometries, like a country with offshore islands (e.g., France includes islands in the Caribbean).}
+
+% ----------------------------------------------------
+\begin{frame}
+\frametitle{What does an \texttt{sf} object look like?}
+\centering
+
+\vspace{6pt}
+
+\begin{block}{Console output: \texttt{print(world[1:3,])}}
+\texttt{\footnotesize Simple feature collection with 3 features and 5 fields}\\
+\texttt{\footnotesize Geometry type: MULTIPOLYGON}\\
+\texttt{\footnotesize CRS: EPSG 4326 (WGS84)}\\[4pt]
+\texttt{\footnotesize \ \ name\_long continent \ \ \ pop \ \ \ geom}\\
+\texttt{\footnotesize 1 Afghanistan \ \ \ \ Asia 32564342 MULTIPOLYGON(((61.2 35.6...}\\
+\texttt{\footnotesize 2 \ \ \ \ Angola \ \ Africa 24227524 MULTIPOLYGON(((16.3 -5.8...}\\
+\texttt{\footnotesize 3 \ \ \ Albania \ \ Europe \ 2893654 MULTIPOLYGON(((20.6 41.9...}
+\end{block}
+
+\vspace{8pt}
+
+\begin{itemize}[<+->]
+\item Header: feature count, geometry type, CRS --- always shown first
+\item Rows = features; \texttt{geom} column stores the shapes (truncated in display)
+\item Otherwise: a regular data frame --- \texttt{dplyr} verbs work immediately
+\end{itemize}
+
+\end{frame}
+% ----------------------------------------------------
+\note{This is the visual anchor for the sf section. Before showing any code, students need to see what an sf object looks like when printed. The header is diagnostic: if the geometry type or CRS looks wrong, you know immediately something went wrong on read. The truncated coordinates (\texttt{MULTIPOLYGON(((61.2 35.6...}) are expected: sf stores the full geometry internally but only shows a preview. Most importantly, the output looks like a data frame because it IS a data frame. This is the message to drive home: once you know how to use dplyr, you already know 80\% of how to use sf.}
+
+% ----------------------------------------------------
+\begin{frame}
+\frametitle{Reading spatial data}
+\centering
+
+\vspace{6pt}
+
+\begin{block}{From a shapefile or GeoPackage}
+\texttt{library(sf)}\\
+\texttt{world = st\_read("data/world.shp")}\\
+\texttt{munis = st\_read("data/municipalities.gpkg")}
+\end{block}
+
+\vspace{8pt}
+
+\begin{block}{From a CSV with coordinate columns}
+\texttt{df = read.csv("events.csv")}\\
+\texttt{\# df has columns: lon, lat, event\_type, casualties}\\
+\texttt{events = st\_as\_sf(df,}\\
+\texttt{\hspace{20pt}coords = c("lon", "lat"),}\\
+\texttt{\hspace{20pt}crs = 4326)}
+\end{block}
+
+\vspace{8pt}
+
+\begin{itemize}[<+->]
+\item \texttt{st\_read()} handles: shapefiles (.shp), GeoPackage (.gpkg), GeoJSON, and more
+\item Always check CRS immediately after reading: \texttt{st\_crs(world)}
+\end{itemize}
+
+\end{frame}
+% ----------------------------------------------------
+\note{Two reading workflows students will use constantly. The shapefile is the classic format: it is actually four or five separate files (.shp, .dbf, .prj, .shx) that must all be in the same folder. GeoPackage (.gpkg) is the modern replacement: a single file, more efficient, and open standard. GeoJSON is common for web data. When reading from CSV (a very common workflow when working with event data like ACLED), the key is specifying the coordinate column names correctly and the CRS (almost always 4326 for raw GPS data). Students often mix up lon and lat order --- stress that it is \texttt{c("lon", "lat")}, not \texttt{c("lat", "lon")}. After reading, always run \texttt{st\_crs()} to confirm the CRS was read correctly; a common problem is shapefiles with missing or wrong .prj files.}
+
+% ----------------------------------------------------
+\begin{frame}
+\frametitle{Inspecting an \texttt{sf} object}
+\centering
+
+\vspace{6pt}
+
+\begin{itemize}
+\item[] \texttt{class(world)}
+\item[] \texttt{\# [1] "sf" "data.frame"}
+\item[] \phantom{x}
+\item[] \texttt{st\_crs(world)\$epsg}
+\item[] \texttt{\# [1] 4326}
+\item[] \phantom{x}
+\item[] \texttt{st\_geometry\_type(world, by\_geometry = FALSE)}
+\item[] \texttt{\# [1] MULTIPOLYGON}
+\item[] \phantom{x}
+\item[] \texttt{nrow(world)    \# number of features}
+\item[] \texttt{ncol(world)    \# number of columns (incl. geometry)}
+\item[] \phantom{x}
+\item[] \texttt{head(world)\phantom{xxx}\# shows first rows with geometry}
+\end{itemize}
+
+\end{frame}
+% ----------------------------------------------------
+\note{Walk through these commands as if at the console. The \texttt{class()} call shows that \texttt{sf} objects have two classes: \texttt{"sf"} and \texttt{"data.frame"}. This is by design --- they ARE data frames, with additional spatial machinery. The \texttt{st\_crs()} function returns a full CRS object; accessing \texttt{\$epsg} pulls out the numeric code. \texttt{st\_geometry\_type()} tells you what kind of geometries you have (useful when you receive a dataset and are not sure). \texttt{nrow()} and \texttt{ncol()} work just like on a data frame. \texttt{head()} shows the first rows, including a truncated representation of the geometry column. Tell students: the geometry column is called \texttt{geometry} by default but can have any name; \texttt{sf} tracks it internally via \texttt{attr(world, "sf\_column")}.}
+
+% ----------------------------------------------------
+\begin{frame}
+\frametitle{Attribute operations: \texttt{dplyr} works as usual}
+\centering
+
+\vspace{6pt}
+
+\begin{itemize}
+\item[] \texttt{library(dplyr)}
+\item[] \phantom{x}
+\item[] \texttt{\# Filter to European countries}
+\item[] \texttt{europe = world \%>\% filter(continent == "Europe")}
+\item[] \phantom{x}
+\item[] \texttt{\# Select columns + compute log population}
+\item[] \texttt{world = world \%>\%}
+\item[] \texttt{\hspace{12pt}select(name, pop, gdp\_pc, geometry) \%>\%}
+\item[] \texttt{\hspace{12pt}mutate(log\_pop = log(pop))}
+\item[] \phantom{x}
+\item[] \texttt{\# Summarize: total population by continent}
+\item[] \texttt{cont = world \%>\%}
+\item[] \texttt{\hspace{12pt}group\_by(continent) \%>\%}
+\item[] \texttt{\hspace{12pt}summarize(total\_pop = sum(pop, na.rm = TRUE))}
+\item[] \phantom{x}
+\item[] \texttt{\# Geometry is ``sticky'' --- always retained}
+\item[] \texttt{\# To get a plain data frame: st\_drop\_geometry()}
+\item[] \texttt{world\_df = st\_drop\_geometry(world)}
+\end{itemize}
+
+\end{frame}
+% ----------------------------------------------------
+\note{This slide is where students feel most comfortable: they already know \texttt{dplyr}. The key message is that all the familiar verbs --- \texttt{filter()}, \texttt{select()}, \texttt{mutate()}, \texttt{group\_by()}, \texttt{summarize()} --- work on \texttt{sf} objects without any modification. The geometry column is sticky: it is retained automatically unless you explicitly drop it. The \texttt{summarize()} example is particularly powerful: when you group\_by continent and summarize, \texttt{sf} automatically unions the geometries within each continent, producing a new \texttt{sf} object with continent-level polygons. This geometric aggregation is free --- no extra code needed. Point out that the only difference from a regular data frame is that the geometry column is always there, being quietly updated as needed.}
+
+% ----------------------------------------------------
+\begin{frame}
+\frametitle{CRS operations}
+\centering
+
+\vspace{6pt}
+
+\begin{block}{Check the CRS}
+\texttt{st\_crs(world)         \# full CRS info}\\
+\texttt{st\_crs(world)\$epsg   \# just the EPSG code}
+\end{block}
+
+\vspace{8pt}
+
+\begin{block}{Transform to a different CRS}
+\texttt{\# Reproject to ETRS89-LAEA (Europe equal-area)}\\
+\texttt{europe\_proj = st\_transform(europe, crs = 3035)}
+\end{block}
+
+\vspace{8pt}
+
+\begin{itemize}[<+->]
+\item \textbf{Always} transform before computing distances or areas
+\item \textbf{Always} ensure all layers share the same CRS before spatial joins
+\item \texttt{st\_transform()} reprojects precisely --- do not manually change coordinates
+\end{itemize}
+
+\end{frame}
+% ----------------------------------------------------
+\note{Two of the most important \texttt{sf} functions. \texttt{st\_crs()} is diagnostic; \texttt{st\_transform()} is operative. A common mistake is to try to manually change the coordinate values in the geometry column, which corrupts the data. Always use \texttt{st\_transform()} to reproject. The function applies the full mathematical transformation between CRS, accounting for the datum shift and projection equations. Another common mistake: joining two datasets where one is EPSG:4326 and the other is EPSG:3035 --- \texttt{st\_join()} will throw an error or give wrong results. Make it a rule: at the start of every spatial analysis, check all CRS with \texttt{st\_crs()}, and transform everything to a common CRS before proceeding.}
+
+% ----------------------------------------------------
+\begin{frame}
+\frametitle{Geometric operations}
+\centering
+
+\vspace{6pt}
+
+\begin{itemize}[<+->]
+\item \texttt{st\_area(polygons)}\hspace{10pt}--- area of each polygon (in m\textsuperscript{2} if projected)
+\vspace{6pt}
+\item \texttt{st\_distance(pts, pts)}\hspace{4pt}--- pairwise distance matrix between features
+\vspace{6pt}
+\item \texttt{st\_centroid(polygons)}\hspace{0pt}--- centroid point of each polygon
+\vspace{6pt}
+\item \texttt{st\_buffer(pts, dist = 5000)}\hspace{0pt}--- 5 km buffer around each point
+\vspace{6pt}
+\item \texttt{st\_intersects(x, y)}\hspace{8pt}--- which features of x overlap with y?
+\vspace{6pt}
+\item \texttt{st\_union(polygons)}\hspace{10pt}--- merge all polygons into one
+\end{itemize}
+
+\end{frame}
+% ----------------------------------------------------
+\note{These are the workhorses of spatial analysis. \texttt{st\_area()} returns areas in square meters when the CRS is projected, or in square degrees (useless) when geographic. \texttt{st\_distance()} computes a matrix of pairwise distances --- useful for, e.g., distance from each municipality to the national capital, or distance from each event to the nearest army base. \texttt{st\_centroid()} converts polygons to points (their centroids), useful for computing distances from polygon centroids. \texttt{st\_buffer()} creates a buffer zone around features --- e.g., a 10 km buffer around industrial facilities to define the ``exposed'' population. \texttt{st\_intersects()} returns a logical list: for each feature in x, which features of y does it overlap? This is the basis for spatial joins. Always use projected CRS for distance and area operations.}
+
+% ----------------------------------------------------
+\begin{frame}
+\frametitle{Spatial joins: \texttt{st\_join()}}
+\centering
+
+\vspace{8pt}
+
+\begin{block}{Attach polygon attributes to points}
+\texttt{\# events: sf with POINT geometry (conflict events)}\\
+\texttt{\# munis: sf with POLYGON geometry (municipalities)}\\
+\texttt{events\_muni = st\_join(events, munis,}\\
+\texttt{\hspace{30pt}join = st\_within)}
+\end{block}
+
+\vspace{10pt}
+
+\begin{itemize}[<+->]
+\item Default: \texttt{st\_intersects} (any overlap)
+\item \texttt{st\_within}: point must fall \textit{inside} the polygon
+  \begin{itemize}
+  \item Passed as a function object --- no \texttt{()} --- \texttt{join = st\_within}, not \texttt{st\_within()}
+  \end{itemize}
+\item \texttt{st\_nearest\_feature}: attach the nearest polygon (even if no overlap)
+\item Result: \texttt{events} data frame + municipality attributes appended
+\item Use case: ``which district does each conflict event belong to?''
+\end{itemize}
+
+\end{frame}
+% ----------------------------------------------------
+\note{Spatial joins are one of the most powerful and frequently used operations in political science spatial analysis. The canonical use case: you have point data (conflict events, factories, polling stations) and polygon data (municipalities, districts, countries), and you want to know which polygon each point falls in. After \texttt{st\_join()}, the result is the point data frame with all the polygon attributes appended as new columns. This allows you to, for example, count the number of conflict events per municipality, or aggregate point-level data to the district level. The \texttt{join} argument specifies the spatial predicate: \texttt{st\_within} is usually the right choice for points-in-polygons (a point is within one and only one polygon). Note: CRS must match before joining --- check with \texttt{st\_crs()} and transform if needed.}
+
+% ----------------------------------------------------
+\begin{frame}
+\frametitle{Worked example: events per municipality}
+\centering
+
+\vspace{4pt}
+
+\begin{itemize}
+\item[] \texttt{\# 1. Ensure same CRS}
+\item[] \texttt{events = st\_transform(events, crs = 3035)}
+\item[] \texttt{munis  = st\_transform(munis,  crs = 3035)}
+\item[] \phantom{x}
+\item[] \texttt{\# 2. Spatial join: assign each event to a municipality}
+\item[] \texttt{events\_m = st\_join(events, munis, join = st\_within)}
+\item[] \phantom{x}
+\item[] \texttt{\# 3. Count events per municipality}
+\item[] \texttt{event\_counts = events\_m \%>\%}
+\item[] \texttt{\hspace{12pt}st\_drop\_geometry() \%>\%}
+\item[] \texttt{\hspace{12pt}group\_by(muni\_code) \%>\%}
+\item[] \texttt{\hspace{12pt}summarize(n\_events = n())}
+\item[] \phantom{x}
+\item[] \texttt{\# 4. Merge back to municipality polygons}
+\item[] \texttt{munis = left\_join(munis, event\_counts, by = "muni\_code")}
+\end{itemize}
+
+\end{frame}
+% ----------------------------------------------------
+\note{Walk through this worked example step by step. It illustrates the complete workflow: transform CRS to match, spatial join to assign polygon attributes to points, drop geometry to work with a plain data frame, aggregate by grouping variable, then merge back to the polygon object for visualization. The \texttt{st\_drop\_geometry()} call is important: after the spatial join we no longer need the geometry for counting, so we drop it to avoid confusion. The \texttt{left\_join()} at the end brings the counts back to the municipality polygons so we can make a choropleth map. This full pipeline --- from event coordinates to choropleth map --- is one of the most common spatial analysis workflows in political science. Students should practice this in the assignment.}
+
+% ====================================================
+\section{Visualization with \texttt{ggplot2}}
+% ====================================================
+
+% ----------------------------------------------------
+\begin{frame}
+\frametitle{\texttt{geom\_sf()}: maps in ggplot2}
+\centering
+
+\vspace{6pt}
+
+\begin{block}{Basic map of world countries}
+\texttt{library(ggplot2)}\\
+\texttt{ggplot(world) +}\\
+\texttt{\hspace{12pt}geom\_sf() +}\\
+\texttt{\hspace{12pt}theme\_void()}
+\end{block}
+
+\vspace{8pt}
+
+\begin{itemize}[<+->]
+\item \texttt{geom\_sf()} automatically detects geometry type (points, lines, polygons)
+\item Works within the full \texttt{ggplot2} grammar: \texttt{aes()}, \texttt{scale\_*()}, \texttt{theme\_*()}
+\item \texttt{theme\_void()} removes axes, gridlines, background --- ideal for maps
+\item \texttt{coord\_sf()} controls projection and extent:
+  \begin{itemize}
+  \item[] \texttt{coord\_sf(crs = 3035)}\ \ \texttt{\# reproject for display}
+  \item[] \texttt{coord\_sf(xlim = c(-10, 40), ylim = c(35, 72))}
+  \end{itemize}
+\end{itemize}
+
+\end{frame}
+% ----------------------------------------------------
+\note{The \texttt{geom\_sf()} function was added to \texttt{ggplot2} in version 3.0 and is now the standard way to plot spatial data in R. The key insight is that it fits seamlessly into the \texttt{ggplot2} grammar: you still use \texttt{aes()} for aesthetics, \texttt{scale\_fill\_*()} for color scales, \texttt{theme\_*()} for appearance. The \texttt{coord\_sf()} function is important for two reasons: (1) you can reproject the display without actually transforming the data --- useful for quick visual exploration; (2) you can set bounding box limits to zoom into a region. \texttt{theme\_void()} is the default map theme: it removes the x and y axis labels (which would show lat/lon degrees, generally not useful on a map) and the background grid. Mention that \texttt{theme\_minimal()} is also fine if you want to keep some structure.}
+
+% ----------------------------------------------------
+\begin{frame}
+\frametitle{Choropleth maps}
+\centering
+
+\vspace{6pt}
+
+\begin{block}{Countries colored by GDP per capita}
+\texttt{ggplot(world) +}\\
+\texttt{\hspace{12pt}geom\_sf(aes(fill = gdp\_pc), color = "white", size = 0.1) +}\\
+\texttt{\hspace{12pt}scale\_fill\_viridis\_c(}\\
+\texttt{\hspace{24pt}name = "GDP per capita",}\\
+\texttt{\hspace{24pt}na.value = "grey80",}\\
+\texttt{\hspace{24pt}option = "magma") +}\\
+\texttt{\hspace{12pt}theme\_void() +}\\
+\texttt{\hspace{12pt}labs(title = "GDP per capita (USD)")}
+\end{block}
+
+\vspace{6pt}
+
+\begin{itemize}[<+->]
+\item Map \texttt{fill} to a continuous variable $\Rightarrow$ choropleth
+\item \texttt{color = "white", size = 0.1}: thin white borders between polygons
+\item \texttt{na.value}: color for missing data
+\end{itemize}
+
+\end{frame}
+% ----------------------------------------------------
+\note{The choropleth is the most common type of thematic map in political science. The key \texttt{aes()} mapping is \texttt{fill}: which variable determines polygon color. \texttt{scale\_fill\_viridis\_c()} is the standard for continuous variables: the viridis palette is perceptually uniform and accessible to color-blind readers. The \texttt{option} argument selects the palette variant: \texttt{"viridis"} (blue-green-yellow), \texttt{"magma"} (black-red-yellow), \texttt{"plasma"} (purple-red-yellow). For diverging variables (e.g., party vote share change), \texttt{scale\_fill\_distiller(type = "div")} from RColorBrewer is appropriate. The \texttt{na.value} argument is important: countries with missing GDP data should not just disappear from the map, they should show as a neutral grey. The \texttt{color} and \texttt{size} arguments control polygon borders: thin white lines improve readability on dark-fill maps.}
+
+% ----------------------------------------------------
+\begin{frame}
+\frametitle{Layering: polygons + points}
+\centering
+
+\vspace{6pt}
+
+\begin{block}{Country outlines + conflict event locations}
+\texttt{ggplot() +}\\
+\texttt{\hspace{12pt}geom\_sf(data = world,}\\
+\texttt{\hspace{24pt}fill = "grey90", color = "white", size = 0.2) +}\\
+\texttt{\hspace{12pt}geom\_sf(data = events,}\\
+\texttt{\hspace{24pt}aes(color = event\_type),}\\
+\texttt{\hspace{24pt}size = 0.8, alpha = 0.6) +}\\
+\texttt{\hspace{12pt}scale\_color\_manual(values = c(...)) +}\\
+\texttt{\hspace{12pt}coord\_sf(xlim = c(-18, 52), ylim = c(-35, 38)) +}\\
+\texttt{\hspace{12pt}theme\_void()}
+\end{block}
+
+\vspace{6pt}
+
+\begin{itemize}[<+->]
+\item Add multiple \texttt{geom\_sf()} layers with \texttt{data = } argument
+\item Each layer can use a different \texttt{sf} object
+\item Order matters: later layers drawn on top
+\end{itemize}
+
+\end{frame}
+% ----------------------------------------------------
+\note{Layering is a key strength of \texttt{ggplot2}: you can combine polygon backgrounds with point overlays, add line layers for borders or roads, etc. The important syntax detail: when using multiple datasets, pass \texttt{data = } explicitly to each \texttt{geom\_sf()} call rather than to the top-level \texttt{ggplot()}. The \texttt{coord\_sf(xlim, ylim)} call here zooms to Africa by specifying longitude and latitude bounds. The \texttt{alpha = 0.6} makes overlapping points semi-transparent so dense clusters are visible. This exact code pattern --- grey country polygons + colored event points --- is extremely common in conflict research papers. Students can adapt it by changing the polygon dataset (from world countries to a specific country's municipalities) and the point dataset (to their own events).}
+
+% ----------------------------------------------------
+\begin{frame}
+\frametitle{A complete example: European unemployment}
+\centering
+
+\vspace{6pt}
+
+\begin{itemize}
+\item[] \texttt{library(sf); library(dplyr); library(ggplot2)}
+\item[] \phantom{x}
+\item[] \texttt{\# Read NUTS-2 regions (Eurostat shapefile)}
+\item[] \texttt{nuts2 = st\_read("data/NUTS\_RG\_20M\_2021.shp") \%>\%}
+\item[] \texttt{\hspace{12pt}filter(LEVL\_CODE == 2)}
+\item[] \phantom{x}
+\item[] \texttt{\# Join unemployment data}
+\item[] \texttt{nuts2 = left\_join(nuts2, unemp\_df, by = "NUTS\_ID")}
+\item[] \phantom{x}
+\item[] \texttt{\# Map}
+\item[] \texttt{ggplot(nuts2) +}
+\item[] \texttt{\hspace{12pt}geom\_sf(aes(fill = unemp\_rate),}
+\item[] \texttt{\hspace{24pt}color = "white", size = 0.1) +}
+\item[] \texttt{\hspace{12pt}scale\_fill\_distiller(palette = "YlOrRd",}
+\item[] \texttt{\hspace{24pt}direction = 1, name = "Unemployment (\%)") +}
+\item[] \texttt{\hspace{12pt}coord\_sf(xlim = c(-25, 45), ylim = c(34, 72)) +}
+\item[] \texttt{\hspace{12pt}theme\_void()}
+\end{itemize}
+
+\end{frame}
+% ----------------------------------------------------
+\note{This worked example ties together everything from the session: reading a shapefile, filtering with dplyr, joining external data, and making a choropleth with a sensible color scale. The Eurostat NUTS shapefile is freely available (search ``Eurostat NUTS shapefiles'') and contains European NUTS-0, NUTS-1, NUTS-2, and NUTS-3 regions. Filtering to \texttt{LEVL\_CODE == 2} gives the NUTS-2 level (roughly equivalent to regions or provinces). The \texttt{unemp\_df} would be a data frame downloaded from Eurostat containing unemployment rates by NUTS\_ID code. The \texttt{scale\_fill\_distiller()} function applies RColorBrewer palettes; \texttt{"YlOrRd"} (yellow-orange-red) works well for unemployment rates. Allow students to ask questions about the code; this is a realistic example they could adapt for their final essay.}
+
+% ----------------------------------------------------
+\begin{frame}
+\frametitle{Map aesthetics: quick tips}
+\centering
+
+\vspace{8pt}
+
+\begin{itemize}[<+->]
+\item \textbf{Color scales for continuous data}:
+  \begin{itemize}
+  \item Sequential: \texttt{scale\_fill\_viridis\_c()} --- for one-direction variables
+  \item Diverging: \texttt{scale\_fill\_distiller(type = "div")} --- for +/- variables
+  \end{itemize}
+\vspace{8pt}
+\item \textbf{Borders}: \texttt{color = "white", linewidth = 0.1} for subtle borders
+\vspace{8pt}
+\item \textbf{Theme}: \texttt{theme\_void()} for clean maps; add \texttt{theme(legend.position = "bottom")}
+\vspace{8pt}
+\item \textbf{Missing data}: always set \texttt{na.value = "grey80"} in scale
+\vspace{8pt}
+\item \textbf{Projection}: use \texttt{coord\_sf(crs = 3035)} for Europe without reprojecting data
+\vspace{8pt}
+\item \textbf{Saving}: \texttt{ggsave("map.pdf", width = 8, height = 6)}
+\end{itemize}
+
+\end{frame}
+% ----------------------------------------------------
+\note{These practical tips save students time. The most common mistakes in student maps: (1) using the default ggplot2 theme which adds lat/lon axis labels and a grey background, (2) not setting a na.value so missing countries turn white and look like ocean, (3) using the wrong color scale (sequential palette for a diverging variable), (4) saving at low resolution. The \texttt{coord\_sf(crs = 3035)} trick is very useful: it reprojects the display to the LAEA projection (which looks much better for European maps --- no distorted Greenland) without actually transforming the data stored in the object. The original data stays in whatever CRS it was read in; the projection only affects how ggplot2 renders it on screen. For publications, save as PDF for vector graphics; for presentations, PNG at 150-200 dpi is sufficient.}
+
+% ====================================================
+\section{Wrap-up}
+% ====================================================
+
+% ----------------------------------------------------
+\begin{frame}
+\frametitle{Key takeaways}
+\centering
+
+\vspace{6pt}
+
+\begin{itemize}[<+->]
+\item \textbf{Spatial data} = regular data + geometry column
+  \begin{itemize}
+  \item Vector: points, lines, polygons --- discrete objects with attributes
+  \end{itemize}
+\vspace{8pt}
+\item \textbf{CRS}: always check, always match before joining
+  \begin{itemize}
+  \item EPSG:4326 (WGS84) for raw data; project before computing distances
+  \end{itemize}
+\vspace{8pt}
+\item \textbf{\texttt{sf} package}: the modern R standard
+  \begin{itemize}
+  \item \texttt{st\_read()}, \texttt{st\_as\_sf()}, \texttt{st\_transform()}, \texttt{st\_join()}
+  \item Works seamlessly with \texttt{dplyr} and \texttt{ggplot2}
+  \end{itemize}
+\vspace{8pt}
+\item \textbf{Visualization}: \texttt{geom\_sf()} inside \texttt{ggplot2}
+  \begin{itemize}
+  \item Choropleth: \texttt{aes(fill = variable)} + \texttt{scale\_fill\_viridis\_c()}
+  \end{itemize}
+\vspace{8pt}
+\item \textbf{Workflow}: read $\to$ check CRS $\to$ transform $\to$ join $\to$ visualize
+\end{itemize}
+
+\end{frame}
+% ----------------------------------------------------
+\note{Summarize the arc of the session. Students should leave with a mental model: spatial data is just a data frame with a geometry column, the CRS is the coordinate system that makes the coordinates meaningful, and the \texttt{sf} package integrates smoothly into the R workflow they already know. The workflow arrow at the bottom --- read, check CRS, transform, join, visualize --- is a practical checklist they can follow for any spatial analysis. Next session covers spatial autocorrelation and spatial regression: the analytical core of spatial econometrics, building on the data skills introduced today.}
+
+% ----------------------------------------------------
+\begin{frame}
+\frametitle{For next session}
+\centering
+
+\begin{itemize}
+\item Complete Assignment 7 (spatial data in R)
+  \begin{itemize}
+  \item Load a shapefile, inspect CRS, reproject, make a choropleth
+  \item Perform a spatial join: assign event points to municipality polygons
+  \end{itemize}
+\vspace{8pt}
+\item Next session (Spatial data II):
+  \begin{itemize}
+  \item Spatial autocorrelation: Moran's I
+  \item Spatial weights matrices
+  \item Spatial regression models (SAR, SEM, SLM)
+  \end{itemize}
+\end{itemize}
+
+\end{frame}
+% ----------------------------------------------------
+\note{The assignment reinforces the core workflows: reading shapefiles, checking CRS, reprojecting, choropleth mapping, and spatial join. Students should have access to a shapefile (e.g., municipality boundaries for Spain from the Spanish National Statistics Institute, or world country boundaries from Natural Earth) and a CSV with coordinates. Mention that Natural Earth (naturalearthdata.com) provides free country and regional shapefiles at multiple scales and is an excellent resource. Preview Session 10: once we can work with spatial data, the natural next question is whether outcomes are correlated across space (spatial autocorrelation), how to measure it (Moran's I), and how to model it (spatial regression). This builds directly on the panel data and regression content from earlier sessions.}
+
+% ----------------------------------------------------
+\begin{frame}
+\frametitle{}
+\centering
+
+Questions?
+
+\end{frame}
+% ----------------------------------------------------
+\note{}

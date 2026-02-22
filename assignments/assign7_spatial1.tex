@@ -1,0 +1,280 @@
+\input{preamble.tex}
+\textbf{\large Assignment 7: Spatial Data I}\\\vspace{10pt}
+\end{center}
+
+\vspace{10pt}
+\noindent
+\textbf{\large Instructions:}
+
+\vspace{10pt}
+\begin{itemize}
+\setlength\itemsep{0pt}
+  \item {\color{red}{\textbf{Deadline}}}: \textbf{[DEADLINE - TBD], before class}
+  \item Submit your work in a separate folder in your GitHub repository
+  \begin{itemize}
+    \item You can include only the R file or additional ones (e.g. pdf with results)
+  \end{itemize}
+  \item \textbf{Always use comments} in your R code -- and use them to answer questions
+  \item You are encouraged to work together, but each person must submit their own code
+  \item Plan is to start Part 1 in class and complete Part 2 at home
+  \item I'll upload a solution file to the website after next class
+\end{itemize}
+
+\vspace{20pt}
+\tableofcontents
+\newpage
+
+% ==========================================================================
+\section{Part 1: In-Class (Exploring Spatial Data with \texttt{sf})}
+% ==========================================================================
+
+In this lab we work with the \code{world} dataset from the \code{spData} package, which contains country polygons for the entire world along with socioeconomic attributes. This dataset is ideal for a first encounter with \code{sf} objects: it loads directly into R (no file download needed), uses real data, and illustrates the key operations you will use throughout the spatial analysis part of the course.
+
+Load the required packages and data with:
+\begin{lstlisting}
+library(sf)
+library(spData)
+data(world)
+\end{lstlisting}
+
+Key variables in \code{world}:
+\begin{itemize}
+  \item \code{name\_long} --- country name (long form)
+  \item \code{continent} --- continent
+  \item \code{area\_km2} --- country area in km\textsuperscript{2}
+  \item \code{pop} --- population estimate
+  \item \code{gdpPercap} --- GDP per capita
+  \item \code{lifeExp} --- life expectancy
+  \item \code{geom} --- geometry column (sf)
+\end{itemize}
+
+% --------------------------------------------------------------------------
+\subsection{Inspecting an \texttt{sf} object}
+% --------------------------------------------------------------------------
+
+\begin{enumerate}[label=\alph*)]
+  \item Load the \code{world} dataset and inspect its structure. Run \code{class(world)}, \code{names(world)}, and \code{nrow(world)}. In a comment, describe what makes an \code{sf} object different from a regular R data frame. What is the geometry column, and how is it stored?
+
+  \item Check the coordinate reference system (CRS) with \code{st\_crs(world)}. What EPSG code does the dataset use? In a comment, explain what WGS84 means and why it is the standard CRS for global geographic data.
+
+  \item Use \code{st\_geometry\_type(world)} and \code{unique(st\_geometry\_type(world))} to inspect the geometry type. In a comment, explain what a MULTIPOLYGON is and give two concrete examples of countries that would require multiple polygons to represent their territory.
+
+  \item Produce a quick map of GDP per capita using base R graphics:
+  \begin{lstlisting}
+pdf("world_gdp_base.pdf")
+plot(world["gdpPercap"])
+dev.off()
+  \end{lstlisting}
+  In a comment, describe what you see. Which regions appear wealthiest and which poorest?
+\end{enumerate}
+
+% --------------------------------------------------------------------------
+\subsection{Attribute operations}
+% --------------------------------------------------------------------------
+
+A key feature of \code{sf} objects is that standard \code{dplyr} verbs work on them directly, operating on the attribute table while automatically carrying the geometry column along.
+
+\begin{enumerate}[label=\alph*)]
+  \item Using \code{filter()}, create a subset of \code{world} containing only African countries. Call it \code{africa}. How many African countries are in the dataset? Plot \code{africa["gdpPercap"]} using base graphics. In a comment, note whether the country count matches your expectations.
+
+  \item Add a new variable \code{pop\_millions} equal to population divided by 1{,}000{,}000 using \code{mutate()}. Then compute the average GDP per capita by continent using \code{group\_by()} and \code{summarise()}:
+  \begin{lstlisting}
+library(dplyr)
+
+world = world %>%
+  mutate(pop_millions = pop / 1e6)
+
+gdp_by_continent = world %>%
+  group_by(continent) %>%
+  summarise(mean_gdpPercap = mean(gdpPercap, na.rm = TRUE))
+
+print(gdp_by_continent)
+  \end{lstlisting}
+  In a comment, note that \code{summarise()} on a grouped \code{sf} object \textit{unions} the geometries by group and keeps the geometry column. To get a plain data frame without geometry, use \code{st\_drop\_geometry()} first.
+
+  \item Sort the African countries by GDP per capita (descending) using \code{arrange()}. Print the top 5 rows with \code{name\_long} and \code{gdpPercap}. Name the five countries in a comment.
+\end{enumerate}
+
+% --------------------------------------------------------------------------
+\subsection{Simple visualization with \texttt{ggplot2}}
+% --------------------------------------------------------------------------
+
+The \code{geom\_sf()} layer in \code{ggplot2} allows you to plot \code{sf} objects using the standard grammar of graphics.
+
+\begin{enumerate}[label=\alph*)]
+  \item Make a choropleth map of the world colored by \code{gdpPercap}:
+  \begin{lstlisting}
+library(ggplot2)
+
+ggplot(world) +
+  geom_sf(aes(fill = gdpPercap)) +
+  scale_fill_viridis_c(option = "plasma", na.value = "grey80",
+                       name = "GDP per capita") +
+  theme_void() +
+  labs(title = "GDP per capita by country")
+ggsave("world_gdp.pdf", width = 10, height = 5)
+  \end{lstlisting}
+  In a comment, describe the geographic pattern. Which regions appear wealthiest? Which appear poorest?
+
+  \item Make the same map restricted to the \code{africa} object. Use \code{scale\_fill\_viridis\_c()} with \code{option = "magma"} and save as \code{africa\_gdp.pdf}. Describe the variation in GDP per capita across African countries.
+
+  \item Improve the Africa map by adding white country borders: modify \code{geom\_sf()} to include \code{color = "white"} and \code{linewidth = 0.3}. Save as \code{africa\_gdp\_borders.pdf}. In a comment, explain how the border layer improves readability.
+\end{enumerate}
+
+\newpage
+
+% ==========================================================================
+\section{Part 2: Take-Home (Point Data and Spatial Joins)}
+% ==========================================================================
+
+A key task in spatial data analysis is combining point data (events or observations with coordinates) with polygon data (regions or countries). We do this using \textit{spatial joins}: each point is assigned the attributes of the polygon it falls within. In this part we work with geo-coded armed conflict event data.
+
+Download the conflict events data from the course repository:
+\begin{itemize}
+  \item \href{https://github.com/franvillamil/AQM2/tree/master/datasets/spatial}{\texttt{github.com/franvillamil/AQM2/tree/master/datasets/spatial}}
+\end{itemize}
+
+Load it with \code{events = read.csv("conflict\_events.csv")}. Key variables:
+\begin{itemize}
+  \item \code{event\_id} --- unique event identifier
+  \item \code{year} --- year of the event
+  \item \code{country} --- country name (character; may not match \code{world} exactly)
+  \item \code{longitude}, \code{latitude} --- geographic coordinates (WGS84)
+  \item \code{fatalities} --- estimated number of fatalities
+  \item \code{event\_type} --- type of event (e.g., battles, violence against civilians)
+\end{itemize}
+
+% --------------------------------------------------------------------------
+\subsection{Converting tabular data to \texttt{sf}}
+% --------------------------------------------------------------------------
+
+\begin{enumerate}[label=\alph*)]
+  \item Convert the \code{events} data frame to an \code{sf} object using:
+  \begin{lstlisting}
+events_sf = st_as_sf(events,
+                     coords = c("longitude", "latitude"),
+                     crs = 4326)
+  \end{lstlisting}
+  Run \code{class(events\_sf)} and \code{st\_crs(events\_sf)} to verify it worked. In a comment, explain what \code{st\_as\_sf()} does: what does the \code{coords} argument specify, and what does \code{crs = 4326} mean?
+
+  \item How many events are in the dataset? Use \code{nrow()} and \code{table(events\_sf\$event\_type)} to show the count by event type. In a comment, which event type is most common?
+
+  \item Make a map of conflict events overlaid on the world polygon:
+  \begin{lstlisting}
+ggplot() +
+  geom_sf(data = world, fill = "grey90", color = "white", linewidth = 0.2) +
+  geom_sf(data = events_sf, aes(color = event_type),
+          size = 0.5, alpha = 0.4) +
+  theme_void() +
+  labs(title = "Armed conflict events", color = "Event type")
+ggsave("conflict_events_map.pdf", width = 10, height = 5)
+  \end{lstlisting}
+  In a comment, describe the geographic pattern. In which regions are conflict events most concentrated?
+\end{enumerate}
+
+% --------------------------------------------------------------------------
+\subsection{Spatial join: events to countries}
+% --------------------------------------------------------------------------
+
+\begin{enumerate}[label=\alph*)]
+  \item Use \code{st\_join()} to assign country attributes to each conflict event:
+  \begin{lstlisting}
+# Verify both objects share the same CRS before joining
+st_crs(events_sf) == st_crs(world)
+
+events_joined = st_join(events_sf, world[, c("name_long", "continent", "gdpPercap")])
+  \end{lstlisting}
+  Run \code{nrow(events\_joined)} and verify it equals \code{nrow(events\_sf)}. In a comment, explain what \code{st\_join()} is doing: how does it determine which country polygon each event point falls within? Why is checking the CRS before joining important?
+
+  \item Some events may not match any country polygon (e.g., events at sea, on islands, or exactly on a border). Check with \code{sum(is.na(events\_joined\$name\_long))}. What fraction of events has no matching country? In a comment, list two possible reasons why a point might not match any polygon.
+
+  \item Count the number of events per country:
+  \begin{lstlisting}
+library(dplyr)
+
+events_by_country = events_joined %>%
+  filter(!is.na(name_long)) %>%
+  group_by(name_long) %>%
+  summarise(n_events = n(),
+            total_fatalities = sum(fatalities, na.rm = TRUE)) %>%
+  arrange(desc(n_events))
+
+print(head(st_drop_geometry(events_by_country), 10))
+  \end{lstlisting}
+  Report the top 10 countries by number of events. In a comment, are the results consistent with your knowledge of contemporary armed conflicts?
+\end{enumerate}
+
+% --------------------------------------------------------------------------
+\subsection{Choropleth of conflict intensity}
+% --------------------------------------------------------------------------
+
+\begin{enumerate}[label=\alph*)]
+  \item Join the event counts back to the world polygon data. Note that \code{events\_by\_country} is still an \code{sf} object, so we first drop its geometry before joining:
+  \begin{lstlisting}
+library(tidyr)
+
+events_by_country_df = st_drop_geometry(events_by_country)
+
+world_conflict = world %>%
+  left_join(events_by_country_df, by = "name_long") %>%
+  mutate(n_events = replace_na(n_events, 0),
+         total_fatalities = replace_na(total_fatalities, 0))
+  \end{lstlisting}
+  Verify that \code{nrow(world\_conflict) == nrow(world)}.
+
+  \item Make a choropleth map of conflict event counts by country:
+  \begin{lstlisting}
+ggplot(world_conflict) +
+  geom_sf(aes(fill = n_events), color = "white", linewidth = 0.2) +
+  scale_fill_distiller(palette = "Reds", direction = 1,
+                       name = "N events", na.value = "grey80") +
+  theme_void() +
+  labs(title = "Armed conflict events by country")
+ggsave("conflict_by_country.pdf", width = 10, height = 5)
+  \end{lstlisting}
+  In a comment, describe the map. Does the geographic pattern match the event-level map from question 2.1c?
+
+  \item Make a second map using log-transformed counts: use \code{log1p(n\_events)} as the fill variable (so countries with zero events are handled). Use \code{scale\_fill\_distiller()} with \code{palette = "YlOrRd"}, \code{direction = 1}, and \code{name = "Log(events+1)"}. Save as \code{conflict\_log\_map.pdf}. In a comment, explain why the log transformation is useful and what it reveals that the raw count map did not.
+\end{enumerate}
+
+% --------------------------------------------------------------------------
+\subsection{Discussion}
+% --------------------------------------------------------------------------
+
+Answer the following questions as comments in your R script. Each answer should be 2--3 sentences.
+
+\begin{enumerate}[label=\alph*)]
+  \item Discuss one limitation of the spatial join approach used in this assignment. For example: what happens to events that fall exactly on the border between two countries? How might you handle events that fall just outside a polygon due to small coordinate imprecisions?
+
+  \item What is the difference between \code{st\_join()} and \code{left\_join()}? What information does each use to match rows, and when would you prefer one over the other?
+\end{enumerate}
+
+\vspace{15pt}
+
+% ==========================================================================
+\section{Data Sources}
+% ==========================================================================
+
+\begin{itemize}
+  \item World polygons: \code{world} dataset in the \code{spData} R package\\(\code{library(spData); data(world)})
+  \item Conflict events: \href{https://github.com/franvillamil/AQM2/tree/master/datasets/spatial}{\texttt{github.com/franvillamil/AQM2/tree/master/datasets/spatial}}
+\end{itemize}
+
+\vspace{15pt}
+
+% ==========================================================================
+\section{Submission}
+% ==========================================================================
+
+Commit your file to your GitHub repository before the deadline. Put it in a separate folder, e.g.\ \texttt{assignment7}. Make sure your repository is public so I can access it.
+
+Your R script should:
+\begin{itemize}
+  \item Be well-organized with clear section headers (using comments)
+  \item Include all code needed to reproduce your analysis
+  \item Include your answers and interpretations as comments
+  \item Save any plots to files (using \code{pdf()}/\code{dev.off()} or \code{ggsave()})
+  \item Run without errors from top to bottom
+\end{itemize}
+
+\end{document}
