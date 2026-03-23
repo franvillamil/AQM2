@@ -10,13 +10,15 @@
 \frametitle{Today's goals}
 \centering
 
-\begin{itemize}[<+->]
+\begin{itemize}
 \item Understand why spatial autocorrelation violates OLS assumptions
 \item Diagnose spatial dependence: Moran's I on residuals and LM tests
 \item Estimate the Spatial Error Model (SEM) and interpret $\lambda$
 \item Estimate the Spatial Lag Model (SLM/SAR) and interpret $\rho$
 \item Compute direct and indirect effects after SLM estimation
-\item Choose between SEM, SLM, and SDM in practice
+\item Understand estimation methods: ML, IV/2SLS, and why OLS fails
+\item Choose between SEM, SLM, SDM, and extensions (SAC, SDEM)
+\item Compare models: LR tests for nested models, AIC for non-nested
 \end{itemize}
 
 \end{frame}
@@ -534,17 +536,13 @@ The coefficient $\hat{\boldsymbol{\beta}}$ is not the marginal effect.
 \frametitle{Why $\hat{\boldsymbol{\beta}}$ is not the marginal effect}
 \centering
 
-\vspace{6pt}
-
 Solving the SLM for $\mathbf{y}$:
 
-\vspace{6pt}
+$\mathbf{y} = \rho\mathbf{W}\mathbf{y} + \mathbf{X}\boldsymbol{\beta} + \boldsymbol{\varepsilon}$
 
-$$\mathbf{y} = \rho\mathbf{W}\mathbf{y} + \mathbf{X}\boldsymbol{\beta} + \boldsymbol{\varepsilon}$$
+$(\mathbf{I} - \rho\mathbf{W})\mathbf{y} = \mathbf{X}\boldsymbol{\beta} + \boldsymbol{\varepsilon}$
 
-$$(\mathbf{I} - \rho\mathbf{W})\mathbf{y} = \mathbf{X}\boldsymbol{\beta} + \boldsymbol{\varepsilon}$$
-
-$$\mathbf{y} = \underbrace{(\mathbf{I} - \rho\mathbf{W})^{-1}}_{\mathbf{B}} (\mathbf{X}\boldsymbol{\beta} + \boldsymbol{\varepsilon})$$
+$\mathbf{y} = \underbrace{(\mathbf{I} - \rho\mathbf{W})^{-1}}_{\mathbf{B}} (\mathbf{X}\boldsymbol{\beta} + \boldsymbol{\varepsilon})$
 
 \vspace{10pt}
 
@@ -621,33 +619,33 @@ $$\mathbf{y} = \underbrace{(\mathbf{I} - \rho\mathbf{W})^{-1}}_{\mathbf{B}} (\ma
 % ----------------------------------------------------
 \note{Walk through the \texttt{impacts()} output in detail. The function takes the estimated model object and the weights matrix (needed to compute $\mathbf{B}$). The output table has three columns (Direct, Indirect, Total) and one row per covariate. The numbers in this example show: (1) the direct effect (0.574) is slightly larger than $\hat{\beta}_k$ (0.51 from the SLM output) due to feedback; (2) the indirect effect (0.531) is substantial --- roughly equal to the direct effect; (3) the total effect (1.105) is more than double $\hat{\beta}_k$. This means ignoring spatial spillover would severely underestimate the impact of GDP on $y$. The \texttt{zstats = TRUE} argument includes asymptotic standard errors and $z$-statistics computed by simulation. Always report the impacts table in papers that use SLM.}
 
-% ----------------------------------------------------
-\begin{frame}
-\frametitle{Spatial feedback: intuition}
-\centering
+% % ----------------------------------------------------
+% \begin{frame}
+% \frametitle{Spatial feedback: intuition}
+% \centering
 
-\vspace{8pt}
+% \vspace{8pt}
 
-\begin{tikzpicture}[scale=0.9]
-  % Units
-  \node[draw, circle, fill=accent!15, minimum size=1.0cm, font=\small] (i)  at (0, 0)   {$i$};
-  \node[draw, circle, fill=accent!8,  minimum size=0.8cm, font=\small] (j1) at (-2.5, 1.2) {$j_1$};
-  \node[draw, circle, fill=accent!8,  minimum size=0.8cm, font=\small] (j2) at ( 2.5, 1.2) {$j_2$};
-  \node[draw, circle, fill=accent!8,  minimum size=0.8cm, font=\small] (j3) at (0,   -1.8) {$j_3$};
-  % Arrows: i to neighbors
-  \draw[->, thick, accent2] (i)  -- node[above left, font=\scriptsize]{$\rho w_{j_1 i}$} (j1);
-  \draw[->, thick, accent2] (i)  -- node[above right, font=\scriptsize]{$\rho w_{j_2 i}$} (j2);
-  \draw[->, thick, accent2] (i)  -- node[right, font=\scriptsize]{$\rho w_{j_3 i}$} (j3);
-  % x_i shock label
-  \node[font=\small, asher, align=center] at (0, 1.0) {$\Delta x_i \uparrow$\\$\Downarrow$\\$\Delta y_i \uparrow$};
-\end{tikzpicture}
+% \begin{tikzpicture}[scale=0.9]
+%   % Units
+%   \node[draw, circle, fill=accent!15, minimum size=1.0cm, font=\small] (i)  at (0, 0)   {$i$};
+%   \node[draw, circle, fill=accent!8,  minimum size=0.8cm, font=\small] (j1) at (-2.5, 1.2) {$j_1$};
+%   \node[draw, circle, fill=accent!8,  minimum size=0.8cm, font=\small] (j2) at ( 2.5, 1.2) {$j_2$};
+%   \node[draw, circle, fill=accent!8,  minimum size=0.8cm, font=\small] (j3) at (0,   -1.8) {$j_3$};
+%   % Arrows: i to neighbors
+%   \draw[->, thick, accent2] (i)  -- node[above left, font=\scriptsize]{$\rho w_{j_1 i}$} (j1);
+%   \draw[->, thick, accent2] (i)  -- node[above right, font=\scriptsize]{$\rho w_{j_2 i}$} (j2);
+%   \draw[->, thick, accent2] (i)  -- node[right, font=\scriptsize]{$\rho w_{j_3 i}$} (j3);
+%   % x_i shock label
+%   \node[font=\small, asher, align=center] at (0, 1.0) {$\Delta x_i \uparrow$\\$\Downarrow$\\$\Delta y_i \uparrow$};
+% \end{tikzpicture}
 
-\vspace{6pt}
-{\small $\Delta y_i \uparrow$ $\Rightarrow$ $\Delta(\mathbf{W}\mathbf{y})_j \uparrow$ $\Rightarrow$ $\Delta y_j \uparrow$ for all neighbors $j$, then ripples further}
+% \vspace{6pt}
+% {\small $\Delta y_i \uparrow$ $\Rightarrow$ $\Delta(\mathbf{W}\mathbf{y})_j \uparrow$ $\Rightarrow$ $\Delta y_j \uparrow$ for all neighbors $j$, then ripples further}
 
-\end{frame}
-% ----------------------------------------------------
-\note{Visual intuition for spatial feedback. A shock to $x_i$ raises $y_i$ (direct effect). Because unit $i$ is in neighbors' spatial lag, their $\mathbf{W}y$ rises, which raises their $y_j$ (first-order indirect effect). But now $i$ also has those $j$ units as neighbors, so $\mathbf{W}y_i$ rises further, raising $y_i$ again (own-unit feedback). This continues until the system reaches equilibrium. For large $\rho$ and densely connected networks, these feedback effects can be substantial --- the total effect far exceeds the direct effect. This is why simply ignoring $\rho$ and interpreting $\hat{\beta}$ directly leads to large underestimates of the full policy impact. The network structure captured by $\mathbf{W}$ determines how far and how fast shocks propagate.}
+% \end{frame}
+% % ----------------------------------------------------
+% \note{Visual intuition for spatial feedback. A shock to $x_i$ raises $y_i$ (direct effect). Because unit $i$ is in neighbors' spatial lag, their $\mathbf{W}y$ rises, which raises their $y_j$ (first-order indirect effect). But now $i$ also has those $j$ units as neighbors, so $\mathbf{W}y_i$ rises further, raising $y_i$ again (own-unit feedback). This continues until the system reaches equilibrium. For large $\rho$ and densely connected networks, these feedback effects can be substantial --- the total effect far exceeds the direct effect. This is why simply ignoring $\rho$ and interpreting $\hat{\beta}$ directly leads to large underestimates of the full policy impact. The network structure captured by $\mathbf{W}$ determines how far and how fast shocks propagate.}
 
 % ====================================================
 \section{The Spatial Durbin Model (SDM)}
@@ -715,6 +713,44 @@ $$\mathbf{y} = \rho \mathbf{W}\mathbf{y} + \mathbf{X}\boldsymbol{\beta} + \mathb
 \note{The SDM is fit with the same function as the SLM (\texttt{lagsarlm}) by adding \texttt{type = "mixed"}. This instructs the function to also include all spatially lagged covariates automatically. The output will include $\hat{\rho}$, $\hat{\beta}$ for own-unit covariates, and $\hat{\theta}$ (labeled \texttt{lag.x1}, \texttt{lag.x2}, etc.) for the spatially lagged covariates. As with the SLM, do not interpret these coefficients directly --- use \texttt{impacts()} for the correct direct, indirect, and total effects. When to use SDM: (1) both LM tests significant; (2) substantive theory suggests neighbors' $x$ matters; (3) as a robustness check to confirm SLM results are not sensitive to excluding $\mathbf{W}\mathbf{X}$. LeSage and Pace (2009) argue the SDM is generally preferable to SEM for applied research because it allows more flexible spillover patterns.}
 
 % ====================================================
+\section{Estimation Methods}
+% ====================================================
+
+% ----------------------------------------------------
+\begin{frame}
+\frametitle{How are these models estimated?}
+\centering
+
+\vspace{6pt}
+
+{\footnotesize
+\begin{tabular}{p{1.8cm}p{2.5cm}p{5.0cm}}
+\hline
+\textbf{Model} & \textbf{Estimation} & \textbf{Why not OLS?} \\
+\hline
+OLS        & OLS                & Baseline: valid if no spatial dependence \\[4pt]
+SEM        & ML                 & OLS is unbiased but \textbf{inefficient}; SEs are wrong \\[4pt]
+SLM        & ML (or IV/2SLS)    & $\mathbf{W}\mathbf{y}$ is \textbf{endogenous}: OLS is biased \\[4pt]
+SDM        & ML                 & Same endogeneity as SLM ($\rho\mathbf{W}\mathbf{y}$) \\[4pt]
+\hline
+\end{tabular}
+}
+
+\vspace{10pt}
+
+\begin{itemize}[<+->]
+\item \textbf{Maximum Likelihood} (ML): estimates $\boldsymbol{\beta}$ and spatial parameters ($\lambda$, $\rho$) jointly by maximizing the log-likelihood
+\item ML requires distributional assumption ($\varepsilon \sim \mathcal{N}$)
+\vspace{6pt}
+\item Alternative for SLM: \textbf{IV/2SLS} using $\mathbf{W}\mathbf{X}$, $\mathbf{W}^2\mathbf{X}$ as instruments
+\item Alternative for SEM: \textbf{Feasible GLS} or \textbf{GMM} (Kelejian \& Prucha)
+\end{itemize}
+
+\end{frame}
+% ----------------------------------------------------
+\note{This slide clarifies why each model requires a specific estimator. The key distinction: in the SEM, OLS is still unbiased (the $\beta$ coefficients are correct on average) but inefficient --- the standard errors are wrong because the covariance matrix is not diagonal. ML exploits the known spatial structure of the errors to produce efficient estimates and correct SEs. In the SLM, OLS is both biased and inconsistent: $\mathbf{W}\mathbf{y}$ is correlated with $\varepsilon$ because neighbors' outcomes depend on neighbors' errors. This is the classic endogenous regressor problem, so we need ML or instrumental variables. The IV/2SLS approach instruments $\mathbf{W}\mathbf{y}$ with higher-order spatial lags of the covariates ($\mathbf{W}\mathbf{X}$, $\mathbf{W}^2\mathbf{X}$). For GMM estimation of SEM, the \texttt{GMerrorsar()} function in \texttt{spatialreg} implements the Kelejian--Prucha estimator, which does not require normality.}
+
+% ====================================================
 \section{Model Selection and Practical Guidance}
 % ====================================================
 
@@ -779,9 +815,7 @@ $$\mathbf{y} = \rho \mathbf{W}\mathbf{y} + \mathbf{X}\boldsymbol{\beta} + \mathb
 \frametitle{The full workflow in R}
 \centering
 
-\vspace{4pt}
-
-\begin{itemize}
+\begin{itemize}\scriptsize
 \item[] \texttt{library(sf); library(spdep); library(spatialreg)}
 \item[] \phantom{x}
 \item[] \texttt{\# 1. Build weights}
@@ -837,6 +871,215 @@ $$\mathbf{y} = \rho \mathbf{W}\mathbf{y} + \mathbf{X}\boldsymbol{\beta} + \mathb
 % ----------------------------------------------------
 \note{These pitfalls come from common errors in applied work. (1) The most frequent mistake: students and researchers copy $\hat{\beta}$ from the SLM output and interpret it as the effect size, ignoring the spillover. This understates the total effect whenever $\rho > 0$. (2) Weights matrix sensitivity: different choices of $\mathbf{W}$ can change results noticeably. As a rule, report results under at least two weight specifications (e.g., queen contiguity and 5-nearest-neighbors). (3) $\hat{\lambda}$ and $\hat{\rho}$ are parameters of the spatial process, not the substantive effect of interest. Researchers sometimes fixate on whether they are significant and forget to examine $\hat{\beta}$. (4) Skipping Moran's I: some researchers jump straight to SLM or SEM without checking whether spatial correction is needed. If the OLS residuals are not spatially autocorrelated, the spatial models add complexity without benefit.}
 
+% ====================================================
+\section{Model Relationships and Extensions}
+% ====================================================
+
+% ----------------------------------------------------
+\begin{frame}
+\frametitle{The family of spatial regression models}
+\centering
+
+\vspace{4pt}
+
+\begin{tikzpicture}[
+  box/.style={draw, rounded corners, minimum width=2.2cm, minimum height=0.65cm, align=center, font=\scriptsize},
+  arrow/.style={->, thick, asher},
+  lbl/.style={font=\tiny, asher}
+]
+  % Top: general model
+  \node[box, fill=accent!15] (gns) at (0, 4.0) {\textbf{GNS (Manski)}\\$\rho\mathbf{W}\mathbf{y} + \mathbf{X}\boldsymbol{\beta} + \mathbf{W}\mathbf{X}\boldsymbol{\theta} + \lambda\mathbf{W}\mathbf{u}$};
+  % Second row
+  \node[box, fill=accent!10] (sdm)  at (-3.8, 2.3) {\textbf{SDM}\\$\rho\mathbf{W}\mathbf{y} + \mathbf{X}\boldsymbol{\beta} + \mathbf{W}\mathbf{X}\boldsymbol{\theta}$};
+  \node[box, fill=accent!10] (sac)  at (0, 2.3)    {\textbf{SAC}\\$\rho\mathbf{W}\mathbf{y} + \mathbf{X}\boldsymbol{\beta} + \lambda\mathbf{W}\mathbf{u}$};
+  \node[box, fill=accent!10] (sdem) at (3.8, 2.3)  {\textbf{SDEM}\\$\mathbf{X}\boldsymbol{\beta} + \mathbf{W}\mathbf{X}\boldsymbol{\theta} + \lambda\mathbf{W}\mathbf{u}$};
+  % Third row
+  \node[box, fill=accent2!10] (slm) at (-3.8, 0.6) {\textbf{SLM}\\$\rho\mathbf{W}\mathbf{y} + \mathbf{X}\boldsymbol{\beta}$};
+  \node[box, fill=accent2!10] (sem) at (1.9, 0.6)   {\textbf{SEM}\\$\mathbf{X}\boldsymbol{\beta} + \lambda\mathbf{W}\mathbf{u}$};
+  \node[box, fill=accent2!10] (slx) at (5.0, 0.6)   {\textbf{SLX}\\$\mathbf{X}\boldsymbol{\beta} + \mathbf{W}\mathbf{X}\boldsymbol{\theta}$};
+  % Bottom
+  \node[box, fill=asher!8] (ols)  at (0, -0.8) {\textbf{OLS}\\$\mathbf{X}\boldsymbol{\beta}$};
+  % Arrows
+  \draw[arrow] (gns) -- node[lbl, left]{$\lambda=0$} (sdm);
+  \draw[arrow] (gns) -- node[lbl, right]{$\boldsymbol{\theta}=\mathbf{0}$} (sac);
+  \draw[arrow] (gns) -- node[lbl, right]{$\rho=0$} (sdem);
+  \draw[arrow] (sdm) -- node[lbl, left]{$\boldsymbol{\theta}=\mathbf{0}$} (slm);
+  \draw[arrow] (sac) -- node[lbl, left]{$\lambda=0$} (slm);
+  \draw[arrow] (sac) -- node[lbl, right]{$\rho=0$} (sem);
+  \draw[arrow] (sdem) -- node[lbl, left]{$\boldsymbol{\theta}=\mathbf{0}$} (sem);
+  \draw[arrow] (sdem) -- node[lbl, right]{$\lambda=0$} (slx);
+  \draw[arrow] (slm) -- node[lbl, left]{$\rho=0$} (ols);
+  \draw[arrow] (sem) -- node[lbl, right]{$\lambda=0$} (ols);
+  \draw[arrow] (slx) -- node[lbl, right]{$\boldsymbol{\theta}=\mathbf{0}$} (ols);
+\end{tikzpicture}
+
+\end{frame}
+% ----------------------------------------------------
+\note{This diagram shows how all spatial regression models relate to each other through parameter restrictions. The most general model (GNS or Manski model) includes all three spatial components: a spatial lag of $y$ ($\rho$), spatially lagged covariates ($\theta$), and spatially correlated errors ($\lambda$). However, the GNS is rarely estimated because it is not identified without strong assumptions. Each arrow represents a restriction that nests one model within another. The models students already know (SEM, SLM, SDM) are in the middle rows. The new models (SAC, SDEM, SLX) fill in the remaining combinations. Understanding nesting is essential for model comparison: if model A is nested in model B, we can use a likelihood ratio test to decide whether the extra parameters in B are statistically justified.}
+
+% ----------------------------------------------------
+\begin{frame}
+\frametitle{Comparing nested models: the LR test}
+\centering
+
+\vspace{6pt}
+
+\begin{itemize}[<+->]
+\item Two models are \textbf{nested} if one is a restricted version of the other
+  \begin{itemize}
+  \item OLS is nested in SEM ($\lambda = 0$), SLM ($\rho = 0$), SLX ($\boldsymbol{\theta} = \mathbf{0}$)
+  \item SEM and SLM are nested in SDM, SAC
+  \end{itemize}
+\vspace{6pt}
+\item \textbf{Likelihood Ratio test}: compares log-likelihoods
+$$LR = 2 \big[\ell(\text{unrestricted}) - \ell(\text{restricted})\big] \sim \chi^2(q)$$
+  \begin{itemize}
+  \item $q$ = number of restrictions (extra parameters in unrestricted model)
+  \item Reject $H_0$: the restricted model is sufficient
+  \end{itemize}
+\vspace{6pt}
+\item In R: \texttt{anova(restricted\_fit, unrestricted\_fit)}
+  \begin{itemize}
+  \item Or compare log-likelihoods manually with \texttt{logLik()}
+  \end{itemize}
+\end{itemize}
+
+\end{frame}
+% ----------------------------------------------------
+\note{The likelihood ratio (LR) test is the standard tool for comparing nested spatial models. The logic: if the unrestricted model (e.g., SDM) fits significantly better than the restricted model (e.g., SLM, where $\theta = 0$), then the extra parameters are warranted. Example: to test SLM vs.\ SDM, fit both and compute $LR = 2[\ell_{SDM} - \ell_{SLM}]$. Under the null that $\theta = 0$, this follows a $\chi^2$ distribution with degrees of freedom equal to the number of $\theta$ parameters (one per covariate). The \texttt{anova()} method in \texttt{spatialreg} performs this test. Note: SEM and SLM are \textit{not} nested in each other --- they are different restrictions of the SDM or SAC --- so you cannot use an LR test to choose between them directly.}
+
+% ----------------------------------------------------
+\begin{frame}
+\frametitle{Comparing non-nested models: AIC}
+\centering
+
+\vspace{8pt}
+
+\begin{itemize}[<+->]
+\item SEM and SLM are \textbf{not nested} in each other
+  \begin{itemize}
+  \item Cannot use LR test to compare them directly
+  \end{itemize}
+\vspace{8pt}
+\item Use \textbf{AIC} (Akaike Information Criterion):
+$$AIC = -2\ell + 2k$$
+  \begin{itemize}
+  \item $\ell$ = log-likelihood, $k$ = number of parameters
+  \item Lower AIC = better fit (penalized for complexity)
+  \end{itemize}
+\vspace{8pt}
+\item In R: \texttt{AIC(ols\_fit, sem\_fit, slm\_fit, sdm\_fit)}
+\vspace{8pt}
+\item \textbf{Strategy}: use LR tests along nesting paths; use AIC across non-nested alternatives
+\end{itemize}
+
+\end{frame}
+% ----------------------------------------------------
+\note{AIC is the workhorse for comparing non-nested models. It balances goodness of fit ($-2\ell$) against model complexity ($2k$). When comparing SEM vs.\ SLM, choose the model with the lower AIC. BIC (Bayesian Information Criterion, $-2\ell + k\log n$) is an alternative that penalizes complexity more heavily and tends to favor simpler models. In practice, report both AIC and BIC. A useful workflow: (1) start with OLS; (2) use LR tests to check if SEM or SLM improve on OLS; (3) use AIC to compare SEM vs.\ SLM; (4) use LR tests to check if SDM improves on the chosen model. The \texttt{AIC()} function works directly on \texttt{errorsarlm} and \texttt{lagsarlm} objects. Note that AIC comparisons require the same dataset across all models --- do not drop observations between models.}
+
+% ----------------------------------------------------
+\begin{frame}
+\frametitle{The SAC model (SARAR)}
+\centering
+
+\vspace{8pt}
+
+\begin{block}{Spatial Autoregressive Combined Model}
+$$\mathbf{y} = \rho \mathbf{W}\mathbf{y} + \mathbf{X}\boldsymbol{\beta} + \mathbf{u}, \quad \mathbf{u} = \lambda \mathbf{W}\mathbf{u} + \boldsymbol{\varepsilon}$$
+\end{block}
+
+\vspace{10pt}
+
+\begin{itemize}[<+->]
+\item Combines spatial lag ($\rho$) and spatial error ($\lambda$) in one model
+\item Nests both SLM ($\lambda = 0$) and SEM ($\rho = 0$)
+\vspace{6pt}
+\item In R:
+\end{itemize}
+
+\vspace{0pt}
+
+\begin{block}{}
+\texttt{sac\_fit = sacsarlm(y \textasciitilde{} x1 + x2,}\\
+\texttt{\hspace{20pt}data = mydata, listw = my\_listw)}
+\end{block}
+
+\vspace{0pt}
+
+{\small Useful when both diffusion in $y$ \textbf{and} spatially structured errors are present}
+
+\end{frame}
+% ----------------------------------------------------
+\note{The SAC (also called SARAR: Spatial AutoRegressive model with AutoRegressive errors) is the natural combination of SLM and SEM. It allows $y_i$ to depend on neighbors' $y$ and also allows the errors to be spatially correlated. This is useful when the LM tests suggest both types of dependence are present. Because it nests both SEM and SLM, you can use LR tests to check whether either $\rho = 0$ or $\lambda = 0$ can be imposed. The SAC is estimated by ML using \texttt{sacsarlm()} from \texttt{spatialreg}. Note: interpretation requires \texttt{impacts()} because of the spatial lag on $y$. The SAC does not include spatially lagged covariates $\mathbf{W}\mathbf{X}$, which distinguishes it from the SDM.}
+
+% ----------------------------------------------------
+\begin{frame}
+\frametitle{The SDEM model}
+\centering
+
+\vspace{8pt}
+
+\begin{block}{Spatial Durbin Error Model}
+$$\mathbf{y} = \mathbf{X}\boldsymbol{\beta} + \mathbf{W}\mathbf{X}\boldsymbol{\theta} + \mathbf{u}, \quad \mathbf{u} = \lambda \mathbf{W}\mathbf{u} + \boldsymbol{\varepsilon}$$
+\end{block}
+
+\vspace{10pt}
+
+\begin{itemize}[<+->]
+\item Neighbors' covariates ($\mathbf{W}\mathbf{X}\boldsymbol{\theta}$) + spatially correlated errors ($\lambda$)
+\item \textbf{No} spatial lag of $y$ $\Rightarrow$ no endogeneity $\Rightarrow$ $\hat{\boldsymbol{\beta}}$, $\hat{\boldsymbol{\theta}}$ are marginal effects
+\item Nests SEM ($\boldsymbol{\theta} = \mathbf{0}$) and SLX ($\lambda = 0$)
+\vspace{6pt}
+\item In R:
+\end{itemize}
+
+\vspace{4pt}
+
+\begin{block}{}\footnotesize
+\texttt{sdem\_fit = errorsarlm(y \textasciitilde{} x1 + x2,}\\
+\texttt{\hspace{20pt}data = mydata, listw = my\_listw,}\\
+\texttt{\hspace{20pt}Durbin = TRUE)}
+\end{block}
+
+\end{frame}
+% ----------------------------------------------------
+\note{The SDEM is an attractive model because it allows neighbors' covariates to directly affect $y$ (through $\theta$) while also correcting for spatially correlated errors (through $\lambda$), but it avoids the endogeneity problem of the spatial lag. This means $\hat{\beta}$ and $\hat{\theta}$ can be interpreted directly as marginal effects --- no need for \texttt{impacts()}. The $\hat{\theta}_k$ coefficient has a clear interpretation: the effect of neighbors' $x_k$ on unit $i$'s $y$. This is estimated using \texttt{errorsarlm()} with \texttt{Durbin = TRUE}, which adds the spatially lagged covariates to the SEM. Halleck Vega and Elhorst (2015) argue the SDEM deserves more attention as a starting point for applied work because it avoids the strong assumptions embedded in the SDM about global spillover through the lag of $y$.}
+
+% ----------------------------------------------------
+\begin{frame}
+\frametitle{Summary: nesting and comparison strategy}
+\centering
+
+\vspace{4pt}
+
+{\footnotesize
+\begin{tabular}{p{4.5cm}p{1.6cm}p{3.0cm}}
+\hline
+\textbf{Comparison} & \textbf{Nested?} & \textbf{Test} \\
+\hline
+OLS vs.\ SEM          & Yes & LR test ($\lambda = 0$) \\[3pt]
+OLS vs.\ SLM          & Yes & LR test ($\rho = 0$) \\[3pt]
+SLM vs.\ SDM          & Yes & LR test ($\boldsymbol{\theta} = \mathbf{0}$) \\[3pt]
+SEM vs.\ SDM          & Yes & LR test ($\boldsymbol{\theta} = -\rho\boldsymbol{\beta}$) \\[3pt]
+SLM vs.\ SAC          & Yes & LR test ($\lambda = 0$) \\[3pt]
+SEM vs.\ SAC          & Yes & LR test ($\rho = 0$) \\[3pt]
+SEM vs.\ SDEM         & Yes & LR test ($\boldsymbol{\theta} = \mathbf{0}$) \\[3pt]
+\hline
+SEM vs.\ SLM          & \alert{No} & AIC / BIC \\[3pt]
+SDM vs.\ SAC          & \alert{No} & AIC / BIC \\[3pt]
+SDM vs.\ SDEM         & \alert{No} & AIC / BIC \\[3pt]
+\hline
+\end{tabular}
+}
+
+\vspace{8pt}
+
+{\small LR test for nested pairs; AIC/BIC across non-nested alternatives}
+
+\end{frame}
+% ----------------------------------------------------
+\note{This table is a practical reference for model comparison. The top block lists nested pairs where a likelihood ratio test is appropriate. The bottom block lists non-nested pairs where AIC or BIC must be used instead. Note the asymmetry: SEM and SLM are both nested in SDM and in SAC, but not in each other. A practical workflow: (1) estimate OLS, SEM, SLM, and SDM; (2) use LR tests along the nesting arrows (OLS $\to$ SEM, OLS $\to$ SLM, SLM $\to$ SDM, SEM $\to$ SDM); (3) use AIC to compare SEM vs.\ SLM; (4) if the SAC or SDEM are of interest, test them against their nested restrictions. Always complement statistical comparison with substantive reasoning about the data-generating process.}
+
 % ----------------------------------------------------
 \begin{frame}
 \frametitle{Key takeaways}
@@ -851,16 +1094,80 @@ $$\mathbf{y} = \rho \mathbf{W}\mathbf{y} + \mathbf{X}\boldsymbol{\beta} + \mathb
 \vspace{6pt}
 \item \textbf{SEM} ($\lambda$): spatial structure is nuisance; $\hat{\boldsymbol{\beta}}$ interpreted as OLS
 \vspace{6pt}
-\item \textbf{SLM} ($\rho$): genuine spillover in $y$; \alert{use \texttt{impacts()} for marginal effects}
+\item \textbf{SLM} ($\rho$): genuine spillover in $y$; \alert{use \texttt{impacts()} for MEs}
 \vspace{6pt}
 \item \textbf{SDM}: most flexible; nests SEM and SLM; good conservative choice
+% \vspace{6pt}
+\item \textbf{Extended models}: SAC (lag + error), SDEM (lagged $\mathbf{x}$ + error)
 \vspace{6pt}
-\item \textbf{Theory matters}: statistical tests guide but do not replace substantive reasoning
+\item \textbf{Comparison}: LR test for nested models; AIC/BIC for non-nested pairs
 \end{itemize}
 
 \end{frame}
 % ----------------------------------------------------
-\note{Summarize the six key messages. The arc of the session: (1) why spatial data creates problems for OLS; (2) how to detect those problems; (3) two fundamentally different models depending on the mechanism; (4) the importance of computing correct marginal effects after SLM; (5) the SDM as a flexible extension; (6) the interplay of statistical diagnostics and theoretical reasoning. Students should leave able to run the full workflow in R and to explain to a non-specialist why they chose SEM vs.\ SLM for their specific research question.}
+\note{Summarize the key messages. The arc of the session: (1) why spatial data creates problems for OLS; (2) how to detect those problems; (3) two fundamentally different models depending on the mechanism; (4) the importance of computing correct marginal effects after SLM; (5) the SDM as a flexible extension; (6) the broader family of spatial models (SAC, SDEM) and how they nest; (7) using LR tests for nested comparisons and AIC/BIC for non-nested comparisons. Students should leave able to run the full workflow in R, understand how models relate to each other, and explain to a non-specialist why they chose a specific spatial model for their research question.}
+
+% ====================================================
+\section{Beyond Cross-Sections: Spatial Panel Models}
+% ====================================================
+
+% ----------------------------------------------------
+\begin{frame}
+\frametitle{What if you have panel data?}
+\centering
+
+\vspace{8pt}
+
+\begin{itemize}[<+->]
+\item All models so far assume a \textbf{single cross-section} ($n$ units, one time period)
+\vspace{6pt}
+\item With panel data ($n$ units $\times$ $T$ periods), a natural instinct:
+  \begin{itemize}
+  \item Add unit fixed effects and a spatial lag $\to$ estimate with \texttt{plm} + \texttt{lagsarlm}?
+  \end{itemize}
+\vspace{6pt}
+\item \alert{This does not work properly}:
+  \begin{itemize}
+  \item Fixed effects with a spatial lag create \textbf{incidental parameters} bias
+  \item Time dependence and spatial dependence interact
+  \item Standard cross-sectional ML ignores the time dimension
+  \end{itemize}
+\vspace{6pt}
+\item Dedicated \textbf{spatial panel models} handle both dimensions jointly
+\end{itemize}
+
+\end{frame}
+% ----------------------------------------------------
+\note{This slide is meant as awareness, not mastery. Students who work with panel data and spatial dependence need to know that simply adding spatial lags to a standard panel regression is not a valid approach. The incidental parameters problem arises because the number of fixed effects grows with $n$, biasing the ML estimate of $\rho$ in short panels. Additionally, the cross-sectional spatial models assume the data-generating process is observed at a single point in time; with panel data, temporal dynamics (lagged $y_{t-1}$) interact with spatial dynamics ($\mathbf{W}y_t$) in ways that require specialized estimators. The next slide points students to the right tools if they encounter this in their own research.}
+
+% ----------------------------------------------------
+\begin{frame}
+\frametitle{Spatial panel models: where to look}
+\centering
+
+\vspace{6pt}
+
+\begin{itemize}[<+->]
+\item R package \texttt{splm} (Millo \& Piras):
+  \begin{itemize}
+  \item Spatial panel models with fixed and random effects
+  \item ML and GM estimation for SEM, SLM, SAC with panel structure
+  \item \texttt{spml()}, \texttt{spgm()} functions
+  \end{itemize}
+\vspace{6pt}
+\item R package \texttt{plm} + \texttt{spatialreg}:
+  \begin{itemize}
+  \item Some integration, but limited compared to \texttt{splm}
+  \end{itemize}
+\vspace{6pt}
+\item Key reference: Elhorst (2014), \textit{Spatial Econometrics: From Cross-Sectional Data to Spatial Panels}
+\vspace{6pt}
+\item \textbf{Bottom line}: if your data has a spatial \textit{and} temporal dimension, use purpose-built tools --- do not improvise with cross-sectional spatial models
+\end{itemize}
+
+\end{frame}
+% ----------------------------------------------------
+\note{The \texttt{splm} package is the main R tool for spatial panel models. It implements ML estimation for spatial lag and spatial error models with fixed effects, random effects, or both (Kapoor, Kelejian, and Prucha 2007). The \texttt{spml()} function is the workhorse: it takes a formula, panel data in long format, a spatial weights matrix, and arguments for the type of spatial dependence and the type of effects. Elhorst (2014) is the standard textbook reference and includes worked examples in Matlab and R. For students using Stata, the \texttt{xsmle} command provides similar functionality. The key message is not to learn these tools now, but to know they exist and to avoid the mistake of fitting cross-sectional spatial models to panel data or naively combining \texttt{plm} and \texttt{spatialreg}.}
 
 % ----------------------------------------------------
 \begin{frame}
