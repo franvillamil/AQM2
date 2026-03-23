@@ -26,7 +26,7 @@
 \note{This session is the analytical companion to Session 7. Students already know how to work with spatial data in R and how to build spatial weights matrices with \texttt{spdep}. Today we ask: what do we do once we suspect that our regression residuals are spatially correlated? The answer involves two steps: diagnosis (Moran's I on residuals, LM tests) and cure (SEM or SLM or SDM). The conceptual distinction between SEM and SLM is the hardest part and deserves extra time. The lab component of this session will have students apply these models to a real dataset.}
 
 % ====================================================
-\section{The Problem: OLS and Spatial Dependence}
+\section{Introduction to spatial dependence}
 % ====================================================
 
 % ----------------------------------------------------
@@ -60,38 +60,69 @@ $$y_i = \alpha + \mathbf{x}_i \boldsymbol{\beta} + \varepsilon_i$$
 % ----------------------------------------------------
 \note{Start with the familiar OLS setup and identify the violated assumption. The independence of errors assumption is what breaks down with spatial data. The analogy to panel data is useful: with panel data, residuals are correlated within units over time; with spatial data, residuals are correlated across neighboring units. Just as we use clustered standard errors for panel data, we need spatial corrections for geographic data. But in the spatial case, there are two fundamentally different reasons why residuals might be correlated, and the correct model depends on which mechanism is at work.}
 
+
 % ----------------------------------------------------
 \begin{frame}
-\frametitle{Two sources of spatial dependence}
+\frametitle{Spatial weights: a brief recap}
 \centering
 
-\vspace{8pt}
+\includegraphics[height = .9\textheight]{../img/weurope}
+  
+\onslide<2->{
+\begin{tikzpicture}[remember picture, overlay]
+  \node[at = (current page.center), yshift = 0cm] (cover) {%
+    \includegraphics[keepaspectratio, width=.97\paperwidth]{../img/weuropemat1}};
+\end{tikzpicture}}
 
-\begin{tikzpicture}[
-  box/.style={draw, rounded corners, minimum width=4.6cm, minimum height=1.1cm, align=center, font=\small},
-  arrow/.style={->, thick, accent}
-]
-  \node[font=\small, align=center] (q) at (0, 3.4)
-    {Moran's I on OLS residuals is significant \\ --- why?};
-  \node[box, fill=accent!12]  (sem) at (-3.0, 1.8)
-    {\textbf{Nuisance correlation}\\Unmeasured spatially\\correlated factors};
-  \node[box, fill=accent2!12] (slm) at ( 3.0, 1.8)
-    {\textbf{True spillover}\\Outcome in unit $i$\\affects neighbors $j$};
-  \node[font=\small, accent]  (semm) at (-3.0, 0.2) {$\Rightarrow$ Spatial Error Model};
-  \node[font=\small, accent2] (slmm) at ( 3.0, 0.2) {$\Rightarrow$ Spatial Lag Model};
-  \draw[arrow] (q) -- (sem);
-  \draw[arrow] (q) -- (slm);
-\end{tikzpicture}
-
-\vspace{8pt}
-{\small\color{asher} Same symptom, different model}
-
-\vspace{8pt}
-{\small \textit{In your research: which mechanism is more plausible?}}
+\onslide<3->{
+\begin{tikzpicture}[remember picture, overlay]
+  \node[at = (current page.center), yshift = 0cm] (cover) {%
+    \includegraphics[keepaspectratio, width=.97\paperwidth]{../img/weuropemat2}};
+\end{tikzpicture}}
 
 \end{frame}
 % ----------------------------------------------------
-\note{This is the central conceptual slide of the lecture. The two paths have the same observable symptom --- spatially correlated residuals --- but require fundamentally different model specifications. Nuisance correlation: your model is missing some variable that clusters geographically (historical culture, climate, infrastructure), so the residuals absorb that spatial structure. True spillover: the value of $y$ in one unit directly causes or influences $y$ in neighboring units (democracy diffusion, conflict contagion, economic agglomeration). The SEM captures the first; the SLM captures the second. The practical decision between them requires both statistical tests and substantive reasoning about the data-generating process. Return to this distinction throughout the lecture.}
+\note{...}
+
+% ----------------------------------------------------
+\begin{frame}
+\frametitle{Spatial weights: a brief recap}
+\centering
+
+\begin{itemize}
+    \item[] \textbf{Types of adjacency matrices} (with spatial data)
+    \vspace{10pt}
+    \item[1.]<2-> Based on \textbf{contiguity}
+    \begin{itemize}
+        \item Queen or rook {\small (or bishop, less common)}
+    \end{itemize}
+    \item[2.]<3-> Based on \textbf{distance}
+    \begin{itemize}
+        \item Distance threshold
+        \item $k$-nearest neighbors (kNN)
+    \end{itemize}
+    \item[3.]<4-> Non-binary: weighted adjacency
+    \begin{itemize}
+        \item Based on distance (from border? from centroid? capital?), length of shared border, etc
+    \end{itemize}
+    \vspace{10pt}
+    \item<5-> Conceptually, the same as a \textbf{network}, but just geographical
+    \begin{itemize}
+        \item<7-> e.g. difference with a network based on trade flows
+        \item[]<8-> (but you could use \textbf{the same models on network data}!)
+    \end{itemize}
+\end{itemize}
+
+\onslide<6>{
+\begin{tikzpicture}[remember picture, overlay]
+\fill[white] (current page.south west) rectangle (current page.north east);
+  \node[at = (current page.center), yshift = 0cm] (cover) {%
+    \includegraphics[keepaspectratio, width=.97\paperwidth]{../img/weuropemat_network}};
+\end{tikzpicture}}
+
+\end{frame}
+% ----------------------------------------------------
+\note{...}
 
 % ----------------------------------------------------
 \begin{frame}
@@ -105,7 +136,7 @@ $$y_i = \alpha + \mathbf{x}_i \boldsymbol{\beta} + \varepsilon_i$$
   \begin{itemize}[<+->]
   \item $\mathbf{W}$: the $n \times n$ spatial weights matrix
   \item $w_{ij} > 0$ if $i$ and $j$ are neighbors, 0 otherwise
-  \item Row-standardized: rows sum to 1
+  \item (row-standardized matrix: rows sum to 1)
   \vspace{8pt}
   \item $\mathbf{W}\mathbf{y}$: the \textbf{spatial lag} of $\mathbf{y}$
     \begin{itemize}
@@ -138,13 +169,9 @@ $$y_i = \alpha + \mathbf{x}_i \boldsymbol{\beta} + \varepsilon_i$$
 % ----------------------------------------------------
 \note{Quick recap from Session 7 --- students already built weights matrices. The key concepts to refresh: the weights matrix $\mathbf{W}$ encodes the neighborhood structure; row standardization makes each row a proper weighted average; the spatial lag $\mathbf{W}\mathbf{y}$ is the average of neighbors' outcomes. This is the building block for all spatial models. If students are fuzzy on this, spend 2--3 minutes here before proceeding. For the models in this lecture, the weights matrix is always given: we do not estimate it, we choose it based on geographic contiguity or distance, then condition on it.}
 
-% ====================================================
-\section{Detecting Spatial Autocorrelation}
-% ====================================================
-
 % ----------------------------------------------------
 \begin{frame}
-\frametitle{Moran's I: a brief recap}
+\frametitle{Moran's I}
 \centering
 
 \vspace{6pt}
@@ -201,6 +228,39 @@ $$I = \frac{n}{\sum_{i}\sum_{j} w_{ij}} \cdot \frac{\sum_{i}\sum_{j} w_{ij}(y_i 
 \end{frame}
 % ----------------------------------------------------
 \note{This is the first concrete step in the workflow. The Moran's I on residuals is a standard diagnostic in spatial econometrics. If the $p$-value is small (conventional threshold: $p < 0.05$), the null of no spatial autocorrelation is rejected and we should consider a spatial model. Note: a significant Moran's I tells us \textit{that} there is a problem but not \textit{which} model to use. For that, we need the Lagrange Multiplier tests covered in the next slide. The \texttt{moran.test()} function in \texttt{spdep} takes a numeric vector (the residuals) and a listw object. The function performs an analytical permutation test. An alternative is \texttt{moran.mc()} for a Monte Carlo permutation test.}
+
+% ----------------------------------------------------
+\begin{frame}
+\frametitle{Two sources of spatial dependence}
+\centering
+
+\vspace{8pt}
+
+\begin{tikzpicture}[
+  box/.style={draw, rounded corners, minimum width=4.6cm, minimum height=1.1cm, align=center, font=\small},
+  arrow/.style={->, thick, accent}
+]
+  \node[font=\small, align=center] (q) at (0, 3.4)
+    {Moran's I on OLS residuals is significant \\ --- why?};
+  \node[box, fill=accent!12]  (sem) at (-3.0, 1.8)
+    {\textbf{Nuisance correlation}\\Unmeasured spatially\\correlated factors};
+  \node[box, fill=accent2!12] (slm) at ( 3.0, 1.8)
+    {\textbf{True spillover}\\Outcome in unit $i$\\affects neighbors $j$};
+  \node[font=\small, accent]  (semm) at (-3.0, 0.2) {$\Rightarrow$ Spatial Error Model};
+  \node[font=\small, accent2] (slmm) at ( 3.0, 0.2) {$\Rightarrow$ Spatial Lag Model};
+  \draw[arrow] (q) -- (sem);
+  \draw[arrow] (q) -- (slm);
+\end{tikzpicture}
+
+\vspace{8pt}
+{\small\color{asher} Same symptom, different model}
+
+\vspace{8pt}
+Think about \textbf{your projects}: which mechanism is more plausible?
+
+\end{frame}
+% ----------------------------------------------------
+\note{This is the central conceptual slide of the lecture. The two paths have the same observable symptom --- spatially correlated residuals --- but require fundamentally different model specifications. Nuisance correlation: your model is missing some variable that clusters geographically (historical culture, climate, infrastructure), so the residuals absorb that spatial structure. True spillover: the value of $y$ in one unit directly causes or influences $y$ in neighboring units (democracy diffusion, conflict contagion, economic agglomeration). The SEM captures the first; the SLM captures the second. The practical decision between them requires both statistical tests and substantive reasoning about the data-generating process. Return to this distinction throughout the lecture.}
 
 % ----------------------------------------------------
 \begin{frame}
