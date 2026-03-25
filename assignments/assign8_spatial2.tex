@@ -168,9 +168,11 @@ So far we have used queen contiguity to define neighbors: two countries are neig
   \item Compute the centroids of every country and build a distance-based neighborhood in which two countries are neighbors if their centroids are within 300\,km of each other. Use the following code:
   \begin{lstlisting}
 coords = st_centroid(st_geometry(world))
-nb_dist = dnearneigh(coords, d1 = 0, d2 = 300, longlat = TRUE)
+nb_dist = dnearneigh(coords, d1 = 0, d2 = 300)
 summary(nb_dist)
   \end{lstlisting}
+  \textbf{Note on distances and projections.} Earlier in the course we said that computing distances requires projecting to a planar CRS (e.g.\ UTM). That advice applies when you work within a limited area where a single projection is accurate. Here we have a global dataset: no single planar projection preserves distances everywhere on Earth. The function \code{dnearneigh()} handles this automatically --- when it receives an \code{sf} object with a geographic CRS (WGS84), it computes great-circle distances on the ellipsoid, which are accurate worldwide. The 300\,km threshold is therefore interpreted in kilometers without needing to reproject.
+
   In a comment, compare this neighborhood to the queen contiguity one from question 1.2a. How many countries now have zero neighbors? Is this number higher or lower than before? Why might that be?
 
   \item Create row-standardized weights from the distance-based neighborhood and fit a SEM using the same formula (\code{lifeExp \textasciitilde{} log\_gdp}):

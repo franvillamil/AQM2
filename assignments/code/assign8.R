@@ -90,7 +90,7 @@ moran.test(world$sem_resid, listw = listw, zero.policy = TRUE)
 
 # a)
 coords = st_centroid(st_geometry(world))
-nb_dist = dnearneigh(coords, d1 = 0, d2 = 300, longlat = TRUE)
+nb_dist = dnearneigh(coords, d1 = 0, d2 = 300)
 summary(nb_dist)
 # Compare number of zero-neighbor countries to queen contiguity (nb).
 # Distance-based approach uses centroid-to-centroid distance, so large

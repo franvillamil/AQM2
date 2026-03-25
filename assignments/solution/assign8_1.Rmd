@@ -97,9 +97,9 @@ lm_tests = lm.LMtests(ols_fit, listw = listw,
 summary(lm_tests)
 ```
 
-**a)** `LMerr` tests whether there is spatial dependence in the **error term** ($\lambda \neq 0$ in the SEM). `LMlag` tests whether a **spatially lagged dependent variable** belongs in the model ($\rho \neq 0$ in the SLM). Both tests are significant (p < 0.05), meaning both types of spatial dependence appear to be present in some form when tested individually. When both standard LM tests are significant, we turn to the robust versions to discriminate.
+**a)** `LMerr` tests whether there is spatial dependence in the **error term** ($\lambda \neq 0$ in the SEM). `LMlag` tests whether a **spatially lagged dependent variable** belongs in the model ($\rho \neq 0$ in the SLM). Here, `LMerr` is highly significant (p < 0.001) while `LMlag` is not significant (p $\approx$ 0.80). This already points strongly toward the SEM: there is clear evidence of spatial dependence in the errors, but no evidence that a spatially lagged dependent variable is needed.
 
-**b)** The robust tests (`RLMerr`, `RLMlag`) each control for the presence of the other type of spatial dependence. Comparing them: if `RLMerr` is more significant than `RLMlag`, the evidence favors the SEM; if `RLMlag` dominates, the SLM is preferred. Based on the decision rule from class — select the model whose robust test is more significant — the output above guides the choice between the two spatial models for Part 2.
+**b)** The robust tests (`RLMerr`, `RLMlag`) each control for the presence of the other type of spatial dependence. `RLMerr` remains highly significant (p < 0.001), while `RLMlag` is not significant (p $\approx$ 0.14). Since even the standard `LMlag` was not significant, there is no ambiguity here: the diagnostics clearly favor the SEM over the SLM. The spatial dependence in this application operates through spatially correlated omitted factors (the error channel), not through direct diffusion of life expectancy across borders.
 
 # 4. Spatial Error Model (SEM)
 
@@ -130,7 +130,7 @@ Comparing this Moran's I to the one from question 2b, the SEM substantially redu
 
 ```{r 5a}
 coords = st_centroid(st_geometry(world))
-nb_dist = dnearneigh(coords, d1 = 0, d2 = 300, longlat = TRUE)
+nb_dist = dnearneigh(coords, d1 = 0, d2 = 300)
 summary(nb_dist)
 ```
 
