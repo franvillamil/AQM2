@@ -123,3 +123,36 @@ moran.test(world$sem_resid, listw = listw, zero.policy = TRUE)
 ```
 
 Comparing this Moran's I to the one from question 2b, the SEM substantially reduces the spatial autocorrelation in the residuals. The test statistic is now much closer to zero and the p-value is no longer significant (or much less so), indicating that the spatial error correction has absorbed most of the geographic clustering that OLS left behind in its residuals.
+
+# 5. Distance-based weights: an alternative neighborhood
+
+**a)** Compute centroids and build a distance-based neighborhood (300 km threshold):
+
+```{r 5a}
+coords = st_centroid(st_geometry(world))
+nb_dist = dnearneigh(coords, d1 = 0, d2 = 300, longlat = TRUE)
+summary(nb_dist)
+```
+
+With a 300 km distance threshold based on centroids, more countries end up with zero neighbors compared to the queen contiguity matrix. Queen contiguity picks up any shared border point, no matter how small, while the distance-based approach relies on centroid-to-centroid distance. Large countries whose centroids are far from any neighbor's centroid — as well as island nations — are likely to be isolated here. On the other hand, some small, clustered countries (e.g., in Europe or Central America) may gain additional neighbors that they did not have under contiguity alone.
+
+**b)** Row-standardized weights and SEM with distance-based neighbors:
+
+```{r 5b}
+listw_dist = nb2listw(nb_dist, style = "W", zero.policy = TRUE)
+
+sem_dist = errorsarlm(lifeExp ~ log_gdp, data = world,
+                      listw = listw_dist, zero.policy = TRUE)
+summary(sem_dist)
+```
+
+The `log_gdp` coefficient and $\hat{\lambda}$ from the distance-based SEM can be compared to the contiguity-based SEM in question 4a. Differences between the two sets of estimates illustrate that spatial models are sensitive to how the neighborhood is defined — the choice of weights matrix is a modelling decision, not purely a data feature. If the estimates are broadly similar, this gives some reassurance about robustness; if they diverge, it flags that the spatial structure assumed by the model matters for substantive conclusions.
+
+**c)** Moran's I on the distance-based SEM residuals:
+
+```{r 5c}
+world$sem_dist_resid = residuals(sem_dist)
+moran.test(world$sem_dist_resid, listw = listw_dist, zero.policy = TRUE)
+```
+
+As with the contiguity-based SEM, we check whether the distance-based SEM has successfully absorbed the spatial autocorrelation. If Moran's I on these residuals is non-significant, the model has done its job under this alternative definition of neighborhood as well.

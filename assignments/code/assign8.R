@@ -85,6 +85,31 @@ summary(sem_fit)
 world$sem_resid = residuals(sem_fit)
 moran.test(world$sem_resid, listw = listw, zero.policy = TRUE)
 
+# ----------------------------------------------------------
+## 5. Distance-based weights: an alternative neighborhood
+
+# a)
+coords = st_centroid(st_geometry(world))
+nb_dist = dnearneigh(coords, d1 = 0, d2 = 300, longlat = TRUE)
+summary(nb_dist)
+# Compare number of zero-neighbor countries to queen contiguity (nb).
+# Distance-based approach uses centroid-to-centroid distance, so large
+# countries and island nations may have more isolated nodes.
+
+# b)
+listw_dist = nb2listw(nb_dist, style = "W", zero.policy = TRUE)
+
+sem_dist = errorsarlm(lifeExp ~ log_gdp, data = world,
+                      listw = listw_dist, zero.policy = TRUE)
+summary(sem_dist)
+# Compare log_gdp coefficient and lambda to contiguity-based SEM.
+# Differences show sensitivity to neighborhood definition.
+
+# c)
+world$sem_dist_resid = residuals(sem_dist)
+moran.test(world$sem_dist_resid, listw = listw_dist, zero.policy = TRUE)
+# Check whether distance-based SEM also removes spatial autocorrelation.
+
 # ==========================================================================
 # Part 2: Take-Home (Spatial Lag Model and Model Comparison)
 # ==========================================================================

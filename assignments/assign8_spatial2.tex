@@ -99,7 +99,7 @@ nb = poly2nb(world, queen = TRUE)
 listw = nb2listw(nb, style = "W", zero.policy = TRUE)
 summary(nb)
   \end{lstlisting}
-  In a comment, report how many countries have zero neighbors. Explain why some countries have no neighbors in a contiguity-based weights matrix (think about island nations).
+  In a comment, report how many countries have zero neighbors. Explain why some countries have no neighbors in a contiguity-based weights matrix.
 
   \item Test Moran's I on the OLS residuals:
   \begin{lstlisting}
@@ -154,6 +154,36 @@ world$sem_resid = residuals(sem_fit)
 moran.test(world$sem_resid, listw = listw, zero.policy = TRUE)
   \end{lstlisting}
   In a comment, compare this result to the Moran's I on the OLS residuals from question 1.2b. Has the spatial autocorrelation been removed or substantially reduced?
+
+\end{enumerate}
+
+% --------------------------------------------------------------------------
+\subsection{Distance-based weights: an alternative neighborhood}
+% --------------------------------------------------------------------------
+
+So far we have used queen contiguity to define neighbors: two countries are neighbors if their polygons share at least one point. But this misses island nations entirely and treats all shared-border pairs as equally connected regardless of distance. An alternative is to define neighbors based on geographic proximity: two countries are neighbors if the distance between their centroids is below a threshold.
+
+\begin{enumerate}[label=\alph*)]
+
+  \item Compute the centroids of every country and build a distance-based neighborhood in which two countries are neighbors if their centroids are within 300\,km of each other. Use the following code:
+  \begin{lstlisting}
+coords = st_centroid(st_geometry(world))
+nb_dist = dnearneigh(coords, d1 = 0, d2 = 300, longlat = TRUE)
+summary(nb_dist)
+  \end{lstlisting}
+  In a comment, compare this neighborhood to the queen contiguity one from question 1.2a. How many countries now have zero neighbors? Is this number higher or lower than before? Why might that be?
+
+  \item Create row-standardized weights from the distance-based neighborhood and fit a SEM using the same formula (\code{lifeExp \textasciitilde{} log\_gdp}):
+  \begin{lstlisting}
+listw_dist = nb2listw(nb_dist, style = "W", zero.policy = TRUE)
+
+sem_dist = errorsarlm(lifeExp ~ log_gdp, data = world,
+                      listw = listw_dist, zero.policy = TRUE)
+summary(sem_dist)
+  \end{lstlisting}
+  In a comment, report $\hat{\lambda}$ and its p-value. Compare the \code{log\_gdp} coefficient and $\hat{\lambda}$ from this model to the contiguity-based SEM in question 1.4a. Are the results substantially different? What does this tell you about the sensitivity of spatial models to the definition of the neighborhood?
+
+  \item Run Moran's I on the residuals of this distance-based SEM (using \code{listw\_dist}). In a comment, does this model also succeed in removing spatial autocorrelation from the residuals? Compare to your answer in 1.4c.
 
 \end{enumerate}
 
