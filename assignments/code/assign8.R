@@ -51,6 +51,21 @@ summary(nb)
 # b)
 moran.test(world$ols_resid, listw = listw, zero.policy = TRUE)
 
+### trying with distance
+coords = st_centroid(st_geometry(world))
+nb_dist = dnearneigh(coords, d1 = 0, d2 = 1500)
+world$name_long[nb_dist[[49]]]
+listw_dist = nb2listw(nb_dist, style = "W", zero.policy = TRUE)
+
+moran.test(world$ols_resid, listw = listw_dist, zero.policy = TRUE)
+
+
+we = world %>%
+  filter(name_long %in% c("Spain", "Portugal", "Morocco"))
+
+nb1 = poly2nb(we, queen = TRUE)
+nb2 = nb2listw(nb1, zero.policy=T)
+
 # ----------------------------------------------------------
 ## 3. Lagrange Multiplier tests
 
