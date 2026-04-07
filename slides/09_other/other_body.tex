@@ -7,6 +7,31 @@
 
 % ----------------------------------------------------
 \begin{frame}
+\frametitle{Logistics}
+\centering
+
+\begin{itemize}
+\item Presentations (April 16th)
+  \begin{itemize}
+    \item {\color{red}{\textbf{5-minute}}} \textbf{presentations}, blocks of $\approx$5, random order,
+    \item[] 15-min feedback after each block
+    \item[] \url{https://franvillamil.github.io/AQM2/logistics.html}
+    \item Send me \textbf{presentations} by email \textbf{in advance}
+    \item[] \textbf{3 slides max!:} e.g. what, how, problems
+  \end{itemize}
+\item Rest of the course
+  \begin{itemize}
+      \item Computing session (April 23rd)
+      \item Final session (April 30th), \textbf{exam} + review
+  \end{itemize}
+\end{itemize}
+
+\end{frame}
+% ----------------------------------------------------
+\note{}
+
+% ----------------------------------------------------
+\begin{frame}
 \frametitle{Today's goals}
 \centering
 
@@ -86,9 +111,9 @@
 Continuous & Normal & Identity & OLS (\texttt{lm()}) \\[2pt]
 Binary (0/1) & Bernoulli & Logit & Logit (\texttt{glm(...,binomial)}) \\[2pt]
 Ordinal & Prop.\ odds & Cumul.\ logit & Ordered logit (\texttt{polr()}) \\[2pt]
-Nominal ($>$2 cat.) & Multinomial & Log-odds & Multinom.\ logit (\texttt{multinom()}) \\[2pt]
+Nominal ($>$2) & Multinomial & Log-odds & Multinom.\ logit (\texttt{multinom()}) \\[2pt]
 Count ($\geq 0$) & Poisson & Log & Poisson (\texttt{glm(...,poisson)}) \\[2pt]
-Count (overdispersed) & Neg.\ Binomial & Log & NegBin (\texttt{glm.nb()}) \\[2pt]
+Count (overdisp) & Neg.\ Binomial & Log & NegBin (\texttt{glm.nb()}) \\[2pt]
 Duration (time) & --- & --- & Cox PH (\texttt{coxph()}) \\
 \hline
 \end{tabular}
@@ -1026,7 +1051,7 @@ Time until event & Cox PH & Test PH assumption \\
 
 % ----------------------------------------------------
 \begin{frame}
-\frametitle{What you have learned this semester}
+\frametitle{This semester}
 \centering
 
 \vspace{6pt}
@@ -1048,6 +1073,8 @@ Time until event & Cox PH & Test PH assumption \\
   \draw[arrow] (spatial) -- (other);
   \node[font=\scriptsize, asher] at (0, -0.1)
     {Today: ordinal, nominal, count, duration};
+  \node[font=\scriptsize, asher] at (0, -1.1)
+    {(Computing session on April 23rd)};
 \end{tikzpicture}
 
 \end{frame}
