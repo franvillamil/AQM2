@@ -17,13 +17,10 @@ layout: default
 | Mar 19  | 7. [Spatial data (I)](./sessions.md) | [[Slides 7](./slides/07_spatial1/spatial1.pdf)] | [[Ex 7](./assignments/assign7_spatial1.pdf)] | [[1](./assignments/solution/assign7_1.pdf)] [[2](./assignments/solution/assign7_2.pdf)] |
 | Mar 26  | 8. [Spatial data (II)](./sessions.md) | [[Slides 8](./slides/08_spatial2/spatial2.pdf)] | [[Ex 8](./assignments/assign8_spatial2.pdf)] | [[1](./assignments/solution/assign8_1.pdf)]
 || *Easter break* |||
-| Apr 9   | 9. [Other outcomes](./sessions.md) | | |
+| Apr 9   | 9. [Other outcomes](./sessions.md) | [[Slides 9](./slides/09_other/other.pdf)] | [[Ex 9](./assignments/assign9_other.pdf)] | [[1](./assignments/solution/assign9_1.pdf)] |
 | Apr 16  | [**Project presentations**](./logistics.md) | | |
 | Apr 23  | 10. [Computing best practices](./sessions.md) | | |
 | Apr 30  | [Exam](./logistics.md) / [Review & Advanced](./sessions.md) | | |
-
-
-<!-- [[Slides 9](./slides/09_other/other.pdf)] | [[Ex 9](./assignments/assign9_other.pdf)] | [[1](./assignments/solution/assign9_1.pdf)] -->
 
 <!-- [[Slides 10](./slides/10_computing/computing.pdf)] | [[Ex 10](./assignments/assign10_computing.pdf)] | [[1](./assignments/solution/assign10_1.pdf)] -->
 

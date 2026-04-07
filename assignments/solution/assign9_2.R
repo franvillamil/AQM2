@@ -1,111 +1,104 @@
 options(stringsAsFactors = FALSE)
 
-library(pscl)
-library(MASS)
-library(AER)
+library(survival)
+library(survminer)
 library(marginaleffects)
-library(ggplot2)
-data(bioChemists)
+data(lung)
+lung$dead = lung$status - 1
 
 # ==========================================================================
-# 3. Poisson regression: publication counts
-# ==========================================================================
-
-# ----------------------------------------------------------
-# a) Explore outcome variable
-# ----------------------------------------------------------
-
-summary(bioChemists$art)
-var(bioChemists$art)
-
-ggplot(bioChemists, aes(x = art)) +
-  geom_histogram(binwidth = 1, fill = "#294b66", color = "white") +
-  theme_minimal() +
-  labs(title = "Publications in last 3 years of PhD",
-       x = "Number of articles", y = "Count")
-ggsave("hist_art.pdf", width = 6, height = 4)
-
-# Mean ~1.69, variance ~3.71 -- variance is roughly twice the mean.
-# Under Poisson, variance should equal mean. Ratio >> 1 signals overdispersion.
-# Distribution is right-skewed with a mode at zero and a long upper tail.
-
-# ----------------------------------------------------------
-# b) Fit Poisson regression
-# ----------------------------------------------------------
-
-m_pois = glm(art ~ fem + mar + kid5 + phd + ment,
-             data = bioChemists, family = poisson)
-summary(m_pois)
-
-exp(coef(m_pois)["ment"])
-
-# IRR for ment: each additional mentor article multiplies expected student
-# articles by ~1.026. Modest but positive effect of mentor productivity.
-# Residual deviance >> degrees of freedom (ratio well above 2): clear
-# diagnostic of overdispersion in the Poisson model.
-
-# ----------------------------------------------------------
-# c) Formal overdispersion test
-# ----------------------------------------------------------
-
-dispersiontest(m_pois)
-
-# z ~ 5.78, p < 0.001: strongly reject equidispersion.
-# Estimated dispersion ~ 1.82 (variance ~1.82x the mean).
-# Consequence: Poisson SEs are too small, p-values anti-conservative.
-# A negative binomial model is needed.
-
-# ==========================================================================
-# 4. Negative binomial regression
+# 5. Kaplan-Meier survival curves
 # ==========================================================================
 
 # ----------------------------------------------------------
-# a) Fit negative binomial model
+# a) Explore the data
 # ----------------------------------------------------------
 
-m_nb = glm.nb(art ~ fem + mar + kid5 + phd + ment,
-              data = bioChemists)
-summary(m_nb)
+nrow(lung)
+sum(lung$dead == 1)
+sum(lung$dead == 0)
 
-# ment coefficient similar to Poisson, but SEs are wider (more honest).
-# theta (overdispersion parameter) shown in summary: moderate overdispersion.
-# Significant predictors: fem (negative), kid5 (negative), ment (positive).
-# phd and mar are not statistically significant.
-
-# ----------------------------------------------------------
-# b) Compare model fit by AIC
-# ----------------------------------------------------------
-
-AIC(m_pois)
-AIC(m_nb)
-
-# NB AIC ~3136 vs Poisson AIC ~3314: NB is substantially better.
-# Despite one extra parameter (theta), the improvement in fit far outweighs
-# the complexity penalty. Overdispersion is real and worth addressing.
+# 228 patients total. 165 deaths (events), 63 censored.
+# Censoring proportion: ~27.6%. Moderate rate, typical for cancer studies.
+# Censored patients' true survival times are unknown but >= observed times.
+# Dropping or treating as events would bias estimates.
 
 # ----------------------------------------------------------
-# c) Predicted counts by gender at sample means
+# b) Overall Kaplan-Meier survival curve
 # ----------------------------------------------------------
 
-predictions(m_nb, newdata = datagrid(fem = c("Men", "Women")))
+km_all = survfit(Surv(time, dead) ~ 1, data = lung)
+summary(km_all)
+km_all
 
-# Men: predicted ~1.87 articles; Women: predicted ~1.51 articles.
-# Gender gap is meaningful and statistically distinguishable (CIs do not overlap).
-# Difference persists after conditioning on marital status, kids, PhD prestige,
-# and mentor productivity -- a within-group productivity gap.
+# Median survival: 310 days (50% of patients survived beyond this point).
+# The KM estimator handles censoring correctly: censored patients leave
+# the risk set without counting as events.
+
+# ----------------------------------------------------------
+# c) Kaplan-Meier curves by sex
+# ----------------------------------------------------------
+
+km_sex = survfit(Surv(time, dead) ~ sex, data = lung)
+p = ggsurvplot(km_sex, data = lung, conf.int = TRUE,
+  pval = TRUE, risk.table = TRUE,
+  legend.labs = c("Male", "Female"))
+pdf("km_sex.pdf", width = 7, height = 5)
+print(p)
+dev.off()
+
+# Females survive longer: female curve lies above male curve throughout.
+# Confidence intervals show limited overlap in early/middle follow-up.
+# Log-rank test p-value is significant: survival distributions differ
+# between sexes. The log-rank test evaluates whether the two survival
+# curves are identical -- rejection supports a sex-survival association.
+
+# ==========================================================================
+# 6. Cox proportional hazards model
+# ==========================================================================
+
+# ----------------------------------------------------------
+# a) Fit Cox PH model and interpret sex hazard ratio
+# ----------------------------------------------------------
+
+cox_fit = coxph(Surv(time, dead) ~ age + sex + ph.ecog, data = lung)
+summary(cox_fit)
+
+# sex HR = 0.575: females have ~42% lower hazard of death than males.
+# sex is coded 1 = male, 2 = female, so HR < 1 means female advantage.
+# Effect is statistically significant (p < 0.01), consistent with KM analysis.
+
+# ----------------------------------------------------------
+# b) Interpret ph.ecog hazard ratio
+# ----------------------------------------------------------
+
+exp(coef(cox_fit)["ph.ecog"])
+
+# ph.ecog HR = 1.59: each unit increase in ECOG score (worse functioning)
+# is associated with ~59% higher hazard of death. Strongest predictor in
+# the model. Highly significant (p < 0.001).
+
+# ----------------------------------------------------------
+# c) Test proportional hazards assumption
+# ----------------------------------------------------------
+
+cox.zph(cox_fit)
+
+# None of the individual tests nor the global test are significant (all p > 0.05).
+# The PH assumption is reasonable for all three covariates: the hazard ratios
+# appear constant over time. If ph.ecog were significant, it would mean the
+# effect of physical functioning changes over the course of the disease.
 
 # ----------------------------------------------------------
 # d) Summary
 # ----------------------------------------------------------
 
-# Poisson is inadequate: variance/mean ratio ~2.2, residual deviance >> df,
-# and dispersiontest() rejects equidispersion (p < 0.001).
-# Negative binomial adds a dispersion parameter, achieves AIC ~180 units lower,
-# and produces more reliable (wider) standard errors.
-# The mentor's IRR ~1.026 per additional mentor article: modest but positive --
-# working with a productive mentor provides a small, real boost to student output.
-# Significant predictors in NB: fem (negative), kid5 (negative), ment (positive).
-# phd prestige and marital status are not significant.
-# Substantive conclusion: early-career publication productivity in biochemistry
-# is shaped by mentor environment, gender, and family demands -- consistent with
-# broader literature on structural barriers facing women and parents in STEM PhD programs.
+# KM analysis shows clear, significant survival advantage for females (log-rank p < 0.05).
+# Cox model confirms: sex HR = 0.58 (p < 0.01), ~42% lower hazard for females.
+# ECOG performance score is the strongest predictor: HR = 1.59 (p < 0.001),
+# each unit worsening in functioning increases hazard by ~59%.
+# Age is not significant after controlling for sex and performance status.
+# PH assumption holds (cox.zph global p > 0.05).
+# Key finding: baseline physical functioning, not age, is the dominant predictor
+# of lung cancer survival -- highlighting the clinical importance of performance
+# status in prognosis.

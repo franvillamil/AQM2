@@ -106,3 +106,53 @@ predictions(m_nb, newdata = datagrid(fem = c("Men", "Women")))
 # Significant NB predictors: fem (negative), kid5 (negative), ment (positive).
 # phd and mar not significant.
 # Early-career productivity shaped by mentor environment, gender, and family demands.
+
+# ==========================================================================
+# Part 3: Survival Analysis (lung) [Take-home]
+# ==========================================================================
+
+lung = lung
+lung$dead = lung$status - 1
+
+# ----------------------------------------------------------
+# 5. Kaplan-Meier survival curves
+# ----------------------------------------------------------
+
+# a)
+nrow(lung)
+sum(lung$dead == 1)
+sum(lung$dead == 0)
+
+# b)
+km_all = survfit(Surv(time, dead) ~ 1, data = lung)
+summary(km_all)
+km_all
+
+# c)
+km_sex = survfit(Surv(time, dead) ~ sex, data = lung)
+ggsurvplot(km_sex, data = lung, conf.int = TRUE,
+  pval = TRUE, risk.table = TRUE,
+  legend.labs = c("Male", "Female"))
+ggsave("km_sex.pdf", width = 7, height = 5)
+
+# ----------------------------------------------------------
+# 6. Cox proportional hazards model
+# ----------------------------------------------------------
+
+# a)
+cox_fit = coxph(Surv(time, dead) ~ age + sex + ph.ecog, data = lung)
+summary(cox_fit)
+
+# b)
+exp(coef(cox_fit)["ph.ecog"])
+
+# c)
+cox.zph(cox_fit)
+
+# d)
+# KM shows clear separation by sex (log-rank p < 0.05): females survive longer.
+# Cox model: sex (HR ~0.58, p < 0.01) and ph.ecog (HR ~1.59, p < 0.001) significant;
+# age not significant. Females have ~42% lower hazard. Each unit increase in ECOG
+# score (worse functioning) increases hazard by ~59%.
+# PH assumption: check cox.zph() p-values. If all non-significant, assumption holds.
+# Key finding: physical functioning is the strongest predictor of lung cancer survival.

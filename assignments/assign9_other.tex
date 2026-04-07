@@ -16,7 +16,7 @@
   \end{itemize}
   \item \textbf{Always use comments} in your R code -- and use them to answer questions
   \item You are encouraged to work together, but each person must submit their own code
-  \item Plan is to start Parts 1 and 2 in class and complete Part 3 at home
+  \item Plan is to start Part 1 in class and complete Part 2 at home
   \item I'll upload a solution file to the website after next class
 \end{itemize}
 
@@ -25,7 +25,7 @@
 \newpage
 
 % ==========================================================================
-\section{Part 1: In-Class (Ordinal and Multinomial Outcomes)}
+\section{Part 1: In-Class (Ordinal, Multinomial, and Count Outcomes)}
 % ==========================================================================
 
 In this lab we use the British Electoral Panel Study (BEPS), a survey of British voters conducted around the 1997 general election. We model two outcomes: (1) voters' perceptions of national economic conditions (an ordinal 1--5 scale), and (2) their vote choice (a nominal three-category outcome). Both require models that go beyond binary logistic regression. Recall from class that the key question before choosing a model is: \textit{what is the data-generating process for your outcome?} Ordinal outcomes have a natural ordering but not equal spacing; nominal outcomes have unordered categories.
@@ -117,12 +117,6 @@ avg_slopes(m_mlogit)
 
 \end{enumerate}
 
-\newpage
-
-% ==========================================================================
-\section{Part 2: In-Class (Count Outcomes)}
-% ==========================================================================
-
 We now analyze the number of articles published by biochemistry PhD students in the last three years of their doctorate, using the \code{bioChemists} dataset from the \code{pscl} package. The outcome (\code{art}) is a non-negative integer count. Recall from class that count outcomes have a natural lower bound of zero and cannot take negative values, which makes OLS inappropriate. The natural starting model is Poisson regression; we then diagnose and address overdispersion using the negative binomial.
 
 Load the required packages (\code{pscl}, \code{AER}, \code{MASS}, \code{marginaleffects}) and the \code{bioChemists} dataset from \code{pscl}.
@@ -159,7 +153,7 @@ The negative binomial (NB) model generalizes Poisson by adding a dispersion para
 
 \begin{enumerate}[label=\alph*)]
 
-  \item Fit the negative binomial model with the same formula using \code{glm.nb()} from \code{MASS}. In a comment, compare the coefficient on \code{ment} to the Poisson estimate from question 2.1b. Has it changed substantially? Report the estimated overdispersion parameter \code{theta} from the NB output. Is the overdispersion modest or severe?
+  \item Fit the negative binomial model with the same formula using \code{glm.nb()} from \code{MASS}. In a comment, compare the coefficient on \code{ment} to the Poisson estimate from the Poisson model above. Has it changed substantially? Report the estimated overdispersion parameter \code{theta} from the NB output. Is the overdispersion modest or severe?
 
   \item Compare model fit using \code{AIC()} for both the Poisson and NB models. In a comment, report both AIC values. Which model has the lower AIC? Recall from earlier in the course that AIC penalizes model complexity, so a lower AIC for the NB model (which has one additional parameter) means the improvement in fit outweighs the added complexity. What does this comparison imply: is overdispersion a problem worth addressing for this dataset?
 
@@ -172,7 +166,7 @@ The negative binomial (NB) model generalizes Poisson by adding a dispersion para
 \newpage
 
 % ==========================================================================
-\section{Part 3: Take-Home (Survival Analysis)}
+\section{Part 2: Take-Home (Survival Analysis)}
 % ==========================================================================
 
 We now analyze time-to-event data using the \code{lung} dataset from the \code{survival} package, which contains survival times for patients with advanced lung cancer from the North Central Cancer Treatment Group. The outcome of interest is time from enrollment to death. Some patients are still alive at the end of the study --- they are \textbf{right-censored}. Recall from class that ignoring censoring (e.g., dropping censored observations or treating them as events) produces biased estimates, which motivates the use of survival models.
