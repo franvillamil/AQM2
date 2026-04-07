@@ -1,5 +1,5 @@
 \input{preamble.tex}
-\textbf{\large Assignment 9: Other Outcomes (Ordinal, Multinomial, Count)}\\\vspace{10pt}
+\textbf{\large Assignment 9: Other Outcomes (Ordinal, Multinomial, Count, Survival)}\\\vspace{10pt}
 \end{center}
 
 \vspace{10pt}
@@ -16,7 +16,7 @@
   \end{itemize}
   \item \textbf{Always use comments} in your R code -- and use them to answer questions
   \item You are encouraged to work together, but each person must submit their own code
-  \item Plan is to start Part 1 in class and complete Part 2 at home
+  \item Plan is to start Parts 1 and 2 in class and complete Part 3 at home
   \item I'll upload a solution file to the website after next class
 \end{itemize}
 
@@ -120,7 +120,7 @@ avg_slopes(m_mlogit)
 \newpage
 
 % ==========================================================================
-\section{Part 2: Take-Home (Count Outcomes)}
+\section{Part 2: In-Class (Count Outcomes)}
 % ==========================================================================
 
 We now analyze the number of articles published by biochemistry PhD students in the last three years of their doctorate, using the \code{bioChemists} dataset from the \code{pscl} package. The outcome (\code{art}) is a non-negative integer count. Recall from class that count outcomes have a natural lower bound of zero and cannot take negative values, which makes OLS inappropriate. The natural starting model is Poisson regression; we then diagnose and address overdispersion using the negative binomial.
@@ -169,6 +169,89 @@ The negative binomial (NB) model generalizes Poisson by adding a dispersion para
 
 \end{enumerate}
 
+\newpage
+
+% ==========================================================================
+\section{Part 3: Take-Home (Survival Analysis)}
+% ==========================================================================
+
+We now analyze time-to-event data using the \code{lung} dataset from the \code{survival} package, which contains survival times for patients with advanced lung cancer from the North Central Cancer Treatment Group. The outcome of interest is time from enrollment to death. Some patients are still alive at the end of the study --- they are \textbf{right-censored}. Recall from class that ignoring censoring (e.g., dropping censored observations or treating them as events) produces biased estimates, which motivates the use of survival models.
+
+Load the required packages and data with:
+\begin{lstlisting}
+library(survival)
+library(survminer)
+library(marginaleffects)
+data(lung)
+\end{lstlisting}
+
+Key variables in \code{lung}:
+\begin{itemize}
+  \item \code{time} --- survival time in days
+  \item \code{status} --- censoring status (1 = censored, 2 = dead)
+  \item \code{age} --- age in years
+  \item \code{sex} --- 1 = male, 2 = female
+  \item \code{ph.ecog} --- ECOG performance score (0 = fully active, \ldots, 4 = bedridden)
+  \item \code{ph.karno} --- Karnofsky performance score rated by physician (0 = dead, 100 = normal)
+  \item \code{wt.loss} --- weight loss in last six months (pounds)
+\end{itemize}
+
+\textbf{Note:} The \code{status} variable uses 1 = censored and 2 = dead, but the \code{Surv()} function expects 0 = censored and 1 = event. Recode it before fitting any models:
+\begin{lstlisting}
+lung$dead = lung$status - 1
+\end{lstlisting}
+
+% --------------------------------------------------------------------------
+\subsection{Kaplan-Meier survival curves}
+% --------------------------------------------------------------------------
+
+\begin{enumerate}[label=\alph*)]
+
+  \item Explore the data. In a comment, report the total number of observations, the number of events (deaths), and the number of censored cases. What proportion of patients are censored? Is this a lot or a little? Think about what this means: the censored patients' true survival times are unknown but at least as long as their observed times.
+
+  \item Estimate the overall Kaplan-Meier survival curve:
+  \begin{lstlisting}
+km_all = survfit(Surv(time, dead) ~ 1, data = lung)
+summary(km_all)
+  \end{lstlisting}
+  The \code{summary()} output shows, at each event time, the number at risk, the number of events, the estimated survival probability, and the confidence interval. In a comment, report the estimated median survival time from the output (also available via \code{km\_all}). What does this number mean in plain language?
+
+  \item Now estimate separate Kaplan-Meier curves by sex and plot them:
+  \begin{lstlisting}
+km_sex = survfit(Surv(time, dead) ~ sex, data = lung)
+ggsurvplot(km_sex, data = lung, conf.int = TRUE,
+           pval = TRUE, risk.table = TRUE,
+           legend.labs = c("Male", "Female"))
+  \end{lstlisting}
+  Save the plot as a PDF. In a comment, describe what you see: which group survives longer? Does the confidence interval for the two groups overlap? The \code{pval = TRUE} option adds the result of the log-rank test --- report the $p$-value and explain what it tests (whether the survival curves are statistically different).
+
+\end{enumerate}
+
+% --------------------------------------------------------------------------
+\subsection{Cox proportional hazards model}
+% --------------------------------------------------------------------------
+
+\begin{enumerate}[label=\alph*)]
+
+  \item Fit a Cox proportional hazards model predicting survival from \code{age}, \code{sex}, and \code{ph.ecog}:
+  \begin{lstlisting}
+cox_fit = coxph(Surv(time, dead) ~ age + sex + ph.ecog, data = lung)
+summary(cox_fit)
+  \end{lstlisting}
+  The output shows both raw coefficients (log-hazard scale) and exponentiated coefficients (hazard ratios). In a comment, report and interpret the hazard ratio for \code{sex}. Recall from class: a hazard ratio below 1 means lower hazard (longer survival), above 1 means higher hazard (shorter survival). What does the hazard ratio for sex tell us about survival differences between men and women? Is it statistically significant?
+
+  \item Interpret the hazard ratio for \code{ph.ecog}. In a comment, explain what a one-unit increase in ECOG performance score (i.e., moving toward worse physical functioning) does to the hazard of death. Express this as a percentage change (e.g., ``X\% higher/lower hazard'').
+
+  \item The Cox model assumes \textbf{proportional hazards}: the effect of each covariate is constant over time. Test this assumption:
+  \begin{lstlisting}
+cox.zph(cox_fit)
+  \end{lstlisting}
+  In a comment, report the $p$-value for each covariate and the global test. A significant $p$-value suggests the proportional hazards assumption is violated for that variable. Do any variables violate the assumption? If so, what would this mean in substantive terms (e.g., the effect of age changes over the course of the disease)?
+
+  \item Write a short summary paragraph as a comment in your R script (4--6 sentences). Cover: (1) whether the Kaplan-Meier analysis suggested survival differences by sex; (2) which predictors are significant in the Cox model and the direction of their effects; (3) whether the proportional hazards assumption holds; (4) one substantive conclusion about factors predicting lung cancer survival.
+
+\end{enumerate}
+
 \vspace{15pt}
 
 % ==========================================================================
@@ -177,7 +260,8 @@ The negative binomial (NB) model generalizes Poisson by adding a dispersion para
 
 \begin{itemize}
   \item British Electoral Panel Study: \code{BEPS} dataset in the \code{carData} R package (\code{library(carData); data(BEPS)})
-  \item PhD biochemist publications: \code{bioChemists} dataset in the \code{pscl} R package (\code{library(pscl); data(bioChemists)})
+  \item PhD biochemist publications: \code{bioChemists} dataset in the \code{pscl} R package\\ (\code{library(pscl); data(bioChemists)})
+  \item Lung cancer survival: \code{lung} dataset in the \code{survival} R package\\ (\code{library(survival); data(lung)})
 \end{itemize}
 
 \vspace{15pt}

@@ -6,6 +6,8 @@ library(nnet)
 library(pscl)
 library(ggplot2)
 library(AER)
+library(survival)
+library(survminer)
 
 # ===================================================
 # Part 1: Ordinal and Multinomial Outcomes (BEPS)
@@ -53,7 +55,7 @@ avg_slopes(m_mlogit)
 # clearly distinct. IIA plausible overall, but cautious for Labour/Lib Dem pair.
 
 # ==========================================================================
-# Part 2: Count Data (bioChemists)
+# Part 2: Count Data (bioChemists) [In-class]
 # ==========================================================================
 
 data(bioChemists)
