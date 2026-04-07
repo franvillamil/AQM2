@@ -1,6 +1,15 @@
-# ==========================================================================
+library(carData)
+library(MASS)
+library(marginaleffects)
+library(modelsummary)
+library(nnet)
+library(pscl)
+library(ggplot2)
+library(AER)
+
+# ===================================================
 # Part 1: Ordinal and Multinomial Outcomes (BEPS)
-# ==========================================================================
+# ===================================================
 
 data(BEPS)
 
@@ -13,15 +22,17 @@ table(BEPS$economic.cond.national)
 BEPS$econ_ord = factor(BEPS$economic.cond.national, ordered = TRUE)
 
 # b)
-m_ologit = polr(econ_ord ~ age + gender + Europe + political.knowledge,
-                data = BEPS, Hess = TRUE)
+m_ologit = polr(econ_ord ~ age + gender +
+  Europe + political.knowledge,
+  data = BEPS, Hess = TRUE)
 summary(m_ologit)
 
 # c)
 avg_slopes(m_ologit)
 
 # d)
-predictions(m_ologit, newdata = datagrid(gender = c("female", "male")))
+predictions(m_ologit,
+  newdata = datagrid(gender = c("female", "male")))
 
 # ----------------------------------------------------------
 # 2. Multinomial logit: vote choice
