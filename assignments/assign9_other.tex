@@ -119,7 +119,14 @@ avg_slopes(m_mlogit)
 
 We now analyze the number of articles published by biochemistry PhD students in the last three years of their doctorate, using the \code{bioChemists} dataset from the \code{pscl} package. The outcome (\code{art}) is a non-negative integer count. Recall from class that count outcomes have a natural lower bound of zero and cannot take negative values, which makes OLS inappropriate. The natural starting model is Poisson regression; we then diagnose and address overdispersion using the negative binomial.
 
-Load the required packages (\code{pscl}, \code{AER}, \code{MASS}, \code{marginaleffects}) and the \code{bioChemists} dataset from \code{pscl}.
+Load the required packages and data with:
+\begin{lstlisting}
+library(pscl)
+library(AER)
+library(MASS)
+library(marginaleffects)
+data(bioChemists)
+\end{lstlisting}
 
 Key variables in \code{bioChemists}:
 \begin{itemize}
@@ -137,11 +144,31 @@ Key variables in \code{bioChemists}:
 
 \begin{enumerate}[label=\alph*)]
 
-  \item Explore the outcome variable \code{art}. Compute its \code{summary()} and \code{var()}, and plot a histogram (save it as a PDF). In a comment, report the mean and variance of \code{art}. A key diagnostic for count data is whether the variance substantially exceeds the mean --- this is called \textbf{overdispersion} and violates the Poisson assumption that mean equals variance. Note whether you observe this pattern here.
+  \item Explore the outcome variable \code{art}:
+  \begin{lstlisting}
+summary(bioChemists$art)
+var(bioChemists$art)
 
-  \item Fit a Poisson regression of \code{art} on all predictors (\code{fem}, \code{mar}, \code{kid5}, \code{phd}, \code{ment}). Hint: use \code{glm()} with \code{family = poisson}. In a comment, answer the following two questions: (1) Report the coefficient on \code{ment} and exponentiate it with \code{exp()} to obtain the \textbf{incidence rate ratio} (IRR). Interpret it: a one-unit increase in mentor articles multiplies expected student articles by approximately how much? (2) Report the residual deviance and degrees of freedom from the \code{summary()} output and compute their ratio. Recall from class that under a correctly specified Poisson model this ratio should be close to 1; a ratio substantially above 1 (say, $>2$) suggests overdispersion.
+pdf("art_histogram.pdf", width = 6, height = 4)
+hist(bioChemists$art, breaks = 20, main = "Distribution of articles",
+     xlab = "Number of articles", col = "gray80")
+dev.off()
+  \end{lstlisting}
+  In a comment, report the mean and variance of \code{art}. A key diagnostic for count data is whether the variance substantially exceeds the mean --- this is called \textbf{overdispersion} and violates the Poisson assumption that mean equals variance. Note whether you observe this pattern here.
 
-  \item Test for overdispersion formally using \code{dispersiontest()} from the \code{AER} package. In a comment, report the estimated dispersion parameter and the p-value. Is there statistically significant evidence of overdispersion? What does this imply for the validity of the Poisson standard errors you computed above?
+  \item Fit a Poisson regression of \code{art} on all predictors:
+  \begin{lstlisting}
+m_pois = glm(art ~ fem + mar + kid5 + phd + ment,
+             data = bioChemists, family = poisson)
+summary(m_pois)
+  \end{lstlisting}
+  In a comment, answer the following two questions: (1) Report the coefficient on \code{ment} and exponentiate it with \code{exp()} to obtain the \textbf{incidence rate ratio} (IRR). Interpret it: a one-unit increase in mentor articles multiplies expected student articles by approximately how much? (2) Report the residual deviance and degrees of freedom from the \code{summary()} output and compute their ratio. Recall from class that under a correctly specified Poisson model this ratio should be close to 1; a ratio substantially above 1 (say, $>2$) suggests overdispersion.
+
+  \item Test for overdispersion formally:
+  \begin{lstlisting}
+dispersiontest(m_pois)
+  \end{lstlisting}
+  In a comment, report the estimated dispersion parameter and the p-value. Is there statistically significant evidence of overdispersion? What does this imply for the validity of the Poisson standard errors you computed above?
 
 \end{enumerate}
 
@@ -153,11 +180,25 @@ The negative binomial (NB) model generalizes Poisson by adding a dispersion para
 
 \begin{enumerate}[label=\alph*)]
 
-  \item Fit the negative binomial model with the same formula using \code{glm.nb()} from \code{MASS}. In a comment, compare the coefficient on \code{ment} to the Poisson estimate from the Poisson model above. Has it changed substantially? Report the estimated overdispersion parameter \code{theta} from the NB output. Is the overdispersion modest or severe?
+  \item Fit the negative binomial model with the same formula:
+  \begin{lstlisting}
+m_nb = glm.nb(art ~ fem + mar + kid5 + phd + ment,
+              data = bioChemists)
+summary(m_nb)
+  \end{lstlisting}
+  In a comment, compare the coefficient on \code{ment} to the Poisson estimate from the Poisson model above. Has it changed substantially? Report the estimated overdispersion parameter \code{theta} from the NB output. Is the overdispersion modest or severe?
 
-  \item Compare model fit using \code{AIC()} for both the Poisson and NB models. In a comment, report both AIC values. Which model has the lower AIC? Recall from earlier in the course that AIC penalizes model complexity, so a lower AIC for the NB model (which has one additional parameter) means the improvement in fit outweighs the added complexity. What does this comparison imply: is overdispersion a problem worth addressing for this dataset?
+  \item Compare model fit using AIC:
+  \begin{lstlisting}
+AIC(m_pois, m_nb)
+  \end{lstlisting}
+  In a comment, report both AIC values. Which model has the lower AIC? Recall from earlier in the course that AIC penalizes model complexity, so a lower AIC for the NB model (which has one additional parameter) means the improvement in fit outweighs the added complexity. What does this comparison imply: is overdispersion a problem worth addressing for this dataset?
 
-  \item Compute predicted article counts for male vs.\ female researchers, holding all other variables at their sample means. Hint: use \code{predictions()} from \code{marginaleffects} with \code{datagrid()} to set \code{fem} to both levels. In a comment, report the predicted number of articles for men and women (with confidence intervals). How large is the gender gap in predicted publications? Is this difference statistically distinguishable given the uncertainty intervals?
+  \item Compute predicted article counts for male vs.\ female researchers, holding all other variables at their sample means:
+  \begin{lstlisting}
+predictions(m_nb, newdata = datagrid(fem = c("Men", "Women")))
+  \end{lstlisting}
+  In a comment, report the predicted number of articles for men and women (with confidence intervals). How large is the gender gap in predicted publications? Is this difference statistically distinguishable given the uncertainty intervals?
 
   \item Write a short summary paragraph as a comment in your R script (4--6 sentences). Cover all of the following: (1) whether Poisson regression is adequate for this dataset or whether the negative binomial is needed, and why; (2) the interpretation of the \code{ment} incidence rate ratio --- what does mentor productivity tell us about student productivity?; (3) which predictors are statistically significant in the negative binomial model; (4) one substantive conclusion about the factors driving publication productivity among PhD students in biochemistry.
 
@@ -171,13 +212,7 @@ The negative binomial (NB) model generalizes Poisson by adding a dispersion para
 
 We now analyze time-to-event data using the \code{lung} dataset from the \code{survival} package, which contains survival times for patients with advanced lung cancer from the North Central Cancer Treatment Group. The outcome of interest is time from enrollment to death. Some patients are still alive at the end of the study --- they are \textbf{right-censored}. Recall from class that ignoring censoring (e.g., dropping censored observations or treating them as events) produces biased estimates, which motivates the use of survival models.
 
-Load the required packages and data with:
-\begin{lstlisting}
-library(survival)
-library(survminer)
-library(marginaleffects)
-data(lung)
-\end{lstlisting}
+Load the required packages (\code{survival}, \code{survminer}, \code{marginaleffects}) and the \code{lung} dataset from \code{survival}.
 
 Key variables in \code{lung}:
 \begin{itemize}
@@ -190,10 +225,7 @@ Key variables in \code{lung}:
   \item \code{wt.loss} --- weight loss in last six months (pounds)
 \end{itemize}
 
-\textbf{Note:} The \code{status} variable uses 1 = censored and 2 = dead, but the \code{Surv()} function expects 0 = censored and 1 = event. Recode it before fitting any models:
-\begin{lstlisting}
-lung$dead = lung$status - 1
-\end{lstlisting}
+\textbf{Note:} The \code{status} variable uses 1 = censored and 2 = dead, but the \code{Surv()} function expects 0 = censored and 1 = event. Recode it before fitting any models (e.g.\ \code{lung\$dead = lung\$status - 1}).
 
 % --------------------------------------------------------------------------
 \subsection{Kaplan-Meier survival curves}
@@ -203,21 +235,9 @@ lung$dead = lung$status - 1
 
   \item Explore the data. In a comment, report the total number of observations, the number of events (deaths), and the number of censored cases. What proportion of patients are censored? Is this a lot or a little? Think about what this means: the censored patients' true survival times are unknown but at least as long as their observed times.
 
-  \item Estimate the overall Kaplan-Meier survival curve:
-  \begin{lstlisting}
-km_all = survfit(Surv(time, dead) ~ 1, data = lung)
-summary(km_all)
-  \end{lstlisting}
-  The \code{summary()} output shows, at each event time, the number at risk, the number of events, the estimated survival probability, and the confidence interval. In a comment, report the estimated median survival time from the output (also available via \code{km\_all}). What does this number mean in plain language?
+  \item Estimate the overall Kaplan-Meier survival curve using \code{survfit()} with formula \code{Surv(time, dead) \textasciitilde{} 1}. The \code{summary()} output shows, at each event time, the number at risk, the number of events, the estimated survival probability, and the confidence interval. In a comment, report the estimated median survival time. What does this number mean in plain language?
 
-  \item Now estimate separate Kaplan-Meier curves by sex and plot them:
-  \begin{lstlisting}
-km_sex = survfit(Surv(time, dead) ~ sex, data = lung)
-ggsurvplot(km_sex, data = lung, conf.int = TRUE,
-           pval = TRUE, risk.table = TRUE,
-           legend.labs = c("Male", "Female"))
-  \end{lstlisting}
-  Save the plot as a PDF. In a comment, describe what you see: which group survives longer? Does the confidence interval for the two groups overlap? The \code{pval = TRUE} option adds the result of the log-rank test --- report the $p$-value and explain what it tests (whether the survival curves are statistically different).
+  \item Estimate separate Kaplan-Meier curves by sex using \code{survfit()} and plot them with \code{ggsurvplot()} from \code{survminer} (include confidence intervals, a $p$-value, and a risk table). Save the plot as a PDF. In a comment, describe what you see: which group survives longer? Does the confidence interval for the two groups overlap? The $p$-value shown is from the log-rank test --- report it and explain what it tests (whether the survival curves are statistically different).
 
 \end{enumerate}
 
@@ -227,20 +247,11 @@ ggsurvplot(km_sex, data = lung, conf.int = TRUE,
 
 \begin{enumerate}[label=\alph*)]
 
-  \item Fit a Cox proportional hazards model predicting survival from \code{age}, \code{sex}, and \code{ph.ecog}:
-  \begin{lstlisting}
-cox_fit = coxph(Surv(time, dead) ~ age + sex + ph.ecog, data = lung)
-summary(cox_fit)
-  \end{lstlisting}
-  The output shows both raw coefficients (log-hazard scale) and exponentiated coefficients (hazard ratios). In a comment, report and interpret the hazard ratio for \code{sex}. Recall from class: a hazard ratio below 1 means lower hazard (longer survival), above 1 means higher hazard (shorter survival). What does the hazard ratio for sex tell us about survival differences between men and women? Is it statistically significant?
+  \item Fit a Cox proportional hazards model predicting survival from \code{age}, \code{sex}, and \code{ph.ecog} using \code{coxph()} from \code{survival}. The output shows both raw coefficients (log-hazard scale) and exponentiated coefficients (hazard ratios). In a comment, report and interpret the hazard ratio for \code{sex}. Recall from class: a hazard ratio below 1 means lower hazard (longer survival), above 1 means higher hazard (shorter survival). What does the hazard ratio for sex tell us about survival differences between men and women? Is it statistically significant?
 
   \item Interpret the hazard ratio for \code{ph.ecog}. In a comment, explain what a one-unit increase in ECOG performance score (i.e., moving toward worse physical functioning) does to the hazard of death. Express this as a percentage change (e.g., ``X\% higher/lower hazard'').
 
-  \item The Cox model assumes \textbf{proportional hazards}: the effect of each covariate is constant over time. Test this assumption:
-  \begin{lstlisting}
-cox.zph(cox_fit)
-  \end{lstlisting}
-  In a comment, report the $p$-value for each covariate and the global test. A significant $p$-value suggests the proportional hazards assumption is violated for that variable. Do any variables violate the assumption? If so, what would this mean in substantive terms (e.g., the effect of age changes over the course of the disease)?
+  \item The Cox model assumes \textbf{proportional hazards}: the effect of each covariate is constant over time. Test this assumption using \code{cox.zph()}. In a comment, report the $p$-value for each covariate and the global test. A significant $p$-value suggests the proportional hazards assumption is violated for that variable. Do any variables violate the assumption? If so, what would this mean in substantive terms (e.g., the effect of age changes over the course of the disease)?
 
   \item Write a short summary paragraph as a comment in your R script (4--6 sentences). Cover: (1) whether the Kaplan-Meier analysis suggested survival differences by sex; (2) which predictors are significant in the Cox model and the direction of their effects; (3) whether the proportional hazards assumption holds; (4) one substantive conclusion about factors predicting lung cancer survival.
 
