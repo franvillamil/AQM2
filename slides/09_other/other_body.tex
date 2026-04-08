@@ -395,6 +395,41 @@ AIC: 3495.149
 % ----------------------------------------------------
 \note{The stacked bar schematic shows the key communication tool for ordered logit: as education increases, the distribution over categories shifts toward higher categories. Each bar represents the full probability distribution over the response categories. The AMEs tell you the average slope for each category probability across the sample. Note that the AMEs across all categories must sum to zero for any given predictor --- if one category's probability goes up, others must go down. This is a useful sanity check. Always plot predicted probabilities when reporting ordered logit results. A table of log-odds coefficients alone is not informative.}
 
+% ----------------------------------------------------
+\begin{frame}
+\frametitle{Application: Markov transition models}
+\centering
+
+\vspace{6pt}
+
+\begin{itemize}[<+->]
+\item Ordinal models can be used to study \textbf{transitions between ordered states}
+  \begin{itemize}
+  \item Democracy scores (autocracy $\to$ anocracy $\to$ democracy)
+  \item Credit ratings (AAA $\to$ AA $\to$ A $\to$ \ldots)
+  \item Health status (healthy $\to$ mild $\to$ severe $\to$ critical)
+  \end{itemize}
+\vspace{8pt}
+\item \textbf{Idea}: given current state $S_t$, model the probability of transitioning to each state at $S_{t+1}$ using ordinal logit
+\vspace{8pt}
+\item The ordinal structure constrains transitions to respect the natural ordering --- large jumps (e.g., autocracy $\to$ full democracy) are possible but predicted to be rare
+\vspace{8pt}
+\item Covariates shift the latent propensity, making upward or downward transitions more likely
+  \begin{itemize}
+  \item E.g., economic crisis $\to$ higher probability of moving down the scale
+  \end{itemize}
+\vspace{8pt}
+\item In practice: \textbf{interact all covariates with $S_t$}
+  \begin{itemize}
+  \item Allows the effect of each predictor to differ by current state
+  \item Equivalent to fitting a separate ordinal model per origin state
+  \end{itemize}
+\end{itemize}
+
+\end{frame}
+% ----------------------------------------------------
+\note{This slide shows students one application of ordinal models beyond the typical survey-item setting. A Markov transition model asks: given that a unit is in state $j$ at time $t$, what is the probability it moves to each possible state at $t+1$? If the states are ordered, an ordinal logit is a natural fit --- it models the transition probabilities while respecting the ordering constraint. For example, Epstein et al.\ (2006) model transitions between political regime types (autocracy, partial democracy, full democracy) as an ordered outcome. The ordered logit ensures that jumping two categories is less probable than moving one step, which matches our substantive expectation. The last point is important in practice: by interacting all covariates with the current state $S_t$, you allow the effects to be state-dependent --- e.g., the effect of an economic crisis on regime change might differ depending on whether the country is already an autocracy or a partial democracy. This is equivalent to subsetting the data by current state and fitting separate ordinal models, but the interaction approach keeps everything in one model and allows you to test whether the differences across origin states are significant.}
+
 % ====================================================
 \section{Nominal / Multinomial Outcomes}
 % ====================================================
@@ -933,6 +968,39 @@ Zero-inflated NegBin & \texttt{pscl::zeroinfl()} & Excess zeros, overdisp. \\
 \end{frame}
 % ----------------------------------------------------
 \note{This summary slide gives students a practical decision tree for count models. The default recommendation: always start with Poisson, inspect the residual deviance/df ratio and run \texttt{AER::dispersiontest()}, and switch to negative binomial if overdispersion is present. Zero-inflated models (\texttt{pscl::zeroinfl()}) are for situations where there are more zeros than any count distribution can explain --- e.g., a peace researcher studying conflict events, where many country-years have zero events structurally (the country is at peace) and a separate process generates events for those at risk. The zero-inflated model has two parts: a logistic regression for structural zeros and a count model for the rest. Mention this but do not go deep --- it is a more advanced topic.}
+
+% ----------------------------------------------------
+\begin{frame}
+\frametitle{Zero-inflated models}
+\centering
+
+\vspace{6pt}
+
+\begin{itemize}[<+->]
+\item Sometimes data have \textbf{more zeros than any count distribution predicts}
+  \begin{itemize}
+  \item Conflict events: many country-years at peace (structural zeros)
+  \item Patent counts: many firms never innovate
+  \end{itemize}
+\vspace{8pt}
+\item \textbf{Two-process model}:
+  \begin{itemize}
+  \item Process 1 (logit): is the unit ``at risk'' of a positive count?
+  \item Process 2 (Poisson/NegBin): if at risk, how many events?
+  \end{itemize}
+\vspace{8pt}
+\item Distinguishes \textbf{structural zeros} (unit can't have the event) from \textbf{sampling zeros} (could happen, just didn't)
+\vspace{8pt}
+\item In R: \texttt{pscl::zeroinfl(y \textasciitilde{} x | z, dist = "negbin")}
+  \begin{itemize}
+  \item \texttt{x}: predictors for the count process
+  \item \texttt{z}: predictors for the zero-inflation process
+  \end{itemize}
+\end{itemize}
+
+\end{frame}
+% ----------------------------------------------------
+\note{This slide introduces the intuition behind zero-inflated models without going into the math. The key idea is that sometimes zeros come from two different processes: some units are structurally unable to produce events (e.g., a stable democracy will not have a civil war onset), while others are at risk but happen to have zero events in the observation period. A standard Poisson or negative binomial can only model one type of zero. The zero-inflated model separates these with a logistic regression that predicts structural zeros and a count model for the at-risk population. The predictors in the two parts can differ --- for example, regime type might predict structural peace (zero-inflation part) while GDP and population predict the intensity of violence (count part). In practice, if you see a histogram with a huge spike at zero and a long right tail, consider a zero-inflated model. Compare with AIC or Vuong test (\texttt{pscl::vuong()}).}
 
 % % ----------------------------------------------------
 % \begin{frame}
