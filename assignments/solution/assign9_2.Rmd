@@ -20,7 +20,8 @@ options(stringsAsFactors = FALSE)
 
 ```{r packages}
 library(survival)
-library(survminer)
+library(broom)
+library(ggplot2)
 library(marginaleffects)
 data(lung)
 lung$dead = lung$status - 1
@@ -51,19 +52,24 @@ The estimated median survival time is `r km_all$table["median"]` days. This mean
 
 ```{r 5c, fig.height=5}
 km_sex = survfit(Surv(time, dead) ~ sex, data = lung)
-p = ggsurvplot(km_sex, data = lung, conf.int = TRUE,
-               pval = TRUE, risk.table = TRUE,
-               legend.labs = c("Male", "Female"))
-print(p)
+km_df = tidy(km_sex)
+ggplot(km_df, aes(x = time, y = estimate, color = strata, fill = strata)) +
+  geom_step() +
+  geom_ribbon(aes(ymin = conf.low, ymax = conf.high), alpha = 0.2, linetype = 0) +
+  scale_color_manual(values = c("#294b66", "#f53831"),
+    labels = c("Male", "Female")) +
+  scale_fill_manual(values = c("#294b66", "#f53831"),
+    labels = c("Male", "Female")) +
+  labs(x = "Time (days)", y = "Survival probability", color = "", fill = "") +
+  theme_minimal()
+ggsave("km_sex.pdf", width = 7, height = 5)
 ```
 
-```{r 5c_save, include=FALSE}
-pdf("km_sex.pdf", width = 7, height = 5)
-print(p)
-dev.off()
+```{r 5c_logrank}
+survdiff(Surv(time, dead) ~ sex, data = lung)
 ```
 
-The Kaplan-Meier curves show clear separation: females survive longer than males throughout the study period. The female survival curve lies consistently above the male curve, and the confidence intervals show limited overlap in the early and middle portions of follow-up. The log-rank test p-value (displayed on the plot) is statistically significant, indicating that the survival distributions differ significantly between the two groups. The log-rank test evaluates the null hypothesis that the survival curves are identical across groups — a significant result rejects this null and supports the conclusion that sex is associated with survival in this lung cancer cohort.
+The Kaplan-Meier curves show clear separation: females survive longer than males throughout the study period. The female survival curve lies consistently above the male curve, and the confidence intervals show limited overlap in the early and middle portions of follow-up. The log-rank test is statistically significant, indicating that the survival distributions differ significantly between the two groups. The log-rank test evaluates the null hypothesis that the survival curves are identical across groups — a significant result rejects this null and supports the conclusion that sex is associated with survival in this lung cancer cohort.
 
 # 6. Cox proportional hazards model
 

@@ -7,7 +7,7 @@ library(pscl)
 library(ggplot2)
 library(AER)
 library(survival)
-library(survminer)
+library(broom)
 
 # ===================================================
 # Part 1: Ordinal and Multinomial Outcomes (BEPS)
@@ -130,10 +130,20 @@ km_all
 
 # c)
 km_sex = survfit(Surv(time, dead) ~ sex, data = lung)
-ggsurvplot(km_sex, data = lung, conf.int = TRUE,
-  pval = TRUE, risk.table = TRUE,
-  legend.labs = c("Male", "Female"))
+km_df = tidy(km_sex)
+ggplot(km_df, aes(x = time, y = estimate, color = strata, fill = strata)) +
+  geom_step() +
+  geom_ribbon(aes(ymin = conf.low, ymax = conf.high), alpha = 0.2, linetype = 0) +
+  scale_color_manual(values = c("#294b66", "#f53831"),
+    labels = c("Male", "Female")) +
+  scale_fill_manual(values = c("#294b66", "#f53831"),
+    labels = c("Male", "Female")) +
+  labs(x = "Time (days)", y = "Survival probability", color = "", fill = "") +
+  theme_minimal()
 ggsave("km_sex.pdf", width = 7, height = 5)
+
+# Log-rank test
+survdiff(Surv(time, dead) ~ sex, data = lung)
 
 # ----------------------------------------------------------
 # 6. Cox proportional hazards model

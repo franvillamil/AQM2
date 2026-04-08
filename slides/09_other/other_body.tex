@@ -1099,18 +1099,36 @@ Duration analysis:\\[6pt]
 
 % ----------------------------------------------------
 \begin{frame}
-\frametitle{Discussion}
+\frametitle{What does survival data look like?}
 \centering
-\vspace{20pt}
 
-\large\textit{A researcher studies how long democracies survive.\\[10pt]
-She drops all country-spells that are still ongoing at the end of the dataset,
-keeping only countries where a democratic breakdown was observed.\\[10pt]
-What is wrong with this decision?}
+\vspace{6pt}
+
+{\footnotesize\setlength{\tabcolsep}{5pt}
+\begin{tabular}{llccl}
+\hline
+\textbf{Unit} & \textbf{Spell start} & \textbf{Duration} & \textbf{Event} & \textbf{Covariates \ldots} \\
+\hline
+Country A & 1975 & 12 years & 1 (breakdown) & GDP, region, \ldots \\
+Country B & 1991 & 30 years & 0 (censored)  & GDP, region, \ldots \\
+Country C & 1985 &  8 years & 1 (breakdown) & GDP, region, \ldots \\
+Country D & 2002 & 19 years & 0 (censored)  & GDP, region, \ldots \\
+Country E & 1960 &  3 years & 1 (breakdown) & GDP, region, \ldots \\
+\hline
+\end{tabular}
+}
+
+\vspace{10pt}
+
+\begin{itemize}[<+->]
+\item Each row is a \textbf{spell}: one unit observed from entry to event or censoring
+\item Two outcome variables: \textbf{duration} ($T$) and \textbf{event indicator} ($d$: 1 = event, 0 = censored)
+\item In R: combined into a \texttt{Surv(time, event)} object
+\end{itemize}
 
 \end{frame}
 % ----------------------------------------------------
-\note{This is the classic censoring bias problem. If the researcher drops right-censored observations (countries still democratic at the end of the observation window), she is systematically removing long-surviving democracies from the sample. The remaining data will only contain breakdowns, which will make the estimated hazard much higher than it actually is. In other words, she will overestimate the risk of democratic breakdown. Survival models handle this correctly: censored observations stay in the risk set until they are censored, contributing information that the event had not yet occurred. Dropping censored observations is one of the most common mistakes in applied survival analysis.}
+\note{This slide shows students the concrete data structure for survival analysis before any formulas. Each row is a spell --- a period of time during which a unit is at risk of the event. The two key columns are: (1) duration, how long the spell lasted, and (2) an event indicator that tells you whether the spell ended with the event (1) or was censored (0). Censored means the observation window closed before the event occurred --- the unit is still ``alive.'' Covariates can be time-invariant (region, regime type at entry) or time-varying (GDP, which updates each year). In R, \texttt{Surv(time, event)} packages these two columns into a single object that all survival functions understand. Connect this to the diagram on the previous slide: Country A and C are the spells ending with filled circles (events), while B and D are the ones hitting the dashed line (censored).}
 
 % ----------------------------------------------------
 \begin{frame}
@@ -1185,7 +1203,7 @@ What is wrong with this decision?}
 
 \end{frame}
 % ----------------------------------------------------
-\note{The Kaplan-Meier (KM) estimator is the standard first step in survival analysis. It is non-parametric: it makes no distributional assumptions and does not include covariates. It simply estimates the survival probability at each event time by updating the fraction of the risk set that experiences the event. The KM curve is always a step function, dropping at each observed event time. Censored observations are marked with tick marks on the curve. The KM curve is a powerful visual tool: you can immediately see whether Group A has higher survival than Group B, whether survival differences emerge early or late, and how many observations remain in the risk set over time. In R: \texttt{survfit(Surv(time, event) \textasciitilde{} group, data = mydata)} and then \texttt{survminer::ggsurvplot()}.}
+\note{The Kaplan-Meier (KM) estimator is the standard first step in survival analysis. It is non-parametric: it makes no distributional assumptions and does not include covariates. It simply estimates the survival probability at each event time by updating the fraction of the risk set that experiences the event. The KM curve is always a step function, dropping at each observed event time. Censored observations are marked with tick marks on the curve. The KM curve is a powerful visual tool: you can immediately see whether Group A has higher survival than Group B, whether survival differences emerge early or late, and how many observations remain in the risk set over time. In R: \texttt{survfit(Surv(time, event) \textasciitilde{} group, data = mydata)} and then plot with \texttt{ggplot2} using the data from \texttt{broom::tidy()}.}
 
 % ----------------------------------------------------
 \begin{frame}
@@ -1226,7 +1244,7 @@ What is wrong with this decision?}
 
 \end{frame}
 % ----------------------------------------------------
-\note{This diagram makes the proportional hazards (PH) assumption visually intuitive before the algebra. All hazard curves are multiples of the same baseline function h_0(t) --- they have the same shape but different levels. This means the hazard ratio between any two units is fixed over time (the curves are parallel on a log scale). The PH assumption is testable: plot log(-log(S(t))) for two groups --- under PH these should be parallel lines. Violations occur when the effect of a covariate changes over time (e.g., treatment effectiveness wanes). A practical fix is to include a time-interaction term or stratify by the offending covariate.}
+\note{This diagram makes the proportional hazards (PH) assumption visually intuitive before the algebra. All hazard curves are multiples of the same baseline function $h_0(t)$ --- they have the same shape but different levels. This means the hazard ratio between any two units is fixed over time (the curves are parallel on a log scale). The PH assumption is testable: plot log(-log(S(t))) for two groups --- under PH these should be parallel lines. Violations occur when the effect of a covariate changes over time (e.g., treatment effectiveness wanes). A practical fix is to include a time-interaction term or stratify by the offending covariate.}
 
 % ----------------------------------------------------
 \begin{frame}
@@ -1266,11 +1284,13 @@ $$h_i(t) = h_0(t) \cdot \exp(\mathbf{x}_i \boldsymbol{\beta})$$
 \vspace{6pt}
 
 \begin{itemize}
-\item[] \texttt{library(survival); library(survminer)}
+\item[] \texttt{library(survival); library(broom); library(ggplot2)}
 \vspace{4pt}
 \item[] \texttt{\# Kaplan-Meier estimator}
 \item[] \texttt{km\_fit = survfit(Surv(time, event) \textasciitilde{} group, data = d)}
-\item[] \texttt{ggsurvplot(km\_fit, conf.int = TRUE)}
+\item[] \texttt{ggplot(tidy(km\_fit), aes(time, estimate, color = strata)) +}
+\item[] \texttt{~~geom\_step() + geom\_ribbon(aes(ymin = conf.low,}
+\item[] \texttt{~~ymax = conf.high, fill = strata), alpha = .2)}
 \vspace{4pt}
 \item[] \texttt{\# Cox PH model}
 \item[] \texttt{cox\_fit = coxph(Surv(time, event) \textasciitilde{} x1 + x2, data = d)}
@@ -1280,7 +1300,7 @@ $$h_i(t) = h_0(t) \cdot \exp(\mathbf{x}_i \boldsymbol{\beta})$$
 
 \end{frame}
 % ----------------------------------------------------
-\note{Walk through the syntax. The \texttt{Surv(time, event)} object is the key data structure: \texttt{time} is the duration variable, \texttt{event} is a binary indicator for whether the event occurred (1) or the observation was censored (0). This object is always the left-hand side of the formula. \texttt{survfit()} fits the Kaplan-Meier estimator; \texttt{ggsurvplot()} from the \texttt{survminer} package creates publication-quality KM plots with confidence bands and risk tables. \texttt{coxph()} fits the Cox proportional hazards model. The output includes coefficients on the log-hazard scale and, when you run \texttt{summary()}, the exponentiated hazard ratios. Always test the PH assumption with \texttt{cox.zph(cox\_fit)}: a significant test indicates time-varying effects that violate the PH assumption.}
+\note{Walk through the syntax. The \texttt{Surv(time, event)} object is the key data structure: \texttt{time} is the duration variable, \texttt{event} is a binary indicator for whether the event occurred (1) or the observation was censored (0). This object is always the left-hand side of the formula. \texttt{survfit()} fits the Kaplan-Meier estimator; \texttt{broom::tidy()} converts the result into a data frame that \texttt{ggplot2} can plot directly using \texttt{geom\_step()} for the survival curve and \texttt{geom\_ribbon()} for confidence bands. \texttt{coxph()} fits the Cox proportional hazards model. The output includes coefficients on the log-hazard scale and, when you run \texttt{summary()}, the exponentiated hazard ratios. Always test the PH assumption with \texttt{cox.zph(cox\_fit)}: a significant test indicates time-varying effects that violate the PH assumption.}
 
 % ----------------------------------------------------
 \begin{frame}[fragile]
@@ -1361,6 +1381,36 @@ Score (logrank) test = 30.5  on 3 df,   p=1e-06
 \end{frame}
 % ----------------------------------------------------
 \note{Walk through the output table carefully. The ``Coef'' column gives log-hazard coefficients, which are hard to interpret. The ``Exp(coef)'' column gives hazard ratios, which are the quantities to report. The direction of the hazard ratio can be counterintuitive: a hazard ratio less than 1 means lower hazard, which means longer survival. GDP per capita coefficient: richer countries have lower hazard of regime collapse (or war, or whatever the event is), i.e., they are more stable. Military regime coefficient: military regimes face nearly twice the hazard compared to non-military regimes. These are interpreted as effects conditional on survival to time $t$ (the risk set at each moment). Note: the PH assumption must be checked --- \texttt{cox.zph(cox\_fit)} tests whether the coefficients are constant over time.}
+
+% ----------------------------------------------------
+\begin{frame}
+\frametitle{What if proportional hazards fails?}
+\centering
+
+\vspace{6pt}
+
+\begin{itemize}[<+->]
+\item Test with \texttt{cox.zph()}: significant $p$-value $\Rightarrow$ effect changes over time
+\vspace{8pt}
+\item \textbf{Solutions}:
+  \begin{itemize}
+  \item \textbf{Stratify}: \texttt{coxph(Surv(t,d) \textasciitilde{} x + strata(z))}\\
+    {\small Fits separate baseline hazard per group; useful for control variables}
+  \vspace{4pt}
+  \item \textbf{Time interaction}: let $\beta$ vary with time\\
+    {\small Models the changing effect explicitly}
+  \vspace{4pt}
+  \item \textbf{Split follow-up}: divide time into periods, fit separate models\\
+    {\small Simple but choice of cutpoint can be arbitrary}
+  \vspace{4pt}
+  \item \textbf{Different model}: parametric (Weibull) or accelerated failure time\\
+    {\small Do not require proportional hazards}
+  \end{itemize}
+\end{itemize}
+
+\end{frame}
+% ----------------------------------------------------
+\note{This is a reference slide --- students do not need to master these solutions, but should know they exist. The most common approach in practice is stratification: if the PH assumption fails for a control variable (e.g., sex), you stratify by it, which allows each stratum to have its own baseline hazard while still estimating a common coefficient for the variables of interest. You lose the ability to estimate the stratifying variable's effect, but that is acceptable if it is just a control. Time interactions are more involved: they let the coefficient change as a function of time, which directly addresses the violation. Splitting follow-up is the most intuitive but least elegant --- it requires choosing a cutpoint and reduces power. Finally, parametric models (Weibull, log-normal) and accelerated failure time (AFT) models operate on a different scale and do not assume proportional hazards. In an applied course, the key message is: always check PH, and if it fails, stratification is usually the easiest fix.}
 
 % ====================================================
 \section{Model Selection in Practice}

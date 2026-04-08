@@ -1,7 +1,8 @@
 options(stringsAsFactors = FALSE)
 
 library(survival)
-library(survminer)
+library(broom)
+library(ggplot2)
 library(marginaleffects)
 data(lung)
 lung$dead = lung$status - 1
@@ -40,12 +41,20 @@ km_all
 # ----------------------------------------------------------
 
 km_sex = survfit(Surv(time, dead) ~ sex, data = lung)
-p = ggsurvplot(km_sex, data = lung, conf.int = TRUE,
-  pval = TRUE, risk.table = TRUE,
-  legend.labs = c("Male", "Female"))
-pdf("km_sex.pdf", width = 7, height = 5)
-print(p)
-dev.off()
+km_df = tidy(km_sex)
+ggplot(km_df, aes(x = time, y = estimate, color = strata, fill = strata)) +
+  geom_step() +
+  geom_ribbon(aes(ymin = conf.low, ymax = conf.high), alpha = 0.2, linetype = 0) +
+  scale_color_manual(values = c("#294b66", "#f53831"),
+    labels = c("Male", "Female")) +
+  scale_fill_manual(values = c("#294b66", "#f53831"),
+    labels = c("Male", "Female")) +
+  labs(x = "Time (days)", y = "Survival probability", color = "", fill = "") +
+  theme_minimal()
+ggsave("km_sex.pdf", width = 7, height = 5)
+
+# Log-rank test
+survdiff(Surv(time, dead) ~ sex, data = lung)
 
 # Females survive longer: female curve lies above male curve throughout.
 # Confidence intervals show limited overlap in early/middle follow-up.

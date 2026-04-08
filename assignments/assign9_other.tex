@@ -212,7 +212,7 @@ predictions(m_nb, newdata = datagrid(fem = c("Men", "Women")))
 
 We now analyze time-to-event data using the \code{lung} dataset from the \code{survival} package, which contains survival times for patients with advanced lung cancer from the North Central Cancer Treatment Group. The outcome of interest is time from enrollment to death. Some patients are still alive at the end of the study --- they are \textbf{right-censored}. Recall from class that ignoring censoring (e.g., dropping censored observations or treating them as events) produces biased estimates, which motivates the use of survival models.
 
-Load the required packages (\code{survival}, \code{survminer}, \code{marginaleffects}) and the \code{lung} dataset from \code{survival}.
+Load the required packages (\code{survival}, \code{broom}, \code{ggplot2}, \code{marginaleffects}) and the \code{lung} dataset from \code{survival}.
 
 Key variables in \code{lung}:
 \begin{itemize}
@@ -237,7 +237,7 @@ Key variables in \code{lung}:
 
   \item Estimate the overall Kaplan-Meier survival curve using \code{survfit()} with formula \code{Surv(time, dead) \textasciitilde{} 1}. The \code{summary()} output shows, at each event time, the number at risk, the number of events, the estimated survival probability, and the confidence interval. In a comment, report the estimated median survival time. What does this number mean in plain language?
 
-  \item Estimate separate Kaplan-Meier curves by sex using \code{survfit()} and plot them with \code{ggsurvplot()} from \code{survminer} (include confidence intervals, a $p$-value, and a risk table). Save the plot as a PDF. In a comment, describe what you see: which group survives longer? Does the confidence interval for the two groups overlap? The $p$-value shown is from the log-rank test --- report it and explain what it tests (whether the survival curves are statistically different).
+  \item Estimate separate Kaplan-Meier curves by sex using \code{survfit()} and plot them with \code{ggplot2}. Hint: use \code{broom::tidy()} to convert the \code{survfit} object to a data frame, then plot with \code{geom\_step()} and \code{geom\_ribbon()} for confidence intervals. Save the plot as a PDF. Also run a log-rank test using \code{survdiff()}. In a comment, describe what you see: which group survives longer? Does the confidence interval for the two groups overlap? Report the log-rank test $p$-value and explain what it tests (whether the survival curves are statistically different).
 
 \end{enumerate}
 
