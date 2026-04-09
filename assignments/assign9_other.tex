@@ -74,7 +74,7 @@ m_ologit = polr(econ_ord ~ age + gender + Europe + political.knowledge,
                 data = BEPS, Hess = TRUE)
 summary(m_ologit)
   \end{lstlisting}
-  Note: \code{polr()} uses a \textbf{reversed sign convention} --- the raw coefficients in the output are negated relative to the standard parameterization. A positive raw coefficient corresponds to a \textit{negative} association with higher categories. Always interpret via marginal effects (see below). In a comment, report the raw coefficient on \code{Europe} and its sign. Based on the sign convention, does higher support for European integration predict more optimistic views of the national economy?
+  In a comment, report the raw coefficient on \code{Europe} and its sign. Based on the sign convention, does higher support for European integration predict more optimistic views of the national economy?
 
   \item Compute average marginal effects (AMEs) using \code{marginaleffects}:
   \begin{lstlisting}

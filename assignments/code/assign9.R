@@ -21,6 +21,7 @@ data(BEPS)
 
 # a)
 table(BEPS$economic.cond.national)
+BEPS$econ_ord2 = factor(BEPS$economic.cond.national)
 BEPS$econ_ord = factor(BEPS$economic.cond.national, ordered = TRUE)
 
 # b)
@@ -33,8 +34,20 @@ summary(m_ologit)
 avg_slopes(m_ologit)
 
 # d)
-predictions(m_ologit,
-  newdata = datagrid(gender = c("female", "male")))
+preds = predictions(m_ologit, by = "gender") %>%
+  tidy() %>%
+  rename(est = estimate, g = group)
+
+men = preds %>% filter(g == 1 & gender == "male") %>% pull(est) +
+  preds %>% filter(g == 2 & gender == "male") %>% pull(est)
+
+women = preds %>% filter(g == 1 & gender == "female") %>% pull(est) +
+  preds %>% filter(g == 2 & gender == "female") %>% pull(est)
+
+women - men
+
+avg_slopes(m_ologit, variables = "gender")
+
 
 # ----------------------------------------------------------
 # 2. Multinomial logit: vote choice
