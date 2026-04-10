@@ -62,6 +62,21 @@ summary(m_mlogit)
 # b)
 avg_slopes(m_mlogit)
 
+
+pred = tidy(predictions(m_mlogit, by = "economic.cond.national")) %>%
+  rename(eco = economic.cond.national, g = group, est = estimate)
+
+con1 = pred %>% filter(g == "Conservative" & eco == 1) %>% pull(est)
+con5 = pred %>% filter(g == "Conservative" & eco == 5) %>% pull(est)
+con5 - con1
+
+con1 = pred %>% filter(g == "Conservative" & eco == 1) %>% pull(est)
+con5 = pred %>% filter(g == "Conservative" & eco == 5) %>% pull(est)
+con5 - con1
+
+
+
+
 # c)
 # IIA: odds ratio between any two alternatives unaffected by other alternatives.
 # Labour and Lib Dem are both centre-left (moderate concern); Conservatives are
