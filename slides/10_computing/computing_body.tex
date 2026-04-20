@@ -12,7 +12,8 @@
 
 \begin{itemize}[<+->]
 \item Understand why computing practices matter for research
-\item Learn to organize a research project with a clear folder structure
+\item Learn principles for organizing a research project
+\item Integrate R output directly into \LaTeX{} documents
 \item Write better R code: functions, checks, and style
 \item Understand the role of plain text and command line tools
 \item Deepen your knowledge of version control with Git
@@ -20,11 +21,36 @@
 
 \end{frame}
 % ----------------------------------------------------
-\note{This is a practical session --- a breather between the heavy methods content of the first four weeks and the panel data material coming next. The skills covered today are not statistical, but they are essential for doing good empirical work. Students who have struggled with organizing their assignments or tracking down bugs in their code will find this session especially useful. The goal is not to master all of these tools in one session, but to establish good habits early that will pay off for the rest of the course and beyond.}
+\note{This is a practical session focused on the computing side of doing empirical research. The skills covered today are not statistical, but they are essential for doing good empirical work. Students who have struggled with organizing their assignments or tracking down bugs in their code will find this session especially useful. The goal is not to master all of these tools in one session, but to establish good habits that will pay off for the rest of the course and beyond.}
 
 % ====================================================
 \section{Introduction}
 % ====================================================
+
+% ----------------------------------------------------
+\begin{frame}
+\frametitle{Code is a scientific artifact}
+\centering
+
+\begin{itemize}[<+->]
+\item Social scientists often treat computing as a necessary evil
+  \begin{itemize}
+  \item Something to get through to reach results
+  \end{itemize}
+\vspace{8pt}
+\item But code is part of your research
+  \begin{itemize}
+  \item It will be \textbf{read} (by collaborators, reviewers, future you)
+  \item It will \textbf{break} (after software updates, on another machine)
+  \item It needs to be \textbf{maintained} (for revisions, new data)
+  \end{itemize}
+\vspace{8pt}
+\item The standards of rigor you apply to your theory and research design should extend to your computing
+\end{itemize}
+
+\end{frame}
+% ----------------------------------------------------
+\note{This is the key mindset shift for the whole lecture. Most students in the social sciences have been trained to think carefully about research design and causal inference, but treat code as a throwaway scratchpad --- something they write once, get results from, and never look at again. The reality is that code is a scientific artifact: it embodies your analytical choices, it is the thing that actually produces your findings, and it will be read by others (reviewers, co-authors, or your future self trying to revise the paper). If the code is messy, undocumented, or unreproducible, the research is fragile regardless of how good the identification strategy is.}
 
 % ----------------------------------------------------
 \begin{frame}
@@ -65,36 +91,37 @@
 
 % ----------------------------------------------------
 \begin{frame}
-\frametitle{The key principle: separate tasks into folders}
+\frametitle{Three principles}
 \centering
 
 \begin{itemize}[<+->]
-\item Each \textbf{task} gets its own folder with its own script and output
-\vspace{8pt}
-\item A task is a self-contained step in the pipeline:
+\item \textbf{Separation of concerns}
   \begin{itemize}
-  \item Data collection / cleaning
-  \item Analysis (models, tables)
-  \item Plots and figures
-  \item Final document (paper, slides)
+  \item Code does analysis. Documents present it.
+  \item Output files (tables, figures) are the interface between the two
   \end{itemize}
 \vspace{8pt}
-\item Each folder has:
+\item \textbf{The pipeline}
   \begin{itemize}
-  \item A script (e.g., \texttt{analyze.R})
-  \item An \texttt{output/} subfolder for results
+  \item Raw data $\rightarrow$ cleaned data $\rightarrow$ analysis $\rightarrow$ results $\rightarrow$ document
+  \item Each stage has clear inputs and outputs
+  \item No stage depends on a later stage
   \end{itemize}
 \vspace{8pt}
-\item \textbf{Never} one giant script that does everything
+\item \textbf{Raw data is sacred}
+  \begin{itemize}
+  \item Never overwrite it, never modify it by hand
+  \item Code transforms raw data into everything else
+  \end{itemize}
 \end{itemize}
 
 \end{frame}
 % ----------------------------------------------------
-\note{The single most important organizational principle: break the project into discrete tasks, each in its own folder. This makes the project navigable (you know where to look for each piece), modular (you can re-run one step without re-running everything), and debuggable (when something breaks, you know which script to check). The output subfolder is key: it creates a clear separation between code and results, and makes it obvious which files are generated (and therefore reproducible) versus which are source files. Contrast this with the common student pattern of having one enormous R script with 500 lines that loads data, cleans it, runs models, and makes plots all in one go.}
+\note{These three principles are the foundation of good project organization. Separation of concerns means that your analysis scripts do not contain LaTeX code, and your documents do not contain R code --- the only connection between them is the output files (a .tex table, a .pdf figure). The pipeline principle means your project has a clear direction: data flows from raw to cleaned to analyzed to presented, and no step depends on a later step. This makes the project debuggable --- if a table looks wrong, you know to check the analysis script, not the document. Raw data immutability is the most important rule: if you modify your raw data by hand, you cannot reproduce your results. All transformations must happen in code, so they are documented and repeatable.}
 
 % ----------------------------------------------------
 \begin{frame}
-\frametitle{Example: \texttt{workflow\_example} project}
+\frametitle{Organizing a project: one example}
 \centering
 
 \vspace{5pt}
@@ -132,7 +159,36 @@
 
 \end{frame}
 % ----------------------------------------------------
-\note{Walk through the folder structure. Each folder is a task: create\_data generates the dataset, analyses runs models and produces a LaTeX table, plots creates figures, and document compiles the final paper. Each task folder has a script and an output subfolder. The Makefile ties everything together (we will see it shortly). The .gitignore tells Git which files to ignore. The key insight: the document folder does not contain any R code, and the analysis folders do not contain any LaTeX. Each piece does one thing. This is the structure students should aim for in their assignments and final projects.}
+\note{This is one way to implement those principles. Each folder is a task: create\_data generates the dataset, analyses runs models and produces a LaTeX table, plots creates figures, and document compiles the final paper. Each task folder has a script and an output subfolder. The Makefile ties everything together (we will see it shortly). The .gitignore tells Git which files to ignore. The key insight: the document folder does not contain any R code, and the analysis folders do not contain any LaTeX. Each piece does one thing. There are other valid ways to organize a project --- the details matter less than the principles: clear separation, a pipeline that flows in one direction, and raw data that is never touched.}
+
+% ----------------------------------------------------
+\begin{frame}
+\frametitle{Practical rules}
+\centering
+
+\begin{itemize}[<+->]
+\item \textbf{Always use relative paths}
+  \begin{itemize}
+  \item \red{\texttt{read.csv("/Users/fran/proj/data/file.csv")}} --- breaks on any other machine
+  \item \textcolor{accent}{\texttt{read.csv("data/file.csv")}} --- works anywhere
+  \end{itemize}
+\vspace{8pt}
+\item \textbf{Never one giant script}
+  \begin{itemize}
+  \item Break the project into discrete steps
+  \item Each script has clear inputs and outputs
+  \end{itemize}
+\vspace{8pt}
+\item \textbf{Generated files are disposable}
+  \begin{itemize}
+  \item If a file can be reproduced by running a script, it is not a source file
+  \item Delete all output, re-run, and get the same results
+  \end{itemize}
+\end{itemize}
+
+\end{frame}
+% ----------------------------------------------------
+\note{Relative paths are the most common reason code fails on another machine. If your script says \texttt{read.csv("/Users/yourname/Desktop/project/data.csv")}, it will not work on anyone else's computer. Use relative paths from the project root: \texttt{read.csv("data/file.csv")}. The ``never one giant script'' rule is about modularity: a 500-line script that loads data, cleans it, runs models, and makes plots is hard to debug and hard to maintain. Break it into steps. The ``generated files are disposable'' rule is a test: can you delete everything in your output folders, re-run your scripts, and get exactly the same results? If yes, your project is reproducible. If not, something is missing from your pipeline.}
 
 % ----------------------------------------------------
 \begin{frame}
@@ -186,12 +242,12 @@
   \end{itemize}
 \vspace{8pt}
 \item \textbf{No copy-pasting}: update the analysis, recompile the document
-\item The document always reflects the latest results
+\item No local \LaTeX? Use \textbf{Overleaf} --- same \texttt{\textbackslash input\{\}} workflow
 \end{itemize}
 
 \end{frame}
 % ----------------------------------------------------
-\note{This is one of the biggest practical payoffs of good project organization. When your LaTeX document reads tables and figures directly from the output folders, you never have to manually update them. Change a model specification? Re-run the R script, recompile the document, and everything updates automatically. This eliminates a major source of errors: the table in the paper not matching the actual analysis because you forgot to update it after a change. Students who are used to R Markdown get some of this automatically, but the folder-based approach is more flexible for larger projects where you want to separate analysis from writing.}
+\note{This is one of the biggest practical payoffs of good project organization. When your LaTeX document reads tables and figures directly from the output folders, you never have to manually update them. Change a model specification? Re-run the R script, recompile the document, and everything updates automatically. This eliminates a major source of errors: the table in the paper not matching the actual analysis because you forgot to update it after a change. For students who do not have LaTeX installed locally: Overleaf works the same way. You can upload the generated .tex table files and .pdf figures to your Overleaf project and use \texttt{\textbackslash input\{\}} and \texttt{\textbackslash includegraphics\{\}} just the same. Overleaf also supports Git, so you can clone your Overleaf project locally and copy output files into it programmatically.}
 
 % ----------------------------------------------------
 \begin{frame}
@@ -389,6 +445,32 @@
 
 % ----------------------------------------------------
 \begin{frame}
+\frametitle{Seeds and package versions}
+\centering
+
+\begin{itemize}[<+->]
+\item Any code involving randomness must set a \textbf{seed}:
+  \begin{itemize}
+  \item Simulation, bootstrapping, random sampling
+  \item \texttt{set.seed(12345)} at the top of the script
+  \item Same seed $=$ same results every time
+  \end{itemize}
+\vspace{8pt}
+\item Results can change across \textbf{package versions}
+  \begin{itemize}
+  \item Document which version of R and packages you used
+  \item \texttt{renv} (R) or virtual environments (Python) lock versions
+  \end{itemize}
+\vspace{8pt}
+\item Not paranoia --- this has caused real problems in published work
+\end{itemize}
+
+\end{frame}
+% ----------------------------------------------------
+\note{This sounds like a minor technical detail, but forgetting to set a seed is one of the most common reproducibility failures. If your analysis involves any randomness --- bootstrapped standard errors, simulations, cross-validation, random sampling --- the results will differ every time you run the script unless you set a seed. The seed should go at the top of the script so it is obvious. Package versions are a subtler problem: a function that behaved one way in version 1.2 might behave differently in version 2.0. The \texttt{renv} package in R creates a lockfile that records exact package versions, so someone else can install the same versions and reproduce your results. You do not need to use \texttt{renv} for every project, but you should at least note your R version and key package versions somewhere (e.g., in the README).}
+
+% ----------------------------------------------------
+\begin{frame}
 \frametitle{Code style matters}
 \centering
 
@@ -415,7 +497,37 @@
 
 \end{frame}
 % ----------------------------------------------------
-\note{Code style is about making your code readable --- for others and for your future self. Meaningful variable names eliminate the need for comments explaining what \texttt{x1} is. Consistent formatting (indentation, spacing, naming conventions) makes the code scannable. Comments should explain the reasoning behind non-obvious decisions, not narrate what the code does line by line. The section divider pattern (a line of equals signs or dashes) helps break long scripts into navigable chunks. The R community has adopted snake\_case as the standard; avoid dots in names (data.frame style) and camelCase (Java style). Reference: Hadley Wickham's R Style Guide.}
+\note{Code style is about making your code readable --- for others and for your future self. Meaningful variable names eliminate the need for comments explaining what \texttt{x1} is. Consistent formatting (indentation, spacing, naming conventions) makes the code scannable. Comments should explain the reasoning behind non-obvious decisions, not narrate what the code does line by line: ``Drop observations before 1990 per Acemoglu (2001)'' is useful; ``filter rows'' is not. The section divider pattern (a line of equals signs or dashes) helps break long scripts into navigable chunks. The R community has adopted snake\_case as the standard; avoid dots in names (data.frame style) and camelCase (Java style). Reference: Hadley Wickham's R Style Guide.}
+
+% ----------------------------------------------------
+\begin{frame}
+\frametitle{What NOT to do}
+\centering
+
+\begin{itemize}[<+->]
+\item Overwriting raw data with your code
+\vspace{8pt}
+\item Results that require clicking through a GUI
+  \begin{itemize}
+  \item SPSS menus, Excel transformations, manual edits
+  \end{itemize}
+\vspace{8pt}
+\item ``It works on my machine''
+  \begin{itemize}
+  \item Almost always an absolute path problem
+  \end{itemize}
+\vspace{8pt}
+\item ``I fixed a few values in Excel''
+  \begin{itemize}
+  \item Undocumented, unreproducible, invisible to collaborators
+  \end{itemize}
+\vspace{8pt}
+\item Scripts that must be run in a specific undocumented order
+\end{itemize}
+
+\end{frame}
+% ----------------------------------------------------
+\note{Sometimes the most memorable part of a lecture is the horror stories. Each of these is a real pattern that leads to broken research. Overwriting raw data means you cannot go back to the original if something went wrong. GUI-dependent results (clicking through SPSS or Excel) cannot be reproduced because there is no record of what you did. Absolute paths are the number one reason code fails on another machine. Manual data edits are invisible: your co-author does not know you changed three values in Excel, and neither will the reviewer or your future self. Undocumented script ordering means the project only works if you happen to remember to run things in the right sequence --- and you will not remember in six months. Every one of these problems is solved by the practices covered in this lecture.}
 
 % ====================================================
 \section{Plain Text and Tools}
@@ -506,7 +618,7 @@
 {\large How do you currently organize your R projects?\\\vspace{15pt}One script or many? How do you keep track of output?}
 \end{frame}
 % ----------------------------------------------------
-\note{Discussion prompt. This is a good moment to pause and let students share their current practices. Some will have one giant script, others will have started organizing into folders. Use their answers to connect back to the principles covered: separating tasks, naming files well, using output subfolders. This also helps calibrate the rest of the lecture: if most students are already using good practices, you can move faster; if most are struggling, spend more time on the basics.}
+\note{Discussion prompt. This is a good moment to pause and let students share their current practices. Some will have one giant script, others will have started organizing into folders. Use their answers to connect back to the principles covered: separation of concerns, the pipeline, keeping raw data untouched. This also helps calibrate the rest of the lecture: if most students are already using good practices, you can move faster; if most are struggling, spend more time on the basics.}
 
 % ====================================================
 \section{Version Control with Git}
@@ -619,31 +731,31 @@
 
 % ----------------------------------------------------
 \begin{frame}
-\frametitle{GitHub for replication materials}
+\frametitle{The replication package as your north star}
 \centering
 
 \begin{itemize}[<+->]
-\item Journals increasingly require \textbf{replication packages}
+\item Journals require \textbf{replication packages} (APSR, AJPS, JOP, \ldots)
 \vspace{8pt}
-\item GitHub is the standard platform for sharing code:
+\item From \textbf{day one} of a project, imagine you will submit one
   \begin{itemize}
-  \item Public repository with all scripts
-  \item README explaining how to reproduce results
+  \item What would a reviewer need to go from raw data to published tables?
+  \item Build that throughout --- don't assemble it in a panic at the end
+  \end{itemize}
+\vspace{8pt}
+\item A well-organized project is already a replication package:
+  \begin{itemize}
+  \item Public repo with all scripts and a README
   \item Data (if shareable) or instructions to obtain it
+  \item Ideally: run one command and reproduce everything
   \end{itemize}
 \vspace{8pt}
-\item Good examples in political science:
-  \begin{itemize}
-  \item Most published papers now have a GitHub repo
-  \item Look at how others structure their replication packages
-  \end{itemize}
-\vspace{8pt}
-\item Your \texttt{workflow\_example}-style project is already a replication package
+\item Example: \href{https://github.com/franvillamil/workflow_example}{\texttt{github.com/franvillamil/workflow\_example}}
 \end{itemize}
 
 \end{frame}
 % ----------------------------------------------------
-\note{The connection between project organization and replication: if your project is well-organized with separate task folders, a Makefile, and clear naming, it is already a replication package. You just need to push it to GitHub and add a README. Journals like the APSR, AJPS, and JOP now require replication materials as a condition of publication. Having good workflow habits from the start means you do not have to scramble to create a replication package after the paper is accepted. The README should explain: what software is needed, what data to download, and how to run the scripts (ideally just \texttt{make}). Point students to the workflow\_example repo as a minimal template they can adapt.}
+\note{This is where everything comes together. The replication package is the practical test of whether your workflow is good. If a stranger can clone your repository, run \texttt{make}, and produce your tables and figures, your project is reproducible. Journals like APSR, AJPS, and JOP now require this as a condition of publication --- it is not hypothetical. The key insight is to think about replication from day one, not as an afterthought. If you organize your project well from the start, the replication package is just your project folder on GitHub. If you wait until the paper is accepted and then try to assemble one, you will spend days reconstructing which script produced which table, tracking down missing data, and documenting steps that were never written down. Point students to published replication packages on GitHub to see how other researchers structure theirs.}
 
 % ----------------------------------------------------
 \begin{frame}
@@ -716,12 +828,13 @@
 \centering
 
 \begin{itemize}[<+->]
-\item \textbf{Organize}: separate tasks into folders, each with script + output
+\item \textbf{Code is a scientific artifact}: treat it with rigor
+\vspace{8pt}
+\item \textbf{Organize}: separation of concerns, clear pipeline, raw data is sacred
 \item \textbf{Automate}: use Makefiles to run the pipeline
 \item \textbf{Integrate}: R output feeds directly into \LaTeX{} documents
 \vspace{8pt}
-\item \textbf{Code well}: DRY, constants at the top, checks and assertions
-\item \textbf{Print diagnostics}: log what your scripts do
+\item \textbf{Code well}: DRY, constants, checks, seeds, readable style
 \vspace{8pt}
 \item \textbf{Use plain text}: portable, versionable, scriptable
 \item \textbf{Use Git}: commit often, write good messages, share via GitHub
@@ -729,7 +842,7 @@
 
 \end{frame}
 % ----------------------------------------------------
-\note{Recap the main messages. The overarching theme is: invest a little time in your workflow now, save a lot of time (and errors) later. None of these practices are difficult on their own; the challenge is building them into habits. Encourage students to start with one change (e.g., separate their next assignment into task folders) and gradually adopt more practices. By the end of the course, their final projects should follow the workflow\_example structure.}
+\note{Recap the main messages. The overarching theme is: your code is part of your research, and the same rigor you apply to your theory and research design should extend to your computing. None of these practices are difficult on their own; the challenge is building them into habits. The practical test: imagine a stranger needs to reproduce your results from scratch. Could they do it from your project folder? If yes, you are doing it right.}
 
 % ----------------------------------------------------
 \begin{frame}
@@ -737,18 +850,18 @@
 \centering
 
 \begin{itemize}
-\item Complete Assignment 5
+\item Complete Assignment 10 (computing practices)
 \vspace{8pt}
-\item Next session: Panel Data
+\item Next session: In-class exam + course review
   \begin{itemize}
-  \item Fixed effects and within-group variation
-  \item The \texttt{fixest} package in R
+  \item Exam covers sessions 1--9
+  \item Second half: review and open questions
   \end{itemize}
 \end{itemize}
 
 \end{frame}
 % ----------------------------------------------------
-\note{Brief logistics. Assignment 5 will ask students to apply the computing practices from today: organize a small project with proper folder structure, write a Makefile, and use Git. Next week returns to methods content with panel data, which is one of the most important tools in applied social science. Students should review the basics of panel/longitudinal data structure before the session.}
+\note{Brief logistics. Assignment 10 asks students to build a small self-contained project that integrates R output into a LaTeX document. It applies the computing practices from today's lecture. Next week is the last session: the first half is the in-class exam covering sessions 1 through 9, and the second half is a course review with open questions. Remind students that the final essay is due May 20.}
 
 % ----------------------------------------------------
 \begin{frame}
