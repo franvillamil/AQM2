@@ -232,6 +232,37 @@
 
 % ----------------------------------------------------
 \begin{frame}
+\frametitle{Post-treatment bias: example}
+\centering
+
+\vspace{5pt}
+
+\begin{tikzpicture}[every node/.style={align=center}]
+  \node (D) at (-2.5,0){Violence\\(war)};
+  \node (Y) at (3.5,0){Support\\(postwar)};
+  \node (Z) at (0.5,2.5){Postwar economic\\growth};
+  \node (U) at (4.5,2){$U$};
+  \draw[->] (D) -- (Y);
+  \draw[<-] (Z) -- (D);
+  \draw[->] (Z) -- (Y);
+  \draw[->, dashed] (U) -- (Z);
+  \draw[->, dashed] (U) -- (Y);
+\end{tikzpicture}
+
+\vspace{10pt}
+
+\begin{itemize}
+\item Does wartime violence affect postwar political support?
+\item ``Let's control for postwar economic growth, it also affects support''
+\item But growth is \textbf{caused by} the treatment \textit{and} shares unobservables with the outcome --- controlling for it opens a back door
+\end{itemize}
+
+\end{frame}
+% ----------------------------------------------------
+\note{A concrete example of post-treatment bias. Suppose the question is whether experiencing wartime violence changes people's postwar political attitudes. A reasonable-sounding move would be to control for postwar economic growth, since growth also affects political support. The DAG shows why this is wrong: growth is a \textit{consequence} of the wartime violence (treated areas develop differently after the war), and growth and support share unobserved causes $U$. Conditioning on growth therefore opens a collider path from violence to support through $U$, introducing exactly the bias the researcher was trying to avoid. The rule is not \"control for everything that affects $Y$\"; it is \"control for pre-treatment confounders only\".}
+
+% ----------------------------------------------------
+\begin{frame}
 \frametitle{So what does your regression assume?}
 \centering
 
@@ -282,6 +313,28 @@ Every regression coefficient you report implicitly assumes:
 \end{frame}
 % ----------------------------------------------------
 \note{Recap what we have, flag what we still need to cover at a high level. I do not expect students to leave this lecture able to run an RDD or an IV regression --- I want them to recognize these designs when they encounter them, understand the intuition, and know when a problem calls for them.}
+
+% ----------------------------------------------------
+\begin{frame}
+\frametitle{Estimating DiD}
+\centering
+
+\begin{itemize}[<+->]
+\item DiD is not a special estimator --- it's just OLS on a 2$\times$2 interaction
+\vspace{4pt}
+\item[] \quad $Y_{it} = \alpha + \beta_1 \text{Treat}_i + \beta_2 \text{Post}_t + \beta_3 (\text{Treat}_i \times \text{Post}_t) + \varepsilon_{it}$
+\vspace{4pt}
+\item \BGyellow{$\beta_3$} is the DiD estimate
+\vspace{8pt}
+\item In practice: two-way fixed effects absorb $\text{Treat}_i$ and $\text{Post}_t$
+\item[] \quad \texttt{feols(y \textasciitilde{} treat\_post | unit + time, data = d)}
+\vspace{8pt}
+\item For staggered adoption: use modern estimators (Callaway--Sant'Anna, Sun--Abraham) --- see Session 6
+\end{itemize}
+
+\end{frame}
+% ----------------------------------------------------
+\note{Bring the DiD estimation back to earth: it is not a new statistical method, it is OLS with an interaction term. The interaction coefficient is the DiD. Two-way fixed effects is the scalable way to do this when you have many units and many time periods: the unit FEs absorb the treatment-group indicator, the time FEs absorb the post indicator, and you are left with the interaction as your coefficient of interest. The only complication is staggered adoption, which breaks classic TWFE --- that's what the Callaway--Sant'Anna and Sun--Abraham estimators fix, and we covered them in Session 6.}
 
 % ----------------------------------------------------
 \begin{frame}
@@ -341,6 +394,32 @@ Every regression coefficient you report implicitly assumes:
 
 % ----------------------------------------------------
 \begin{frame}
+\frametitle{Estimating RDD}
+\centering
+
+\begin{itemize}[<+->]
+\item Center the running variable at the cutoff: $\tilde{X}_i = X_i - c$
+\item Define treatment: $D_i = \mathbf{1}(\tilde{X}_i \geq 0)$
+\vspace{6pt}
+\item Run a local linear regression with slopes allowed to differ on each side:
+\item[] \quad $Y_i = \alpha + \tau D_i + \beta_1 \tilde{X}_i + \beta_2 (D_i \times \tilde{X}_i) + \varepsilon_i$
+\vspace{4pt}
+\item $\tau$ is the RDD estimate (the jump at the cutoff)
+\vspace{8pt}
+\item Key choice: \BGyellow{bandwidth} --- how wide a window around the cutoff
+  \begin{itemize}
+  \item Data-driven: Calonico, Cattaneo \& Titiunik
+  \end{itemize}
+\vspace{4pt}
+\item R: \texttt{rdrobust::rdrobust(y, x, c = 0)}
+\end{itemize}
+
+\end{frame}
+% ----------------------------------------------------
+\note{RDD estimation in practice. The conceptual version is: fit a line on each side of the cutoff, report the gap between them at the cutoff. That is what the interacted specification does --- one intercept and slope for units below the cutoff, a different intercept and slope for units above, and the discontinuity $\tau$ is the difference in intercepts at $\tilde{X} = 0$. The one real choice is the bandwidth: how far from the cutoff do you include observations? Wider windows give more data but risk bias from units far from the threshold; narrower windows are less biased but noisier. The \\texttt{rdrobust} package implements the Calonico-Cattaneo-Titiunik data-driven bandwidth selector, which is the current default in applied work.}
+
+% ----------------------------------------------------
+\begin{frame}
 \frametitle{Instrumental variables}
 \centering
 
@@ -370,6 +449,32 @@ Every regression coefficient you report implicitly assumes:
 \end{frame}
 % ----------------------------------------------------
 \note{The IV design. Classic examples: rainfall as an instrument for protest intensity (rainfall shifts who shows up to a protest, but should not affect whatever political outcome you are studying except through its effect on protests). The canonical problem with IV in practice is the exclusion restriction: you have to tell a story about why the instrument could not plausibly affect the outcome by any route other than through the treatment. That story is often contested.}
+
+% ----------------------------------------------------
+\begin{frame}
+\frametitle{Estimating IV: two-stage least squares}
+\centering
+
+\begin{itemize}[<+->]
+\item \textbf{First stage:} regress the treatment on the instrument
+\item[] \quad $D_i = \pi_0 + \pi_1 Z_i + u_i \;\; \Rightarrow \;\; \hat{D}_i$
+\vspace{4pt}
+\item \textbf{Second stage:} regress the outcome on the \textit{predicted} treatment
+\item[] \quad $Y_i = \alpha + \beta \hat{D}_i + \varepsilon_i$
+\vspace{6pt}
+\item \BGyellow{$\beta$} is the IV estimate: a LATE for units whose $D$ responds to $Z$
+\vspace{10pt}
+\item Always report the first stage, and an \BGyellow{F-statistic} on $\pi_1$
+  \begin{itemize}
+  \item Rule of thumb: $F < 10$ signals a weak instrument
+  \end{itemize}
+\vspace{4pt}
+\item R: \texttt{feols(y \textasciitilde{} 1 | d \textasciitilde{} z)} or \texttt{AER::ivreg()}
+\end{itemize}
+
+\end{frame}
+% ----------------------------------------------------
+\note{The mechanics of 2SLS. Conceptually: first project the treatment onto the instrument, keeping only the variation in $D$ that is driven by $Z$. Then use that projected treatment in the outcome equation. The second-stage coefficient is the IV estimate. Two things to emphasize. First, what you estimate is a LATE, not the ATE: it is the effect for the \\textit{compliers}, the units whose treatment status actually responds to the instrument. That is often a subset of the population and may not be who you care about. Second, always show the first stage. A weak first stage --- conventionally an F-statistic below 10 on the instrument --- means your 2SLS estimates can be badly biased and have completely unreliable standard errors. Do not skip this diagnostic.}
 
 % ----------------------------------------------------
 \begin{frame}
