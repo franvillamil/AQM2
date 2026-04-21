@@ -412,11 +412,14 @@ Every regression coefficient you report implicitly assumes:
   \end{itemize}
 \vspace{4pt}
 \item R: \texttt{rdrobust::rdrobust(y, x, c = 0)}
+  \begin{itemize}
+  \item \texttt{c} is the cutoff value of the running variable \texttt{x}
+  \end{itemize}
 \end{itemize}
 
 \end{frame}
 % ----------------------------------------------------
-\note{RDD estimation in practice. The conceptual version is: fit a line on each side of the cutoff, report the gap between them at the cutoff. That is what the interacted specification does --- one intercept and slope for units below the cutoff, a different intercept and slope for units above, and the discontinuity $\tau$ is the difference in intercepts at $\tilde{X} = 0$. The one real choice is the bandwidth: how far from the cutoff do you include observations? Wider windows give more data but risk bias from units far from the threshold; narrower windows are less biased but noisier. The \\texttt{rdrobust} package implements the Calonico-Cattaneo-Titiunik data-driven bandwidth selector, which is the current default in applied work.}
+\note{RDD estimation in practice. The conceptual version is: fit a line on each side of the cutoff, report the gap between them at the cutoff. That is what the interacted specification does --- one intercept and slope for units below the cutoff, a different intercept and slope for units above, and the discontinuity $\tau$ is the difference in intercepts at $\tilde{X} = 0$. The one real choice is the bandwidth: how far from the cutoff do you include observations? Wider windows give more data but risk bias from units far from the threshold; narrower windows are less biased but noisier. The \\texttt{rdrobust} package implements the Calonico-Cattaneo-Titiunik data-driven bandwidth selector, which is the current default in applied work. The \\texttt{c} argument is the cutoff value of the running variable: set \\texttt{c = 0} when you have already centered \\texttt{x} at the threshold, otherwise pass the actual cutoff (for example \\texttt{c = 50} for a vote-share majority rule).}
 
 % ----------------------------------------------------
 \begin{frame}
@@ -483,8 +486,9 @@ Every regression coefficient you report implicitly assumes:
 
 \vspace{10pt}
 
-\renewcommand{\arraystretch}{1.5}
-\begin{tabular}{p{2.3cm}p{3.2cm}p{4.5cm}}
+\renewcommand{\arraystretch}{1.3}
+\footnotesize
+\begin{tabular}{p{1.6cm}p{3.5cm}p{4cm}}
 \hline
 \textbf{Design} & \textbf{Exogenous variation} & \textbf{Key assumption}\\
 \hline
@@ -495,11 +499,11 @@ IV & Instrument $\rightarrow$ treatment & Exclusion restriction\\
 \hline
 \end{tabular}
 
-\vspace{15pt}
+\vspace{12pt}
 
 \begin{itemize}
-\item You do not pick a design, \textit{the data} pick one for you
-\item What source of exogenous variation does the world hand you?
+\item \footnotesize You do not pick a design, \textit{the data} pick one for you
+\item \footnotesize What source of exogenous variation does the world hand you?
 \end{itemize}
 
 \end{frame}
@@ -591,6 +595,13 @@ IV & Instrument $\rightarrow$ treatment & Exclusion restriction\\
   \item \textbf{Placebo outcome}: different $Y$ that the treatment should not affect
   \item \textbf{Placebo treatment}: a fake $D$ that should have no effect
   \item \textbf{Placebo population}: a subgroup not exposed to $D$
+  \end{itemize}
+\vspace{6pt}
+\item Example --- Peisakhin \& Rozenas (2018), Russian TV in Ukraine:
+  \begin{itemize}
+  \item[$\circ$] Outcome: signal strength should not predict \% Russian speakers
+  \item[$\circ$] Treatment: Russian \textit{sports} TV signal should not predict voting
+  \item[$\circ$] Population: Ukrainians on satellite TV --- signal irrelevant
   \end{itemize}
 \end{itemize}
 
@@ -830,49 +841,16 @@ Spatial data & + spatial weights, + Moran's I\\
 
 % ----------------------------------------------------
 \begin{frame}
-\frametitle{What's next (not in this class)}
-\centering
-
-\begin{itemize}
-\item \textbf{Multilevel / hierarchical models} (Gelman \& Hill)
-  \begin{itemize}
-  \item Natural framework when data are nested in groups
-  \end{itemize}
-\vspace{6pt}
-\item \textbf{Bayesian inference}
-  \begin{itemize}
-  \item Priors, posteriors, and what MCMC actually does
-  \item McElreath, \textit{Statistical Rethinking}
-  \end{itemize}
-\vspace{6pt}
-\item \textbf{Machine learning for social science}
-  \begin{itemize}
-  \item Prediction-first tools: lasso, random forests, boosting
-  \item Causal ML (honest trees, double/debiased ML)
-  \end{itemize}
-\vspace{6pt}
-\item \textbf{Text as data}
-  \begin{itemize}
-  \item From bag-of-words to LLMs in social science
-  \end{itemize}
-\end{itemize}
-
-\end{frame}
-% ----------------------------------------------------
-\note{Pointers rather than content. I will put a bit more on multilevel models and text as data in the appendix of these slides; the others are entire courses on their own, but the references listed here are the standard starting points. The McElreath book in particular is the most approachable introduction to Bayesian thinking aimed at social scientists.}
-
-% ----------------------------------------------------
-\begin{frame}
 \frametitle{A checklist for your final essay}
 \centering
 
 \begin{itemize}[<+->]
 \item What is the \textbf{question} (descriptive, predictive, causal)?
 \item What is the \textbf{unit} of analysis and where does \textbf{variation} come from?
-\item What is the \textbf{DAG} behind the relationship?
+\item \asher{What is the \textbf{DAG} behind the relationship?}
 \item What method matches the question and the variation?
-\item What are the \textbf{identifying assumptions}, and how plausible are they?
-\item What \textbf{alternative explanations} does the design \textit{not} rule out?
+\item \asher{What are the \textbf{identifying assumptions}, and how plausible are they?}
+\item \asher{What \textbf{alternative explanations} does the design \textit{not} rule out?}
 \item What \textbf{robustness / placebo} checks can you run?
 \item How do you \textbf{measure} your key concepts, and what's lost in that translation?
 \end{itemize}
@@ -880,21 +858,6 @@ Spatial data & + spatial weights, + Moran's I\\
 \end{frame}
 % ----------------------------------------------------
 \note{The checklist students should keep in front of them as they write the essay. None of these questions is solved by R code. All of them affect whether the final paper is any good.}
-
-% ----------------------------------------------------
-\begin{frame}
-\centering
-\vspace{30pt}
-
-{\Large Good luck with the essay.}
-
-\vspace{30pt}
-
-{\small Appendix follows: multilevel models and text as data.\\Self-study material, not covered in class.}
-
-\end{frame}
-% ----------------------------------------------------
-\note{}
 
 % ====================================================
 \appendix
