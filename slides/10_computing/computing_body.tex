@@ -120,36 +120,30 @@
 \note{These three principles are the foundation of good project organization. Separation of concerns means that your analysis scripts do not contain LaTeX code, and your documents do not contain R code --- the only connection between them is the output files (a .tex table, a .pdf figure). The pipeline principle means your project has a clear direction: data flows from raw to cleaned to analyzed to presented, and no step depends on a later step. This makes the project debuggable --- if a table looks wrong, you know to check the analysis script, not the document. Raw data immutability is the most important rule: if you modify your raw data by hand, you cannot reproduce your results. All transformations must happen in code, so they are documented and repeatable.}
 
 % ----------------------------------------------------
-\begin{frame}
+\begin{frame}[fragile]
 \frametitle{Organizing a project: one example}
 \centering
 
 \vspace{5pt}
 
-\begin{tikzpicture}[
-  every node/.style={font=\footnotesize\ttfamily, anchor=west},
-  level 1/.style={sibling distance=0pt, level distance=18pt},
-  edge from parent/.style={draw, thick, accent!70!black}
-]
-  \node[font=\footnotesize\ttfamily\bfseries] {\textcolor{accent}{workflow\_example/}}
-    child {node {Makefile}}
-    child {node {.gitignore}}
-    child {node {\textcolor{accent}{create\_data/}}
-      child {node {data.R}}
-      child {node {\textcolor{asher}{output/} data.csv}}
-    }
-    child {node {\textcolor{accent}{analyses/}}
-      child {node {analyze.R}}
-      child {node {\textcolor{asher}{output/} table\_models.tex}}
-    }
-    child {node {\textcolor{accent}{plots/}}
-      child {node {plots.R}}
-      child {node {\textcolor{asher}{output/} scatter.pdf}}
-    }
-    child {node {\textcolor{accent}{document/}}
-      child {node {doc.tex}}
-    };
-\end{tikzpicture}
+{\footnotesize\ttfamily
+\begin{tabular}{@{}l@{}}
+\textcolor{accent}{\textbf{workflow\_example/}} \\
+\hspace{1em}Makefile \\
+\hspace{1em}.gitignore \\
+\hspace{1em}\textcolor{accent}{\textbf{create\_data/}} \\
+\hspace{2em}data.R \\
+\hspace{2em}\textcolor{asher}{output/}\,data.csv \\
+\hspace{1em}\textcolor{accent}{\textbf{analyses/}} \\
+\hspace{2em}analyze.R \\
+\hspace{2em}\textcolor{asher}{output/}\,table\_models.tex \\
+\hspace{1em}\textcolor{accent}{\textbf{plots/}} \\
+\hspace{2em}plots.R \\
+\hspace{2em}\textcolor{asher}{output/}\,scatter.pdf \\
+\hspace{1em}\textcolor{accent}{\textbf{document/}} \\
+\hspace{2em}doc.tex \\
+\end{tabular}
+}
 
 \vspace{10pt}
 
@@ -394,8 +388,8 @@
 
 \vspace{5pt}
 
-{\footnotesize
-\begin{itemize}
+{\scriptsize
+\begin{itemize}\setlength{\itemsep}{0pt}
 \item[] \texttt{\# After merging two datasets}
 \item[] \texttt{merged = merge(df1, df2, by = "id")}
 \item[] \texttt{if(nrow(merged) != nrow(df1)) \{}
@@ -459,7 +453,8 @@
 \item Results can change across \textbf{package versions}
   \begin{itemize}
   \item Document which version of R and packages you used
-  \item \texttt{renv} (R) or virtual environments (Python) lock versions
+  \item Check your R session info with \texttt{sessionInfo()}
+  \item Options: \texttt{renv} (R) locks exact package versions
   \end{itemize}
 \vspace{8pt}
 \item Not paranoia --- this has caused real problems in published work
@@ -611,15 +606,6 @@
 % ----------------------------------------------------
 \note{Many students are intimidated by the command line, but they have already been using it for Git since Session 1. The goal here is not to turn them into command-line experts, but to make them comfortable with basic navigation and script execution. Being able to \texttt{cd} into a project folder and type \texttt{make} is all they need for the workflow we are teaching. The six commands listed here cover 90\% of what a social science researcher needs. For those who want to go deeper, point them to MIT's Missing Semester course (\texttt{missing.csail.mit.edu}) and Software Carpentry's Unix Shell lesson.}
 
-% ----------------------------------------------------
-\begin{frame}
-\centering
-\vspace{30pt}
-{\large How do you currently organize your R projects?\\\vspace{15pt}One script or many? How do you keep track of output?}
-\end{frame}
-% ----------------------------------------------------
-\note{Discussion prompt. This is a good moment to pause and let students share their current practices. Some will have one giant script, others will have started organizing into folders. Use their answers to connect back to the principles covered: separation of concerns, the pipeline, keeping raw data untouched. This also helps calibrate the rest of the lecture: if most students are already using good practices, you can move faster; if most are struggling, spend more time on the basics.}
-
 % ====================================================
 \section{Version Control with Git}
 % ====================================================
@@ -646,6 +632,99 @@
 \end{frame}
 % ----------------------------------------------------
 \note{Quick recap of what students already know. By this point they should be comfortable with the basic add-commit-push cycle. Today we go deeper into the practices that make Git actually useful rather than just a backup tool. The three topics: .gitignore (what not to track), commit messages (how to write useful history), and GitHub for sharing replication materials.}
+
+% ----------------------------------------------------
+\begin{frame}
+\frametitle{Git: commits as snapshots}
+\centering
+
+\vspace{5pt}
+
+\begin{tikzpicture}[
+  commit/.style={circle, draw=accent, fill=accent!20, thick, minimum size=0.7cm, font=\scriptsize\ttfamily},
+  arrow/.style={->, thick, accent!70!black},
+  label/.style={font=\scriptsize, text=asher, align=center}
+]
+  \node[commit] (c1) at (0,0) {c1};
+  \node[commit] (c2) at (2.2,0) {c2};
+  \node[commit] (c3) at (4.4,0) {c3};
+  \node[commit] (c4) at (6.6,0) {c4};
+  \node[commit, fill=accent2!20, draw=accent2] (c5) at (8.8,0) {c5};
+
+  \draw[arrow] (c1) -- (c2);
+  \draw[arrow] (c2) -- (c3);
+  \draw[arrow] (c3) -- (c4);
+  \draw[arrow] (c4) -- (c5);
+
+  \node[label] at (0,1.0) {Initial\\ commit};
+  \node[label] at (2.2,1.0) {Add data\\ cleaning};
+  \node[label] at (4.4,1.0) {Run main\\ models};
+  \node[label] at (6.6,1.0) {Fix merge\\ bug};
+  \node[label] at (8.8,1.0) {Add robust\\ SE};
+
+  \node[font=\scriptsize\bfseries, text=accent2] at (8.8,-0.9) {HEAD};
+\end{tikzpicture}
+
+\vspace{15pt}
+
+\begin{itemize}
+\item Each \textbf{commit} is a snapshot of your project at a point in time
+\item The \textbf{history} is a chain of commits, each with a message
+\item \texttt{HEAD} is a pointer to your current position
+\end{itemize}
+
+\end{frame}
+% ----------------------------------------------------
+\note{Visual intuition for what Git actually does. Each commit is a complete snapshot of the project state when you ran \texttt{git commit}. The chain of commits is your history. HEAD is a pointer that tells you where you are in that history --- normally at the tip of your current branch. When you run \texttt{git log}, you see this chain going backwards from HEAD. The key insight: Git does not store diffs between versions, it stores full snapshots (efficiently, via hashing). This is why commits are cheap and you should make them often.}
+
+% ----------------------------------------------------
+\begin{frame}
+\frametitle{Branches: parallel lines of work}
+\centering
+
+\vspace{5pt}
+
+\begin{tikzpicture}[
+  commit/.style={circle, draw=accent, fill=accent!20, thick, minimum size=0.55cm},
+  fcommit/.style={circle, draw=accent2, fill=accent2!20, thick, minimum size=0.55cm},
+  arrow/.style={->, thick, accent!70!black},
+  farrow/.style={->, thick, accent2!70!black},
+  label/.style={font=\scriptsize\bfseries, align=center}
+]
+  \node[commit] (m1) at (0.8,0) {};
+  \node[commit] (m2) at (2.5,0) {};
+  \node[commit] (m3) at (4.2,0) {};
+  \node[commit] (m4) at (7.6,0) {};
+  \node[commit] (m5) at (9.3,0) {};
+
+  \node[fcommit] (f1) at (5.9,-1.3) {};
+  \node[fcommit] (f2) at (7.6,-1.3) {};
+
+  \draw[arrow] (m1) -- (m2);
+  \draw[arrow] (m2) -- (m3);
+  \draw[arrow, dashed] (m3) -- (m4);
+  \draw[arrow] (m4) -- (m5);
+
+  \draw[farrow] (m3) -- (f1);
+  \draw[farrow] (f1) -- (f2);
+  \draw[farrow] (f2) -- (m4);
+
+  \node[label, text=accent] at (-0.1,0) {main};
+  \node[label, text=accent2] at (4.2,-1.3) {new branch};
+  \node[font=\scriptsize, text=asher] at (7.6,0.35) {merge};
+\end{tikzpicture}
+
+\vspace{12pt}
+
+\begin{itemize}
+\item A \textbf{branch} is an independent line of commits
+\item Useful for trying changes without breaking \texttt{main}
+\item \textbf{Merge} brings the work back together
+\end{itemize}
+
+\end{frame}
+% ----------------------------------------------------
+\note{Branches let you work on something without disturbing the main line. Classic use case: you want to try a new model specification but are not sure if it will pan out. Create a branch (\texttt{git checkout -b new-spec}), commit freely, and if it works you merge it back into main; if not, you just delete the branch. For solo researchers, branches are optional --- many people work only on main. For collaboration, branches are essential: each person works on their own branch and merges via pull requests on GitHub. Mention that this is a preview of more advanced Git --- we are not going to practice branching in this course, but they should know it exists.}
 
 % ----------------------------------------------------
 \begin{frame}
@@ -750,7 +829,7 @@
   \item Ideally: run one command and reproduce everything
   \end{itemize}
 \vspace{8pt}
-\item Example: \href{https://github.com/franvillamil/workflow_example}{\texttt{github.com/franvillamil/workflow\_example}}
+\item Example: \href{https://github.com/franvillamil/vox_military}{\texttt{github.com/franvillamil/vox\_military}}
 \end{itemize}
 
 \end{frame}
@@ -814,8 +893,6 @@
   \begin{itemize}
   \item \href{https://raps-with-r.dev/}{\texttt{raps-with-r.dev}}
   \end{itemize}
-\vspace{8pt}
-\item Example project: \href{https://github.com/franvillamil/workflow_example}{\texttt{github.com/franvillamil/workflow\_example}}
 \end{itemize}
 
 \end{frame}
