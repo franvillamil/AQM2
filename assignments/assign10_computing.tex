@@ -11,9 +11,7 @@
 \setlength\itemsep{0pt}
   \item {\color{red}{\textbf{Deadline}}}: \textbf{April 30, before class}
   \item Submit via your GitHub repository in a separate folder (\texttt{assignment10})
-  \item \textbf{Always use comments} in your R code -- and use them to answer questions
-  \item You are encouraged to work together, but each person must submit their own code
-  \item I'll upload a solution file to the website after next class
+  \item (No solutions this time, but no take home part either)
 \end{itemize}
 
 \vspace{20pt}
@@ -26,7 +24,7 @@
 
 The goal of this assignment is to build a small, self-contained project that integrates R analysis with a \LaTeX{} document. The idea is simple: R produces output files (a table and a figure), and the \LaTeX{} document loads them automatically. When the analysis changes, you recompile the document and it updates --- no copy-pasting.
 
-{\sloppy Use the \code{corruption.dta} dataset from previous assignments, available at the course GitHub repository (under \href{https://github.com/franvillamil/AQM2/tree/master/datasets/other}{datasets/other}).\par}
+{\sloppy Use any dataset from previous assignments, available at the course GitHub repository (\href{https://github.com/franvillamil/AQM2/tree/master/datasets/}{github.com/franvillamil/AQM2/tree/master/datasets/}).\par}
 
 \subsection{What to build}
 
@@ -36,8 +34,8 @@ Create a folder \texttt{assignment10} in your course repository with the followi
 
   \item \textbf{An R script} (e.g., \code{analysis.R}) that:
   \begin{itemize}
-    \item Loads the corruption dataset
-    \item Runs at least one regression model (e.g., CPI on GDP and other controls)
+    \item Loads the dataset
+    \item Runs at least two regression models (e.g., CPI on GDP with and without controls, using the \code{corruption} dataset)
     \item Saves a regression table as a \code{.tex} file using \code{modelsummary()} with the \code{output} argument
     \item Creates at least one figure (e.g., a scatter plot) and saves it as a \code{.pdf} file using \code{ggsave()}
   \end{itemize}
@@ -54,6 +52,8 @@ Create a folder \texttt{assignment10} in your course repository with the followi
 
 The specifics of the analysis, the model specification, the plot design, and the folder structure are up to you. What matters is that the pipeline works: run the R script, compile the \LaTeX{} document, and you get a PDF with the results embedded automatically.
 
+\textbf{Note:} at the very least, I recommend creating directories \code{img/} and \code{tab/} to save graphs and tables, respectively. (We'll see why when we use Overleaf.)
+
 \subsection{Requirements}
 
 \begin{itemize}
@@ -68,8 +68,6 @@ The specifics of the analysis, the model specification, the plot design, and the
 \section{Extensions}
 % ==========================================================================
 
-Complete at least one of the following extensions.
-
 \subsection{Extension A: Overleaf workflow}
 
 If you prefer to use Overleaf instead of compiling \LaTeX{} locally, adapt the project to work with Overleaf via Git:
@@ -78,11 +76,12 @@ If you prefer to use Overleaf instead of compiling \LaTeX{} locally, adapt the p
   \item Create an Overleaf project with your \code{document.tex} file
   \item Clone the Overleaf project to your computer using Git (Overleaf provides a Git URL for each project under Menu $\rightarrow$ Git)
   \item Run your R script locally to produce the \code{.tex} table and \code{.pdf} figure
-  \item Copy the output files into the cloned Overleaf folder. You can do this manually, or write a small \code{copy.sh} shell script that automates the copying, e.g.:
+  \item Copy the output files into the cloned Overleaf folder. You can do this manually, or write a small \code{copy.sh} shell script that automates the copying. For example, this is what I use (from the Overleaf folder\footnote{Because my project folder is always in the same place (\code{Documents/Projects/}) but the Overleaf one can change. Sometimes I just clone it locally to update empirical files but work on the website if it's only about text.}):
   \begin{lstlisting}
-#!/bin/bash
-cp output/table_models.tex ../overleaf-project/
-cp output/scatter.pdf ../overleaf-project/
+mkdir -p tab
+mkdir -p img
+cp -v ~/Documents/Projects/mycurrentproject/tab/*.tex tab/
+cp -v ~/Documents/Projects/mycurrentproject/img/*.pdf img/
   \end{lstlisting}
   \item Push to Overleaf via Git (\code{git add}, \code{git commit}, \code{git push}) so the document updates with the latest results
 \end{enumerate}
@@ -94,37 +93,25 @@ In your \code{README.md}, describe the steps you followed and how the Overleaf i
 Create a \code{Makefile} in the \texttt{assignment10} folder that automates the full pipeline. Running \code{make} from the terminal should:
 
 \begin{enumerate}[label=\arabic*.]
-  \item Run the R script to produce the table and figure
-  \item Compile the \LaTeX{} document to produce the final PDF
+  \item \textbf{At least:} Run the R script to produce the table and figure
+  \item \textbf{Potentially:} Compile the \LaTeX{} document to produce the final PDF
 \end{enumerate}
 
-Remember that each rule in a Makefile specifies a \textbf{target} (the output file), its \textbf{dependencies} (what it needs), and a \textbf{recipe} (the command to run). Makefile recipes must be indented with \textbf{tabs}, not spaces.
+Remember that each rule in a Makefile specifies a \textbf{target} (the output file), its \textbf{dependencies} (what it needs), and a \textbf{recipe} (the command to run). Makefile recipes must be indented with \textbf{tabs}, not spaces. \textit{(Use AI to go through this.)}
 
 \vspace{15pt}
 
-% ==========================================================================
-\section{Data Sources}
-% ==========================================================================
+% Commit your work to your GitHub repository before the deadline. Everything should be inside the \texttt{assignment10} folder. Make sure your repository is public so I can access it.
 
-The corruption dataset (\code{corruption.dta}) is available at the course GitHub repository under \href{https://github.com/franvillamil/AQM2/tree/master/datasets/other}{\texttt{datasets/other}}.
+% Your \texttt{assignment10} folder should contain at minimum:
+% \begin{itemize}
+%   \item \code{README.md} --- project description and instructions to reproduce
+%   \item An R script --- analysis that produces a table and a figure
+%   \item A \LaTeX{} document --- loads the R output and compiles to PDF
+%   \item The dataset (\code{corruption.dta}) or instructions to obtain it
+%   \item Plus any extension files (Makefile, \code{copy.sh}, etc.)
+% \end{itemize}
 
-\vspace{15pt}
-
-% ==========================================================================
-\section{Submission}
-% ==========================================================================
-
-Commit your work to your GitHub repository before the deadline. Everything should be inside the \texttt{assignment10} folder. Make sure your repository is public so I can access it.
-
-Your \texttt{assignment10} folder should contain at minimum:
-\begin{itemize}
-  \item \code{README.md} --- project description and instructions to reproduce
-  \item An R script --- analysis that produces a table and a figure
-  \item A \LaTeX{} document --- loads the R output and compiles to PDF
-  \item The dataset (\code{corruption.dta}) or instructions to obtain it
-  \item Plus any extension files (Makefile, \code{copy.sh}, etc.)
-\end{itemize}
-
-All R scripts should run without errors from the \texttt{assignment10} directory.
+% All R scripts should run without errors from the \texttt{assignment10} directory.
 
 \end{document}
