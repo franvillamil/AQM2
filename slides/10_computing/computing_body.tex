@@ -124,26 +124,56 @@
 \frametitle{Organizing a project: one example}
 \centering
 
-\vspace{5pt}
-
-{\footnotesize\ttfamily
-\begin{tabular}{@{}l@{}}
-\textcolor{accent}{\textbf{workflow\_example/}} \\
-\hspace{1em}Makefile \\
-\hspace{1em}.gitignore \\
-\hspace{1em}\textcolor{accent}{\textbf{create\_data/}} \\
-\hspace{2em}data.R \\
-\hspace{2em}\textcolor{asher}{output/}\,data.csv \\
-\hspace{1em}\textcolor{accent}{\textbf{analyses/}} \\
-\hspace{2em}analyze.R \\
-\hspace{2em}\textcolor{asher}{output/}\,table\_models.tex \\
-\hspace{1em}\textcolor{accent}{\textbf{plots/}} \\
-\hspace{2em}plots.R \\
-\hspace{2em}\textcolor{asher}{output/}\,scatter.pdf \\
-\hspace{1em}\textcolor{accent}{\textbf{document/}} \\
-\hspace{2em}doc.tex \\
-\end{tabular}
-}
+\begin{forest}
+  for tree={
+    font=\ttfamily\scriptsize,
+    grow'=0,
+    child anchor=west,
+    parent anchor=south,
+    anchor=west,
+    calign=first,
+    edge path={
+      \noexpand\path [draw, \forestoption{edge}]
+      (!u.south west) +(7.5pt,0) |- node[fill,inner sep=1.25pt] {} (.child anchor)\forestoption{edge label};
+    },
+    before typesetting nodes={
+      if n=1{insert before={[,phantom]}}{}
+    },
+    fit=band,
+    before computing xy={l=10pt},
+    s sep=0.2em,          % was 0.2em
+    inner sep=1pt,      % reduces padding around node text
+    l sep=0.5em,        % tightens parent-child distance too
+  }
+  [PROJECT\_FOLDER/, text=gray
+    [analyses/, text=gray
+      [analyze.R]
+      [output/, text=gray
+        [table\_models.tex]
+      ]
+    ]
+    [create\_data/, text=gray
+      [data.R]
+      [output/, text=gray
+        [data.csv]
+      ]
+    ]
+    [document/, text=gray
+      [doc.tex]
+      [doc.pdf]
+      [doc.aux, draw=none]
+      [\ldots, draw=none]
+    ]
+    [plots/, text=gray
+      [output/, text=gray
+        [scatter.pdf]
+      ]
+      [plots.R]
+    ]
+    [Makefile]
+    [README.md]
+  ]
+\end{forest}
 
 \vspace{10pt}
 
