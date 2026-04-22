@@ -6,6 +6,8 @@ layout: default
 
 ### Schedule
 
+<div style="overflow-x: auto; white-space: nowrap;">
+
 | Date        | Topic  | Slides | Exercises | Solution |
 | :---        | :---   | :--- | :--- | :--- | :---     |
 | Feb 5    | 1. [Introduction](./sessions.md) | [[Slides 1](./slides/01_introduction/introduction.pdf)] | [[Ex 1](./assignments/assign1_introduction.pdf)] |
@@ -21,6 +23,8 @@ layout: default
 | Apr 16  | [**Project presentations**](./logistics.md) | | |
 | Apr 23  | 10. [Computing best practices](./sessions.md) | [[Slides 10](./slides/10_computing/computing.pdf)] | [[Ex 10](./assignments/assign10_computing.pdf)] | | |
 | Apr 30  | [Exam](./logistics.md) / [Review & Advanced](./sessions.md) | | |
+
+</div>
 
 ### Extra documents
 
