@@ -26,6 +26,7 @@ layout: default
 
 - [Using Git and Github](./extra/extra1_git.pdf)
 - [Notes on Code Editors](./extra/extra1_editors.pdf)
+- [Setting up Latex in your computer (with VS Code)](./extra/LaTeX_VSCode_Setup_Guide.pdf)
 
 ### Small resources
 
