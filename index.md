@@ -20,7 +20,7 @@ layout: default
 | Apr 9   | 9. [Other outcomes](./sessions.md) | [[Slides 9](./slides/09_other/other.pdf)] | [[Ex 9](./assignments/assign9_other.pdf)] | [[1](./assignments/solution/assign9_1.pdf)] [[2](./assignments/solution/assign9_2.pdf)] |
 | Apr 16  | [**Project presentations**](./logistics.md) | | |
 | Apr 23  | 10. [Computing best practices](./sessions.md) | [[Slides 10](./slides/10_computing/computing.pdf)] | [[Ex 10](./assignments/assign10_computing.pdf)] | | |
-| Apr 30  | [Exam](./logistics.md) / [Review & Advanced](./sessions.md) | | |
+| Apr 30  | [Exam](./logistics.md) / [Review & Advanced](./sessions.md) | [[Slides 11](./slides/11_review/review.pdf)] | |
 
 ### Extra documents
 
